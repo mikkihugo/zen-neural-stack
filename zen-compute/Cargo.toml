@@ -85,7 +85,7 @@ getrandom = { version = "0.2", features = ["js"] }
 # Native GPU support
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 cuda-sys = { version = "0.2", optional = true }
-opencl3 = { version = "0.9", optional = true }
+opencl3 = { version = "0.12", optional = true }
 vulkano = { version = "0.34", optional = true }
 
 [dev-dependencies]

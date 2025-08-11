@@ -94,7 +94,7 @@ class RuvSwarm {
       return instance;
     }
 
-    console.log('🧠 Initializing ruv-swarm with WASM capabilities...');
+    console.log('🧠 Initializing zen-swarm with WASM capabilities...');
 
     try {
       // Initialize WASM modules
@@ -157,7 +157,7 @@ class RuvSwarm {
         }
       }
 
-      console.log('✅ ruv-swarm initialized successfully');
+      console.log('✅ zen-swarm initialized successfully');
       console.log('📊 Features:', instance.features);
 
       // Mark as initialized
@@ -165,7 +165,7 @@ class RuvSwarm {
 
       return instance;
     } catch (error) {
-      console.error('❌ Failed to initialize ruv-swarm:', error);
+      console.error('❌ Failed to initialize zen-swarm:', error);
       throw error;
     }
   }

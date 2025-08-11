@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # RUV-Swarm Crates Publishing Script
-# Publishes all ruv-swarm crates to crates.io in proper dependency order
+# Publishes all zen-swarm crates to crates.io in proper dependency order
 
 set -e  # Exit on any error
 
@@ -100,7 +100,7 @@ publish_crate() {
     cp Cargo.toml Cargo.toml.backup
     
     # Remove version requirements from path dependencies for publishing
-    sed -i 's/ruv-swarm-\([a-z-]*\) = { path = "\([^"]*\)", version = "[^"]*"/ruv-swarm-\1 = { path = "\2"/g' Cargo.toml
+    sed -i 's/zen-swarm-\([a-z-]*\) = { path = "\([^"]*\)", version = "[^"]*"/zen-swarm-\1 = { path = "\2"/g' Cargo.toml
     
     # Run tests unless skipped
     if [ "$SKIP_TESTS" != "true" ]; then
@@ -155,30 +155,30 @@ main() {
     # Define publishing order (dependencies first)
     local publish_order=(
         # Core crates (no dependencies)
-        "crates/ruv-swarm-core"
+        "crates/zen-swarm-core"
         "crates/claude-parser"
         
         # Transport and persistence (minimal dependencies)
-        "crates/ruv-swarm-transport"
-        "crates/ruv-swarm-persistence"
+        "crates/zen-swarm-transport"
+        "crates/zen-swarm-persistence"
         
         # Agents (depends on core)
-        "crates/ruv-swarm-agents"
+        "crates/zen-swarm-agents"
         
         # ML components (depends on core)
-        "crates/ruv-swarm-ml"
+        "crates/zen-swarm-ml"
         
         # WASM (depends on core, agents)
-        "crates/ruv-swarm-wasm"
+        "crates/zen-swarm-wasm"
         
         # MCP (depends on core, agents, transport)
-        "crates/ruv-swarm-mcp"
+        "crates/zen-swarm-mcp"
         
         # Adapters (depends on core, agents, persistence)
         "crates/swe-bench-adapter"
         
         # CLI (depends on everything)
-        "crates/ruv-swarm-cli"
+        "crates/zen-swarm-cli"
         
         # Training and benchmarking
         "ml-training"

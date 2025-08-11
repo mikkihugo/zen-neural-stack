@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Comprehensive Test Runner for ruv-swarm
+ * Comprehensive Test Runner for zen-swarm
  * Executes all test suites and generates a detailed report
  */
 

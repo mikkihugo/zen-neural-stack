@@ -25,7 +25,7 @@ class PerformanceBenchmarks {
     console.log('📊 Initializing Performance Benchmarking Suite...');
 
     try {
-      // Initialize ruv-swarm with optimizations
+      // Initialize zen-swarm with optimizations
       this.ruvSwarm = await RuvSwarm.initialize({
         useSIMD: true,
         enableNeuralNetworks: true,

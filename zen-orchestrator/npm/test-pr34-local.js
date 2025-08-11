@@ -50,7 +50,7 @@ async function testPR34() {
       // Test MCPServerConfig
       const serverConfig = new MCPServerConfig(
         'node',
-        ['bin/ruv-swarm-clean.js', 'mcp', 'start'],
+        ['bin/zen-swarm-clean.js', 'mcp', 'start'],
         {},
         true,
       );
@@ -59,7 +59,7 @@ async function testPR34() {
       // Test MCPConfig
       const mcpConfig = new MCPConfig(
         {
-          'ruv-swarm': serverConfig,
+          'zen-swarm': serverConfig,
         },
         true,
         true,
@@ -80,7 +80,7 @@ async function testPR34() {
       const configurator = new DefaultMCPConfigurator();
       console.log('   ✅ DefaultMCPConfigurator instantiated successfully');
 
-      // Test config generation (without requiring actual ruv-swarm availability)
+      // Test config generation (without requiring actual zen-swarm availability)
       const config = configurator._generateRuvSwarmConfig();
       console.log('   ✅ Config generation works');
       console.log(
@@ -94,15 +94,15 @@ async function testPR34() {
     }
 
     // Test 5: Check integration with existing code
-    console.log('\n5️⃣ Testing integration with existing ruv-swarm...');
+    console.log('\n5️⃣ Testing integration with existing zen-swarm...');
     try {
       // Check if the binary exists
-      const binaryPath = 'bin/ruv-swarm-clean.js';
+      const binaryPath = 'bin/zen-swarm-clean.js';
       if (existsSync(binaryPath)) {
-        console.log('   ✅ ruv-swarm binary exists');
+        console.log('   ✅ zen-swarm binary exists');
 
         // Import to check syntax
-        await import('./bin/ruv-swarm-clean.js');
+        await import('./bin/zen-swarm-clean.js');
         console.log('   ✅ Binary imports successfully (no syntax errors)');
       } else {
         console.log('   ⚠️  Binary not found at expected location');

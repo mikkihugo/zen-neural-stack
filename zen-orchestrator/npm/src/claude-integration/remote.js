@@ -9,7 +9,7 @@ import path from 'path';
 class RemoteWrapperGenerator {
   constructor(options = {}) {
     this.workingDir = options.workingDir || process.cwd();
-    this.packageName = options.packageName || 'ruv-swarm';
+    this.packageName = options.packageName || 'zen-swarm';
   }
 
   /**

@@ -1,5 +1,5 @@
 /**
- * Neural Network Integration Tests for ruv-swarm
+ * Neural Network Integration Tests for zen-swarm
  * Tests FANN integration, agent learning, and decision making
  */
 

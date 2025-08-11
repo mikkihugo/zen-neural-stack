@@ -285,7 +285,7 @@ class ModelSpecificTests {
       summary: this.generateSummary(),
     };
 
-    const outputDir = path.join(process.cwd(), '.ruv-swarm', 'neural-tests');
+    const outputDir = path.join(process.cwd(), '.zen-swarm', 'neural-tests');
     await fs.mkdir(outputDir, { recursive: true });
 
     const outputFile = path.join(

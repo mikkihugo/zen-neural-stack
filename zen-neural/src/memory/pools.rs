@@ -49,6 +49,7 @@ use super::{MemoryError, MemoryResult};
 
 /// Size class for memory pool organization
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SizeClass {
     /// Size in bytes (always power of 2)
     pub size: usize,
@@ -304,7 +305,7 @@ impl FreeList {
     }
     
     /// Deallocate a block back to this free list
-    fn deallocate(&mut self, ptr: NonNull<u8>, size: usize) -> MemoryResult<()> {
+    fn deallocate(&mut self, _ptr: NonNull<u8>, size: usize) -> MemoryResult<()> {
         // In a real implementation, we'd find the block by pointer and deallocate it
         // For now, just update statistics
         self.allocated_bytes = self.allocated_bytes.saturating_sub(size);
@@ -643,13 +644,18 @@ where
 
 // === THREAD-SAFE MEMORY POOL ===
 
+// Thread-local cache for fast allocation
+thread_local! {
+    static THREAD_CACHE: RefCell<HashMap<usize, VecDeque<NonNull<u8>>>> = RefCell::new(HashMap::new());
+}
+
 /// Thread-safe wrapper around MemoryPool
 #[derive(Debug)]
 pub struct ThreadSafePool<T> {
     /// Inner pool protected by RwLock
     inner: Arc<RwLock<MemoryPool<T>>>,
-    /// Thread-local caches for faster allocation
-    thread_caches: thread_local!(RefCell<HashMap<usize, VecDeque<NonNull<u8>>>>),
+    /// Pool configuration for thread cache management
+    config: PoolConfig,
 }
 
 impl<T> ThreadSafePool<T>
@@ -665,11 +671,11 @@ where
             ..PoolConfig::default()
         };
         
-        let pool = MemoryPool::new(config)?;
+        let pool = MemoryPool::new(config.clone())?;
         
         Ok(Self {
             inner: Arc::new(RwLock::new(pool)),
-            thread_caches: thread_local!(RefCell::new(HashMap::new())),
+            config,
         })
     }
     
@@ -853,47 +859,3 @@ mod tests {
     }
 }
 
-/**
- * ## Memory Pool System Summary
- * 
- * This module implements a high-performance, thread-safe memory pool system
- * designed for zero-allocation neural network operations.
- * 
- * ### Key Features Implemented:
- * 
- * 1. **Size Class System**:
- *    - Powers of 2 from 64 bytes to 128MB
- *    - Automatic size class selection for allocations
- *    - Minimal fragmentation through size class organization
- *    - Efficient coalescing of adjacent free blocks
- * 
- * 2. **Thread Safety**:
- *    - Lock-free allocation for common cases
- *    - Thread-local caches to reduce contention
- *    - Fine-grained locking only when necessary
- *    - Memory barriers for consistency guarantees
- * 
- * 3. **Performance Optimizations**:
- *    - Cache-line aligned allocations
- *    - SIMD-aligned memory for vectorized operations
- *    - Prefetch hints for sequential access
- *    - Automatic defragmentation when needed
- * 
- * 4. **Comprehensive Statistics**:
- *    - Real-time allocation/deallocation tracking
- *    - Fragmentation ratio calculation
- *    - Pool efficiency metrics
- *    - Peak usage monitoring
- * 
- * ### Memory Reduction Achievements:
- * 
- * - ✅ **Zero-allocation hot paths** through pre-allocated pools
- * - ✅ **Reduced fragmentation** via size class system
- * - ✅ **Thread-safe sharing** with minimal overhead
- * - ✅ **Cache-optimized layout** for better performance
- * - ✅ **Automatic defragmentation** to maintain efficiency
- * 
- * This pool system forms the foundation for achieving the 70% memory
- * reduction target by eliminating dynamic allocations during neural
- * network operations and providing efficient memory reuse patterns.
- */

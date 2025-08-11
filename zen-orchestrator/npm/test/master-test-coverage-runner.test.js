@@ -432,7 +432,7 @@ class MasterTestCoverageRunner {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ruv-swarm Test Coverage Report</title>
+    <title>zen-swarm Test Coverage Report</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -459,7 +459,7 @@ class MasterTestCoverageRunner {
 <body>
     <div class="container">
         <div class="header">
-            <h1>🧪 ruv-swarm Test Coverage Report</h1>
+            <h1>🧪 zen-swarm Test Coverage Report</h1>
             <p class="timestamp">Generated: ${new Date(this.results.endTime).toLocaleString()}</p>
             <p class="timestamp">Duration: ${this.results.totalDuration}ms</p>
         </div>

@@ -1,5 +1,5 @@
 /**
- * Comprehensive MCP Integration Tests for ruv-swarm
+ * Comprehensive MCP Integration Tests for zen-swarm
  * Tests all 12 MCP tools and their integration
  */
 
@@ -173,7 +173,7 @@ async function runMCPIntegrationTests() {
       const result = await client.sendRequest('initialize', {
         protocolVersion: '2024-11-05',
         clientInfo: {
-          name: 'ruv-swarm-test-client',
+          name: 'zen-swarm-test-client',
           version: '1.0.0',
         },
         capabilities: {
@@ -215,16 +215,16 @@ async function runMCPIntegrationTests() {
 
       const toolNames = result.tools.map((t) => t.name);
       const expectedTools = [
-        'ruv-swarm.spawn',
-        'ruv-swarm.orchestrate',
-        'ruv-swarm.query',
-        'ruv-swarm.monitor',
-        'ruv-swarm.optimize',
-        'ruv-swarm.memory.store',
-        'ruv-swarm.memory.get',
-        'ruv-swarm.task.create',
-        'ruv-swarm.workflow.execute',
-        'ruv-swarm.agent.list',
+        'zen-swarm.spawn',
+        'zen-swarm.orchestrate',
+        'zen-swarm.query',
+        'zen-swarm.monitor',
+        'zen-swarm.optimize',
+        'zen-swarm.memory.store',
+        'zen-swarm.memory.get',
+        'zen-swarm.task.create',
+        'zen-swarm.workflow.execute',
+        'zen-swarm.agent.list',
       ];
 
       expectedTools.forEach((tool) => {
@@ -234,9 +234,9 @@ async function runMCPIntegrationTests() {
 
     // 3. Test Swarm Init (Agent Spawn)
     let agentId;
-    await test('MCP Tool: ruv-swarm.spawn', async () => {
+    await test('MCP Tool: zen-swarm.spawn', async () => {
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.spawn',
+        name: 'zen-swarm.spawn',
         arguments: {
           agent_type: 'researcher',
           name: 'test-researcher-001',
@@ -255,9 +255,9 @@ async function runMCPIntegrationTests() {
     });
 
     // 4. Test Agent List
-    await test('MCP Tool: ruv-swarm.agent.list', async () => {
+    await test('MCP Tool: zen-swarm.agent.list', async () => {
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.agent.list',
+        name: 'zen-swarm.agent.list',
         arguments: {
           include_inactive: false,
           sort_by: 'created_at',
@@ -270,7 +270,7 @@ async function runMCPIntegrationTests() {
     });
 
     // 5. Test Memory Store
-    await test('MCP Tool: ruv-swarm.memory.store', async () => {
+    await test('MCP Tool: zen-swarm.memory.store', async () => {
       const testData = {
         framework_analysis: {
           react: { performance: 'excellent', learning_curve: 'moderate' },
@@ -281,7 +281,7 @@ async function runMCPIntegrationTests() {
       };
 
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.memory.store',
+        name: 'zen-swarm.memory.store',
         arguments: {
           key: 'test_framework_analysis',
           value: testData,
@@ -294,9 +294,9 @@ async function runMCPIntegrationTests() {
     });
 
     // 6. Test Memory Get
-    await test('MCP Tool: ruv-swarm.memory.get', async () => {
+    await test('MCP Tool: zen-swarm.memory.get', async () => {
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.memory.get',
+        name: 'zen-swarm.memory.get',
         arguments: {
           key: 'test_framework_analysis',
         },
@@ -310,9 +310,9 @@ async function runMCPIntegrationTests() {
 
     // 7. Test Task Create
     let taskId;
-    await test('MCP Tool: ruv-swarm.task.create', async () => {
+    await test('MCP Tool: zen-swarm.task.create', async () => {
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.task.create',
+        name: 'zen-swarm.task.create',
         arguments: {
           task_type: 'research',
           description:
@@ -330,9 +330,9 @@ async function runMCPIntegrationTests() {
     });
 
     // 8. Test Query Swarm State
-    await test('MCP Tool: ruv-swarm.query', async () => {
+    await test('MCP Tool: zen-swarm.query', async () => {
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.query',
+        name: 'zen-swarm.query',
         arguments: {
           filter: {
             agent_type: 'researcher',
@@ -350,11 +350,11 @@ async function runMCPIntegrationTests() {
     });
 
     // 9. Test Monitor (with short duration)
-    await test('MCP Tool: ruv-swarm.monitor', async () => {
+    await test('MCP Tool: zen-swarm.monitor', async () => {
       client.clearNotifications();
 
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.monitor',
+        name: 'zen-swarm.monitor',
         arguments: {
           event_types: ['agent_spawned', 'task_created', 'task_completed'],
           duration_secs: 5, // Short duration for testing
@@ -367,14 +367,14 @@ async function runMCPIntegrationTests() {
       // Wait a bit and check for notifications
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const notifications = client.getNotifications('ruv-swarm/event');
+      const notifications = client.getNotifications('zen-swarm/event');
       console.log(`   Received ${notifications.length} notifications`);
     });
 
     // 10. Test Orchestrate
-    await test('MCP Tool: ruv-swarm.orchestrate', async () => {
+    await test('MCP Tool: zen-swarm.orchestrate', async () => {
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.orchestrate',
+        name: 'zen-swarm.orchestrate',
         arguments: {
           objective:
             'Create comprehensive comparison of React, Vue, and Angular frameworks',
@@ -393,9 +393,9 @@ async function runMCPIntegrationTests() {
     });
 
     // 11. Test Optimize
-    await test('MCP Tool: ruv-swarm.optimize', async () => {
+    await test('MCP Tool: zen-swarm.optimize', async () => {
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.optimize',
+        name: 'zen-swarm.optimize',
         arguments: {
           target_metric: 'throughput',
           constraints: {
@@ -412,7 +412,7 @@ async function runMCPIntegrationTests() {
     });
 
     // 12. Test Workflow Execute
-    await test('MCP Tool: ruv-swarm.workflow.execute', async () => {
+    await test('MCP Tool: zen-swarm.workflow.execute', async () => {
       // First, create a simple workflow file
       const workflowPath = '/tmp/test-workflow.json';
       const workflow = {
@@ -433,7 +433,7 @@ async function runMCPIntegrationTests() {
       await fs.writeFile(workflowPath, JSON.stringify(workflow, null, 2));
 
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.workflow.execute',
+        name: 'zen-swarm.workflow.execute',
         arguments: {
           workflow_path: workflowPath,
           parameters: {
@@ -459,7 +459,7 @@ async function runMCPIntegrationTests() {
       for (let i = 0; i < 5; i++) {
         promises.push(
           client.sendRequest('tools/call', {
-            name: 'ruv-swarm.spawn',
+            name: 'zen-swarm.spawn',
             arguments: {
               agent_type: [
                 'researcher',
@@ -483,7 +483,7 @@ async function runMCPIntegrationTests() {
     await test('Error Handling: Invalid Agent Type', async () => {
       try {
         await client.sendRequest('tools/call', {
-          name: 'ruv-swarm.spawn',
+          name: 'zen-swarm.spawn',
           arguments: {
             agent_type: 'invalid_type',
           },
@@ -497,7 +497,7 @@ async function runMCPIntegrationTests() {
     await test('Error Handling: Missing Required Parameters', async () => {
       try {
         await client.sendRequest('tools/call', {
-          name: 'ruv-swarm.task.create',
+          name: 'zen-swarm.task.create',
           arguments: {
             // Missing required 'task_type' and 'description'
             priority: 'high',
@@ -513,7 +513,7 @@ async function runMCPIntegrationTests() {
     await test('Persistence: Memory Across Reconnection', async () => {
       // Store data
       await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.memory.store',
+        name: 'zen-swarm.memory.store',
         arguments: {
           key: 'persistence_test',
           value: { test: 'data', timestamp: Date.now() },
@@ -528,14 +528,14 @@ async function runMCPIntegrationTests() {
       // Re-initialize
       await client.sendRequest('initialize', {
         clientInfo: {
-          name: 'ruv-swarm-test-client',
+          name: 'zen-swarm-test-client',
           version: '1.0.0',
         },
       });
 
       // Try to retrieve data
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.memory.get',
+        name: 'zen-swarm.memory.get',
         arguments: {
           key: 'persistence_test',
         },
@@ -556,7 +556,7 @@ async function runMCPIntegrationTests() {
       for (let i = 0; i < 10; i++) {
         promises.push(
           client.sendRequest('tools/call', {
-            name: 'ruv-swarm.spawn',
+            name: 'zen-swarm.spawn',
             arguments: {
               agent_type: 'researcher',
               name: `perf-test-agent-${i}`,
@@ -575,16 +575,16 @@ async function runMCPIntegrationTests() {
     });
 
     // Test Custom MCP Methods
-    await test('Custom Method: ruv-swarm/status', async () => {
-      const result = await client.sendRequest('ruv-swarm/status');
+    await test('Custom Method: zen-swarm/status', async () => {
+      const result = await client.sendRequest('zen-swarm/status');
       assert(result);
       console.log(
         `   Status: ${JSON.stringify(result, null, 2).substring(0, 100)}...`,
       );
     });
 
-    await test('Custom Method: ruv-swarm/metrics', async () => {
-      const result = await client.sendRequest('ruv-swarm/metrics');
+    await test('Custom Method: zen-swarm/metrics', async () => {
+      const result = await client.sendRequest('zen-swarm/metrics');
       assert(result);
       console.log(
         `   Metrics: ${JSON.stringify(result, null, 2).substring(0, 100)}...`,
@@ -633,7 +633,7 @@ async function runIntegrationScenarios() {
     const researchers = [];
     for (let i = 0; i < 3; i++) {
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.spawn',
+        name: 'zen-swarm.spawn',
         arguments: {
           agent_type: 'researcher',
           name: `research-team-${i}`,
@@ -656,7 +656,7 @@ async function runIntegrationScenarios() {
 
     for (let i = 0; i < topics.length; i++) {
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.task.create',
+        name: 'zen-swarm.task.create',
         arguments: {
           task_type: 'research',
           description: topics[i],
@@ -670,7 +670,7 @@ async function runIntegrationScenarios() {
 
     // 3. Store research findings
     await client.sendRequest('tools/call', {
-      name: 'ruv-swarm.memory.store',
+      name: 'zen-swarm.memory.store',
       arguments: {
         key: 'research_findings',
         value: {
@@ -693,7 +693,7 @@ async function runIntegrationScenarios() {
 
     // 4. Query final state
     const state = await client.sendRequest('tools/call', {
-      name: 'ruv-swarm.query',
+      name: 'zen-swarm.query',
       arguments: { include_metrics: true },
     });
     console.log(
@@ -705,7 +705,7 @@ async function runIntegrationScenarios() {
 
     // 1. Orchestrate development task
     const devResult = await client.sendRequest('tools/call', {
-      name: 'ruv-swarm.orchestrate',
+      name: 'zen-swarm.orchestrate',
       arguments: {
         objective: 'Implement user authentication system with JWT',
         strategy: 'development',
@@ -719,7 +719,7 @@ async function runIntegrationScenarios() {
     // 2. Monitor progress
     client.clearNotifications();
     await client.sendRequest('tools/call', {
-      name: 'ruv-swarm.monitor',
+      name: 'zen-swarm.monitor',
       arguments: {
         event_types: ['task_started', 'task_completed', 'agent_message'],
         duration_secs: 3,
@@ -727,12 +727,12 @@ async function runIntegrationScenarios() {
     });
 
     await new Promise((resolve) => setTimeout(resolve, 3500));
-    const events = client.getNotifications('ruv-swarm/event');
+    const events = client.getNotifications('zen-swarm/event');
     console.log(`  ✅ Captured ${events.length} events during monitoring`);
 
     // 3. Optimize performance
     const optResult = await client.sendRequest('tools/call', {
-      name: 'ruv-swarm.optimize',
+      name: 'zen-swarm.optimize',
       arguments: {
         target_metric: 'latency',
         constraints: {
@@ -753,7 +753,7 @@ async function runIntegrationScenarios() {
     const analyzers = [];
     for (let i = 0; i < 2; i++) {
       const result = await client.sendRequest('tools/call', {
-        name: 'ruv-swarm.spawn',
+        name: 'zen-swarm.spawn',
         arguments: {
           agent_type: 'analyst',
           name: `neural-analyzer-${i}`,
@@ -779,7 +779,7 @@ async function runIntegrationScenarios() {
     };
 
     await client.sendRequest('tools/call', {
-      name: 'ruv-swarm.memory.store',
+      name: 'zen-swarm.memory.store',
       arguments: {
         key: 'xor_training_data',
         value: trainingData,
@@ -789,7 +789,7 @@ async function runIntegrationScenarios() {
 
     // 3. Create learning task
     const learningResult = await client.sendRequest('tools/call', {
-      name: 'ruv-swarm.task.create',
+      name: 'zen-swarm.task.create',
       arguments: {
         task_type: 'analysis',
         description: 'Train XOR pattern recognition',

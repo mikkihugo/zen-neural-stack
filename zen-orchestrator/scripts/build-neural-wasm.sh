@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# Build script for ruv-swarm WASM with neural network integration
+# Build script for zen-swarm WASM with neural network integration
 # Agent 2: Neural Network Specialist
 
 set -e
 
-echo "🧠 Building ruv-swarm WASM with neural network integration..."
+echo "🧠 Building zen-swarm WASM with neural network integration..."
 
 # Change to the WASM crate directory
-cd "$(dirname "$0")/../crates/ruv-swarm-wasm"
+cd "$(dirname "$0")/../crates/zen-swarm-wasm"
 
 # Check for wasm-pack
 if ! command -v wasm-pack &> /dev/null; then

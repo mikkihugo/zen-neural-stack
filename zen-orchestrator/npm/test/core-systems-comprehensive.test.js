@@ -107,7 +107,7 @@ describe('Core Systems Comprehensive Coverage Tests', () => {
         try {
           await assert.rejects(
             () => RuvSwarm.initialize({ enableNeuralNetworks: true }),
-            /Failed to initialize ruv-swarm/,
+            /Failed to initialize zen-swarm/,
           );
         } finally {
           WasmModuleLoader.prototype.initialize = originalInit;

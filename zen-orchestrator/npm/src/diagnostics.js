@@ -1,5 +1,5 @@
 /**
- * Diagnostic utilities for ruv-swarm
+ * Diagnostic utilities for zen-swarm
  * Helps debug connection issues and performance problems
  */
 

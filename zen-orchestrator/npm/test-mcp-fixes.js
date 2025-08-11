@@ -17,7 +17,7 @@ console.log('========================================\n');
 console.log('1. Starting MCP server in stdio mode...');
 const mcpServer = spawn(
   'node',
-  [join(__dirname, 'bin/ruv-swarm-clean.js'), 'mcp', 'start'],
+  [join(__dirname, 'bin/zen-swarm-clean.js'), 'mcp', 'start'],
   {
     stdio: ['pipe', 'pipe', 'inherit'],
   },

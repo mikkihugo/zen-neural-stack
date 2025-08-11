@@ -536,7 +536,7 @@ impl<T: Float> TimeSeriesDataFrame<T> {
         ErrorBuilder::data(format!("Failed to get unique values: {}", e))
           .build()
       })?
-      .utf8()
+      .str()
       .map_err(|e| {
         ErrorBuilder::data(format!(
           "Unique ID column is not string type: {}",

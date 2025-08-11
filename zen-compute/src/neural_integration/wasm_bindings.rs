@@ -249,7 +249,7 @@ impl WasmNeuralBridge {
     self.bridge.get_device_info().map(|info| {
             format!(
                 r#"{{"name":"{}","vendor":"{}","device_type":"{}","memory_size":{},"compute_units":{},"max_workgroup_size":{},"supports_f16":{},"supports_f64":{}}}"#,
-                info.name, info.vendor, info.device_type, info.memory_size, 
+                info.name, info.vendor, info.device_type, info.memory_size,
                 info.compute_units, info.max_workgroup_size, info.supports_f16, info.supports_f64
             )
         })

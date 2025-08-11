@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Comprehensive Neural Model Benchmarking Suite
- * Tests all neural network architectures in ruv-swarm
+ * Tests all neural network architectures in zen-swarm
  */
 
 import { spawn } from 'child_process';
@@ -61,7 +61,7 @@ class NeuralBenchmark {
 
     try {
       await this.runCommand('npx', [
-        'ruv-swarm',
+        'zen-swarm',
         'neural',
         'train',
         '--model',
@@ -85,7 +85,7 @@ class NeuralBenchmark {
 
     try {
       const { stdout } = await this.runCommand('npx', [
-        'ruv-swarm',
+        'zen-swarm',
         'neural',
         'patterns',
         '--model',
@@ -101,11 +101,11 @@ class NeuralBenchmark {
     // Phase 3: Export weights for analysis
     console.log('\n📊 Phase 3: Weight Export & Analysis\n');
     const exportStart = Date.now();
-    const exportPath = `./.ruv-swarm/neural/${model}-weights-${Date.now()}.json`;
+    const exportPath = `./.zen-swarm/neural/${model}-weights-${Date.now()}.json`;
 
     try {
       await this.runCommand('npx', [
-        'ruv-swarm',
+        'zen-swarm',
         'neural',
         'export',
         '--model',
@@ -220,7 +220,7 @@ class NeuralBenchmark {
     console.log(`📅 ${new Date().toISOString()}\n`);
 
     // Create output directory
-    const outputDir = path.join(process.cwd(), '.ruv-swarm', 'benchmarks');
+    const outputDir = path.join(process.cwd(), '.zen-swarm', 'benchmarks');
     await fs.mkdir(outputDir, { recursive: true });
 
     // Run benchmarks for each model

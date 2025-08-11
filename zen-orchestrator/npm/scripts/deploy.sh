@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ruv-swarm Deployment Automation Script
+# zen-swarm Deployment Automation Script
 # Comprehensive deployment for NPM package with validation and safety checks
 
 set -euo pipefail
@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-PACKAGE_NAME="ruv-swarm"
+PACKAGE_NAME="zen-swarm"
 REGISTRY_URL="https://registry.npmjs.org"
 BACKUP_DIR="./deployment-backup"
 LOG_FILE="./deployment.log"
@@ -154,7 +154,7 @@ validate_package() {
     log "Files in package: $packed_files"
     
     # Check required files
-    local required_files=("bin/ruv-swarm-clean.js" "src/index.js" "README.md" "package.json")
+    local required_files=("bin/zen-swarm-clean.js" "src/index.js" "README.md" "package.json")
     for file in "${required_files[@]}"; do
         if [[ ! -f "$file" ]]; then
             error "Required file missing: $file"
@@ -163,7 +163,7 @@ validate_package() {
     
     # Validate CLI binary
     log "Testing CLI binary..."
-    node bin/ruv-swarm-clean.js --version || error "CLI binary test failed"
+    node bin/zen-swarm-clean.js --version || error "CLI binary test failed"
     
     success "Package validation passed"
 }
@@ -188,13 +188,13 @@ test_installation() {
     
     # Test CLI functionality
     log "Testing CLI functionality..."
-    ./node_modules/.bin/ruv-swarm --version || error "CLI test failed"
+    ./node_modules/.bin/zen-swarm --version || error "CLI test failed"
     
     # Test programmatic usage
     log "Testing programmatic usage..."
     cat > test.js << 'EOF'
-const { RuvSwarm } = require('ruv-swarm');
-console.log('ruv-swarm imported successfully');
+const { RuvSwarm } = require('zen-swarm');
+console.log('zen-swarm imported successfully');
 console.log('SIMD support:', RuvSwarm.detectSIMDSupport());
 EOF
     
@@ -267,7 +267,7 @@ generate_report() {
     local npm_user=$(npm whoami)
     
     cat > "deployment-report-$current_version.md" << EOF
-# ruv-swarm Deployment Report
+# zen-swarm Deployment Report
 
 ## Deployment Information
 - **Package**: $PACKAGE_NAME
@@ -319,7 +319,7 @@ npx $PACKAGE_NAME benchmark run
 
 ## Links
 - **NPM Package**: https://www.npmjs.com/package/$PACKAGE_NAME
-- **Documentation**: https://github.com/ruvnet/ruv-FANN/tree/main/ruv-swarm/npm
+- **Documentation**: https://github.com/ruvnet/ruv-FANN/tree/main/zen-swarm/npm
 - **Issues**: https://github.com/ruvnet/ruv-FANN/issues
 EOF
     
@@ -343,7 +343,7 @@ cleanup() {
 
 # Main deployment function
 main() {
-    log "Starting ruv-swarm deployment process..."
+    log "Starting zen-swarm deployment process..."
     
     # Parse command line arguments
     local skip_tests=false
@@ -366,7 +366,7 @@ main() {
                 ;;
             --help)
                 cat << EOF
-ruv-swarm Deployment Script
+zen-swarm Deployment Script
 
 Usage: $0 [options]
 
@@ -427,7 +427,7 @@ EOF
     generate_report
     cleanup
     
-    success "🎉 ruv-swarm deployment completed successfully!"
+    success "🎉 zen-swarm deployment completed successfully!"
     
     local current_version=$(node -pe "require('./package.json').version")
     echo

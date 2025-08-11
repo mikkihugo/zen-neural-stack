@@ -1,5 +1,5 @@
 /**
- * Integration Test Configuration for ruv-swarm
+ * Integration Test Configuration for zen-swarm
  * Centralized configuration for all integration test scenarios
  */
 

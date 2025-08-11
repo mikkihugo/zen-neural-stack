@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Docker Performance Test Suite for ruv-swarm v1.0.6
+ * Docker Performance Test Suite for zen-swarm v1.0.6
  * Comprehensive performance benchmarks across all features
  */
 
@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 console.log('================================================');
-console.log('ruv-swarm v1.0.6 Performance Benchmark Suite');
+console.log('zen-swarm v1.0.6 Performance Benchmark Suite');
 console.log('================================================');
 console.log(`Date: ${new Date().toISOString()}`);
 console.log(`Node Version: ${process.version}`);

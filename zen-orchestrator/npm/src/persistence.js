@@ -1,5 +1,5 @@
 /**
- * SQLite Persistence Layer for ruv-swarm MCP
+ * SQLite Persistence Layer for zen-swarm MCP
  */
 
 import Database from 'better-sqlite3';
@@ -12,7 +12,7 @@ class SwarmPersistence {
       new URL('.', import.meta.url).pathname,
       '..',
       'data',
-      'ruv-swarm.db',
+      'zen-swarm.db',
     ),
   ) {
     // Ensure data directory exists

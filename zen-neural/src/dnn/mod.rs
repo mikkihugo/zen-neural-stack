@@ -95,7 +95,7 @@ use crate::webgpu::{WebGPUBackend, ComputeContext};
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-use crate::errors::ZenNeuralError;
+use crate::errors::RuvFannError;
 use crate::activation::ActivationFunction;
 
 // === MODULE DECLARATIONS ===
@@ -137,8 +137,8 @@ pub mod simd;
 // === RE-EXPORTS ===
 
 pub use data::{DNNTensor, BatchData, TensorShape, TensorOps};
-pub use layers::{DenseLayer, LinearLayer, LayerConfig, DNNLayer};
-pub use activations::{ActivationLayer, ActivationType};
+pub use layers::{DenseLayer, LinearLayer, DNNLayer, DenseLayerConfig, LayerConfigBuilder};
+pub use activations::ActivationLayer;
 pub use regularization::{DropoutLayer, BatchNormLayer, LayerNormLayer};
 pub use training::{DNNTrainer, DNNTrainingConfig, DNNLoss, DNNOptimizer};
 
@@ -511,10 +511,16 @@ impl ZenDNNModel {
             self.trainer = Some(DNNTrainer::new(config.clone())?);
         }
         
-        let trainer = self.trainer.as_mut().unwrap();
+        // Extract trainer temporarily to avoid double borrow
+        let mut trainer = self.trainer.take().unwrap();
         
         // Delegate to trainer implementation
-        trainer.train(self, training_data, config).await
+        let result = trainer.train(self, training_data, config).await;
+        
+        // Put trainer back
+        self.trainer = Some(trainer);
+        
+        result
     }
     
     /// Get model configuration and parameter count
@@ -852,8 +858,11 @@ pub enum DNNError {
     #[cfg(feature = "zen-distributed")]
     DistributedError(#[from] crate::distributed::DistributedError),
     
-    #[error("General zen-neural error: {0}")]
-    ZenNeuralError(#[from] ZenNeuralError),
+    #[error("Tensor error: {0}")]
+    TensorError(String),
+    
+    #[error("Computation error: {0}")]
+    ComputationError(String),
 }
 
 // === INTEGRATION TRAIT IMPLEMENTATIONS ===
@@ -961,43 +970,3 @@ mod tests {
     }
 }
 
-/**
- * ## Migration Plan from JavaScript Dense Layers to Rust DNN
- * 
- * This module represents the comprehensive port of JavaScript dense layer operations
- * found in CNN and autoencoder implementations to high-performance Rust. The migration
- * maintains API familiarity while adding significant improvements:
- * 
- * ### Completed Components:
- * 1. ✅ **Core Model Structure**: `ZenDNNModel` with configuration system
- * 2. ✅ **Builder Pattern**: Type-safe model construction with fluent API
- * 3. ✅ **Configuration System**: Comprehensive hyperparameter management
- * 4. ✅ **Error Handling**: Detailed error types with context and source tracking
- * 5. ✅ **Module Structure**: Organized into logical sub-modules matching GNN pattern
- * 6. ✅ **Integration Hooks**: GPU, Storage, and Distributed backends
- * 
- * ### Next Steps (Implementation in Sub-modules):
- * 
- * 1. **data/mod.rs**: Tensor operations and batch handling
- * 2. **layers/mod.rs**: Dense layer implementations with SIMD optimization
- * 3. **activations/mod.rs**: Optimized activation function implementations
- * 4. **regularization/mod.rs**: Dropout and normalization layers
- * 5. **training/mod.rs**: Training algorithms and optimization
- * 6. **gpu/mod.rs**: WebGPU acceleration implementation
- * 7. **storage/mod.rs**: Model persistence and checkpointing
- * 8. **distributed/mod.rs**: Multi-node training coordination
- * 9. **utils/mod.rs**: Utility functions and debugging tools
- * 10. **simd/mod.rs**: CPU SIMD optimizations for matrix operations
- * 
- * ### Performance Expectations:
- * - **10-50x speedup** from SIMD matrix operations vs JavaScript nested loops
- * - **Zero-allocation paths** through Rust ownership and ndarray optimization
- * - **Memory safety** without garbage collection overhead
- * - **Type safety** preventing runtime tensor shape errors
- * - **GPU scaling** for large batch sizes and deep networks
- * 
- * ### JavaScript Compatibility:
- * The public API maintains familiarity with TensorFlow.js and PyTorch patterns while
- * leveraging Rust's strengths. Users familiar with modern ML frameworks can easily
- * adopt the Rust implementation with minimal learning curve.
- */

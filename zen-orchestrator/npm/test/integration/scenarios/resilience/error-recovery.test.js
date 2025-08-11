@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const RuvSwarm = require('../../../../src/core/ruv-swarm');
+const RuvSwarm = require('../../../../src/core/zen-swarm');
 const Agent = require('../../../../src/agent');
 const Database = require('better-sqlite3');
 const EventEmitter = require('events');

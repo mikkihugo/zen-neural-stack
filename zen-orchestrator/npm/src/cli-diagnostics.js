@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Diagnostic CLI for ruv-swarm
- * Usage: npx ruv-swarm diagnose [options]
+ * Diagnostic CLI for zen-swarm
+ * Usage: npx zen-swarm diagnose [options]
  */
 
 import { diagnostics } from './diagnostics.js';
@@ -264,11 +264,11 @@ function showLoggingConfig(logger) {
   console.log('   LOG_DIR           - Log directory path');
 
   console.log('\n💡 Examples:');
-  console.log('   LOG_LEVEL=DEBUG npx ruv-swarm mcp start');
+  console.log('   LOG_LEVEL=DEBUG npx zen-swarm mcp start');
   console.log(
-    '   MCP_LOG_LEVEL=TRACE TOOLS_LOG_LEVEL=DEBUG npx ruv-swarm mcp start',
+    '   MCP_LOG_LEVEL=TRACE TOOLS_LOG_LEVEL=DEBUG npx zen-swarm mcp start',
   );
-  console.log('   LOG_TO_FILE=true LOG_DIR=./mylogs npx ruv-swarm mcp start');
+  console.log('   LOG_TO_FILE=true LOG_DIR=./mylogs npx zen-swarm mcp start');
 }
 
 function formatReportForConsole(report) {
@@ -306,7 +306,7 @@ function formatReportForConsole(report) {
 
 function formatReportAsMarkdown(report) {
   const lines = [
-    '# ruv-swarm Diagnostic Report',
+    '# zen-swarm Diagnostic Report',
     '',
     `Generated: ${report.timestamp}`,
     '',
@@ -346,9 +346,9 @@ function formatReportAsMarkdown(report) {
 
 function showHelp() {
   console.log(`
-🔍 ruv-swarm Diagnostics
+🔍 zen-swarm Diagnostics
 
-Usage: npx ruv-swarm diagnose <command> [options]
+Usage: npx zen-swarm diagnose <command> [options]
 
 Commands:
   test                     Run diagnostic tests
@@ -368,11 +368,11 @@ Commands:
   help                     Show this help message
 
 Examples:
-  npx ruv-swarm diagnose test
-  npx ruv-swarm diagnose report --output=report.json
-  npx ruv-swarm diagnose monitor --duration=120
-  npx ruv-swarm diagnose logs --pattern="connection.*failed"
-  npx ruv-swarm diagnose config
+  npx zen-swarm diagnose test
+  npx zen-swarm diagnose report --output=report.json
+  npx zen-swarm diagnose monitor --duration=120
+  npx zen-swarm diagnose logs --pattern="connection.*failed"
+  npx zen-swarm diagnose config
 `);
 }
 

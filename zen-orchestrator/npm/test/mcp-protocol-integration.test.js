@@ -256,7 +256,7 @@ class MCPProtocolIntegrationTestSuite {
         method: 'notifications/message',
         params: {
           level: 'info',
-          logger: 'ruv-swarm',
+          logger: 'zen-swarm',
           data: 'Agent spawned successfully',
         },
       };

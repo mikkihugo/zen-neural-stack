@@ -4,7 +4,7 @@
 
 set -e
 
-echo "📦 Publishing ruv-swarm NPM package..."
+echo "📦 Publishing zen-swarm NPM package..."
 
 # Navigate to NPM directory
 cd "$(dirname "$0")/../npm"
@@ -36,7 +36,7 @@ VERSION=$(node -p "require('./package.json').version")
 echo "📌 Current version: $VERSION"
 
 # Confirm publishing
-read -p "Publish ruv-swarm@$VERSION to npm? (y/n) " -n 1 -r
+read -p "Publish zen-swarm@$VERSION to npm? (y/n) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 1
@@ -46,4 +46,4 @@ fi
 npm publish --access public
 
 echo "🎉 NPM package published successfully!"
-echo "📝 View at: https://www.npmjs.com/package/ruv-swarm"
+echo "📝 View at: https://www.npmjs.com/package/zen-swarm"

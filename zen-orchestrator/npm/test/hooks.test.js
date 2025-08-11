@@ -1,5 +1,5 @@
 /**
- * Test suite for ruv-swarm hooks implementation
+ * Test suite for zen-swarm hooks implementation
  */
 
 import {
@@ -107,7 +107,7 @@ describe('RuvSwarmHooks', () => {
       expect(result.continue).toBe(true);
       expect(result.assignedAgent).toBeDefined();
       expect(mockExecSync).toHaveBeenCalledWith(
-        expect.stringContaining('ruv-swarm agent spawn'),
+        expect.stringContaining('zen-swarm agent spawn'),
         expect.any(Object),
       );
     });

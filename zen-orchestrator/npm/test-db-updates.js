@@ -11,7 +11,7 @@ const __dirname = dirname(__filename);
 async function testDatabaseUpdates() {
   console.log('🧪 Testing MCP Database Updates\n');
 
-  const dbPath = join(__dirname, 'data', 'ruv-swarm.db');
+  const dbPath = join(__dirname, 'data', 'zen-swarm.db');
   const db = new sqlite3.Database(dbPath);
 
   const getCount = (table) =>
@@ -46,7 +46,7 @@ async function testDatabaseUpdates() {
   // Helper to run commands
   const runCommand = (args) =>
     new Promise((resolve, reject) => {
-      const proc = spawn('node', ['bin/ruv-swarm-clean.js', ...args], {
+      const proc = spawn('node', ['bin/zen-swarm-clean.js', ...args], {
         stdio: 'pipe',
       });
       let output = '';

@@ -13,6 +13,18 @@ use std::alloc::{self, Layout};
 use std::ptr::{self, NonNull};
 use std::marker::PhantomData;
 
+/// Custom allocation error for stable API compatibility
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SimdAllocError;
+
+impl std::fmt::Display for SimdAllocError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "SIMD memory allocation failed")
+    }
+}
+
+impl std::error::Error for SimdAllocError {}
+
 /// SIMD-aligned memory allocator
 pub struct SimdAllocator {
     alignment: usize,
@@ -50,14 +62,14 @@ impl SimdAllocator {
     }
 
     /// Allocate aligned memory for the given number of elements
-    pub fn allocate<T>(&self, count: usize) -> Result<SimdBuffer<T>, std::alloc::AllocError> {
+    pub fn allocate<T>(&self, count: usize) -> Result<SimdBuffer<T>, SimdAllocError> {
         let size = count * std::mem::size_of::<T>();
         let layout = Layout::from_size_align(size, self.alignment)
-            .map_err(|_| std::alloc::AllocError)?;
+            .map_err(|_| SimdAllocError)?;
 
         let ptr = unsafe { alloc::alloc_zeroed(layout) };
         if ptr.is_null() {
-            return Err(std::alloc::AllocError);
+            return Err(SimdAllocError);
         }
 
         Ok(SimdBuffer {
@@ -69,7 +81,7 @@ impl SimdAllocator {
     }
 
     /// Allocate and initialize with data
-    pub fn allocate_with_data<T: Copy>(&self, data: &[T]) -> Result<SimdBuffer<T>, std::alloc::AllocError> {
+    pub fn allocate_with_data<T: Copy>(&self, data: &[T]) -> Result<SimdBuffer<T>, SimdAllocError> {
         let mut buffer = self.allocate(data.len())?;
         unsafe {
             ptr::copy_nonoverlapping(data.as_ptr(), buffer.as_mut_ptr(), data.len());
@@ -286,7 +298,7 @@ impl<T: Copy + Default> SimdMemoryPool<T> {
     }
 
     /// Allocate buffer from pool or create new one
-    pub fn allocate(&mut self, size: usize) -> Result<SimdBuffer<T>, std::alloc::AllocError> {
+    pub fn allocate(&mut self, size: usize) -> Result<SimdBuffer<T>, SimdAllocError> {
         // Find appropriate size class
         let size_class_idx = self.size_classes
             .iter()

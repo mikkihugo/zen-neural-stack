@@ -316,7 +316,7 @@ impl MemoryProfiler {
     }
     
     /// Record an allocation
-    pub fn record_allocation(&self, size: usize, tensor_type: TensorType) {
+    pub fn record_allocation(&self, size: usize, _tensor_type: TensorType) {
         if !self.enabled {
             return;
         }
@@ -592,7 +592,7 @@ impl fmt::Display for ProfileReport {
             writeln!(f, "Component Breakdown:")?;
             for (component, (count, size)) in &self.component_breakdown {
                 writeln!(f, "  {}: {} allocations, {} bytes (avg: {} bytes)", 
-                        component, count, size, size / count.max(1))?;
+                        component, count, size, size / count.max(1))?; // Fixed division result and syntax
             }
             writeln!(f)?;
         }
@@ -698,55 +698,3 @@ mod tests {
     }
 }
 
-/**
- * ## Memory Profiling System Summary
- * 
- * This module implements a comprehensive memory profiling and monitoring system
- * that provides detailed insights into memory usage patterns and optimization
- * opportunities within the Zen Neural Stack.
- * 
- * ### Key Features Implemented:
- * 
- * 1. **Real-Time Monitoring**:
- *    - Live allocation/deallocation tracking
- *    - Memory usage statistics by component and tensor type
- *    - Peak usage detection and historical tracking
- *    - Cache performance monitoring
- * 
- * 2. **Memory Analysis**:
- *    - Fragmentation analysis and reporting
- *    - Allocation pattern detection
- *    - Memory leak detection with configurable timeouts
- *    - Size distribution analysis for optimization
- * 
- * 3. **Performance Profiling**:
- *    - Allocation/deallocation timing measurements
- *    - Cache hit/miss ratio tracking
- *    - Memory bandwidth utilization analysis
- *    - Component-level performance breakdown
- * 
- * 4. **Debugging Support**:
- *    - Double-free detection
- *    - Invalid pointer detection
- *    - Memory bounds checking integration
- *    - Optional stack trace capture for allocations
- * 
- * ### Integration with Memory System:
- * 
- * - **Memory Pools**: Automatic tracking of pool allocations and efficiency
- * - **Tensor Operations**: Detailed tensor memory usage analysis
- * - **Training System**: Gradient and activation memory profiling
- * - **Neural Networks**: Model-specific memory consumption tracking
- * 
- * ### Optimization Insights:
- * 
- * The profiler automatically identifies optimization opportunities:
- * - Components with many small allocations (pool candidates)
- * - Low cache hit rates (caching strategy issues)
- * - Memory leaks and long-lived allocations
- * - Fragmentation hotspots requiring defragmentation
- * 
- * This profiling system is essential for achieving and maintaining the
- * 70% memory reduction target by providing the visibility needed to
- * optimize memory usage patterns and identify performance bottlenecks.
- */

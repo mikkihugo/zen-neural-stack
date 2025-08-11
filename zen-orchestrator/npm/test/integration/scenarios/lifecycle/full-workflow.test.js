@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const RuvSwarm = require('../../../../src/core/ruv-swarm');
+const RuvSwarm = require('../../../../src/core/zen-swarm');
 const Agent = require('../../../../src/agent');
 const AgentCommunicator = require('../../../../src/agent-communicator');
 const NeuralAgentManager = require('../../../../src/neural-agent');

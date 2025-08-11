@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Integration Test Runner for ruv-swarm
+ * Integration Test Runner for zen-swarm
  * Comprehensive end-to-end testing suite
  */
 
@@ -62,7 +62,7 @@ class IntegrationTestRunner {
   }
 
   async run() {
-    console.log(chalk.blue.bold('\n🧪 ruv-swarm Integration Test Suite'));
+    console.log(chalk.blue.bold('\n🧪 zen-swarm Integration Test Suite'));
     console.log(chalk.gray('=====================================\n'));
 
     this.logConfig();
@@ -104,7 +104,7 @@ class IntegrationTestRunner {
 
     // Ensure test database is clean
     try {
-      const dbPath = path.join(__dirname, '../../data/test-ruv-swarm.db');
+      const dbPath = path.join(__dirname, '../../data/test-zen-swarm.db');
       if (fs.existsSync(dbPath)) {
         fs.unlinkSync(dbPath);
       }

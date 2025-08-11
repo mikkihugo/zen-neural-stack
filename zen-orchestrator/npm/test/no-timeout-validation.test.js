@@ -1,6 +1,6 @@
 /**
  * Comprehensive test suite to validate that ALL timeout mechanisms have been removed
- * from ruv-swarm-no-timeout.js while maintaining security and functionality
+ * from zen-swarm-no-timeout.js while maintaining security and functionality
  */
 
 import { jest } from '@jest/globals';
@@ -15,8 +15,8 @@ const __dirname = dirname(__filename);
 const execAsync = promisify(exec);
 
 describe('No Timeout Validation Suite', () => {
-  const noTimeoutPath = join(__dirname, '..', 'bin', 'ruv-swarm-no-timeout.js');
-  const originalPath = join(__dirname, '..', 'bin', 'ruv-swarm-secure.js');
+  const noTimeoutPath = join(__dirname, '..', 'bin', 'zen-swarm-no-timeout.js');
+  const originalPath = join(__dirname, '..', 'bin', 'zen-swarm-secure.js');
 
   let noTimeoutCode, originalCode;
 
@@ -197,7 +197,7 @@ describe('No Timeout Validation Suite', () => {
   describe('Version Identification', () => {
     test('Should identify as no-timeout version', () => {
       expect(noTimeoutCode).toMatch(/NO TIMEOUT VERSION/);
-      expect(noTimeoutCode).toMatch(/ruv-swarm-no-timeout/);
+      expect(noTimeoutCode).toMatch(/zen-swarm-no-timeout/);
       expect(noTimeoutCode).toMatch(/INFINITE RUNTIME/);
 
       console.log('✅ Properly identified as no-timeout version');

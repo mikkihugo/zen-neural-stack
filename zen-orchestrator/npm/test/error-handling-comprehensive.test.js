@@ -394,7 +394,7 @@ class ErrorHandlingTestSuite {
       const structuredError = {
         level: 'ERROR',
         timestamp: new Date().toISOString(),
-        service: 'ruv-swarm',
+        service: 'zen-swarm',
         component: 'error-handler',
         message: 'Structured logging test',
         metadata: {
@@ -405,7 +405,7 @@ class ErrorHandlingTestSuite {
       };
 
       assert(
-        structuredError.service === 'ruv-swarm',
+        structuredError.service === 'zen-swarm',
         'Should include service information',
       );
       assert(

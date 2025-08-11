@@ -1,12 +1,12 @@
 /**
- * Logger module for ruv-swarm with comprehensive logging capabilities
+ * Logger module for zen-swarm with comprehensive logging capabilities
  */
 
 import { randomUUID } from 'crypto';
 
 export class Logger {
   constructor(options = {}) {
-    this.name = options.name || 'ruv-swarm';
+    this.name = options.name || 'zen-swarm';
     this.level = options.level || 'INFO';
     this.enableStderr = options.enableStderr !== false;
     this.enableFile = options.enableFile || false;

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# NPX Command Test Suite for ruv-swarm v1.0.6
+# NPX Command Test Suite for zen-swarm v1.0.6
 # Tests all commands listed in issue #45
 
 set -e
 
 echo "================================================"
-echo "ruv-swarm v1.0.6 NPX Integration Test Suite"
+echo "zen-swarm v1.0.6 NPX Integration Test Suite"
 echo "================================================"
 echo "Date: $(date)"
 echo "Node Version: $(node --version)"
@@ -38,7 +38,7 @@ test_npx_command() {
     local expected_output="$3"
     
     echo "Testing: $description"
-    echo "Command: npx ruv-swarm $command"
+    echo "Command: npx zen-swarm $command"
     
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     
@@ -47,7 +47,7 @@ test_npx_command() {
     local start_time=$(date +%s%N)
     
     # Run command and capture output
-    if npx ruv-swarm $command > $output_file 2>&1; then
+    if npx zen-swarm $command > $output_file 2>&1; then
         local end_time=$(date +%s%N)
         local duration=$((($end_time - $start_time) / 1000000))
         

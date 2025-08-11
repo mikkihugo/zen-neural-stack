@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Comprehensive Docker Test Runner for ruv-swarm v1.0.6
+# Comprehensive Docker Test Runner for zen-swarm v1.0.6
 # Orchestrates all Docker-based tests and generates a final report
 
 set -e
 
 echo "================================================"
-echo "ruv-swarm v1.0.6 Docker Test Runner"
+echo "zen-swarm v1.0.6 Docker Test Runner"
 echo "================================================"
 echo "Date: $(date)"
 echo ""
@@ -120,7 +120,7 @@ fs.writeFileSync(reportPath, JSON.stringify(finalReport, null, 2));
 console.log('Final report saved to:', reportPath);
 
 // Generate markdown report
-const markdown = \`# Docker Test Report for ruv-swarm v1.0.6
+const markdown = \`# Docker Test Report for zen-swarm v1.0.6
 
 ## Summary
 - **Date**: \${finalReport.timestamp}

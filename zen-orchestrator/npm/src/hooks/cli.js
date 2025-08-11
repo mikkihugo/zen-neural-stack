@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * CLI handler for ruv-swarm hooks
- * Usage: npx ruv-swarm hook <type> [options]
+ * CLI handler for zen-swarm hooks
+ * Usage: npx zen-swarm hook <type> [options]
  */
 
 import { handleHook } from './index.js';

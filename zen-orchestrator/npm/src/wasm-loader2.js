@@ -40,7 +40,7 @@ class WasmModuleLoader {
         optional: true,
       },
       swarm: {
-        path: './wasm/ruv-swarm-orchestration.wasm',
+        path: './wasm/zen-swarm-orchestration.wasm',
         size: 768 * 1024, // 768KB
         priority: 'high',
         dependencies: ['core'],
@@ -48,7 +48,7 @@ class WasmModuleLoader {
         optional: true,
       },
       persistence: {
-        path: './wasm/ruv-swarm-persistence.wasm',
+        path: './wasm/zen-swarm-persistence.wasm',
         size: 256 * 1024, // 256KB
         priority: 'high',
         dependencies: ['core'],

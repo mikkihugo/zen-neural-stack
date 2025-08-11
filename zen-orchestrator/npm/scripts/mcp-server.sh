@@ -1,6 +1,6 @@
 #!/bin/bash
-# MCP Server wrapper for ruv-swarm
+# MCP Server wrapper for zen-swarm
 # Ensures clean stdio communication for Claude Code
 
-cd /workspaces/ruv-FANN/ruv-swarm/npm
-exec node bin/ruv-swarm-enhanced.js mcp start --protocol=stdio
+cd /workspaces/ruv-FANN/zen-swarm/npm
+exec node bin/zen-swarm-enhanced.js mcp start --protocol=stdio

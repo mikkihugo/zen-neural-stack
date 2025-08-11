@@ -13,45 +13,45 @@ categories = ["science", "algorithms", "mathematics"]
 
 [dependencies]
 # Core numeric types and traits
-num-traits = "0.2"
-num-complex = "0.4"
+num-traits = "0.2.19"
+num-complex = "0.4.6"
 
 # Date and time handling
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4.41", features = ["serde"] }
 
 # Serialization
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.142"
 
 # Error handling
-thiserror = "1.0"
-anyhow = "1.0"
+thiserror = "2.0.12"
+anyhow = "1.0.98"
 
 # Data structures and processing
-ndarray = "0.15"
-polars = { version = "0.35", features = ["lazy", "temporal", "csv", "parquet", "json"] }
+ndarray = "0.16.1"
+polars = { version = "0.45.1", features = ["lazy", "temporal", "csv", "parquet", "json"] }
 
 # Parallel processing
-rayon = "1.8"
+rayon = "1.10.0"
 
 # Random number generation
-rand = "0.8"
-rand_distr = "0.4"
+rand = "0.8.5"
+rand_distr = "0.4.3"
 
 # Mathematical operations
-nalgebra = "0.32"
+nalgebra = "0.34.0"
 
 # ruv-FANN integration
-ruv-fann = "0.1"
+ruv-fann = "0.1.6"
 
 # Optional GPU acceleration
-candle-core = { version = "0.3", optional = true }
-candle-nn = { version = "0.3", optional = true }
+candle-core = { version = "0.9.1", optional = true }
+candle-nn = { version = "0.9.1", optional = true }
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
-proptest = "1.4"
-approx = "0.5"
+criterion = { version = "0.5.1", features = ["html_reports"] }
+proptest = "1.7.0"
+approx = "0.5.1"
 
 [features]
 default = ["std"]

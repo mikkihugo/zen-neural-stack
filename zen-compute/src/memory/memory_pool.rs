@@ -311,7 +311,8 @@ impl KernelMemoryManager {
     };
 
     // Reconstruct the Vec from the raw pointer
-    let buffer = Vec::from_raw_parts(ptr, size, size);
+    // SAFETY: ptr was allocated by this pool and the size is correct
+    let buffer = unsafe { Vec::from_raw_parts(ptr, size, size) };
     self.pool.deallocate(buffer);
 
     Ok(())

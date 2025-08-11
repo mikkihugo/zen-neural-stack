@@ -1,0 +1,88 @@
+# Zen Neural Stack - Optimized Cargo Configuration
+# Target: <30s development builds, <10s incremental builds
+
+[build]
+# Use all available CPU cores for parallel compilation  
+# jobs = 0 is invalid, removed to use system default
+
+# Enable incremental compilation for faster rebuilds
+incremental = true
+
+# Prefer faster linker when available
+rustflags = [
+    # Link-time optimizations for better performance
+    "-C", "link-arg=-fuse-ld=lld",  # Use LLD linker if available (faster)
+    "-C", "target-cpu=native",       # Optimize for current CPU architecture
+]
+
+# Platform-specific optimizations
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+    "-C", "link-arg=-fuse-ld=lld",
+    "-C", "target-cpu=native",
+    "-C", "target-feature=+avx2",    # Enable AVX2 for SIMD operations
+]
+
+[target.x86_64-apple-darwin]
+rustflags = [
+    "-C", "link-arg=-fuse-ld=lld",
+    "-C", "target-cpu=native",
+]
+
+[target.aarch64-apple-darwin]
+rustflags = [
+    "-C", "target-cpu=native",
+    "-C", "target-feature=+neon",    # Enable NEON for ARM SIMD
+]
+
+# Registry configuration for faster dependency fetching
+[registries.crates-io]
+protocol = "sparse"  # Use sparse registry for faster index updates
+
+[net]
+# Increase parallelism for network operations
+git-fetch-with-cli = false
+offline = false
+
+# Source replacement for faster builds (optional - disabled by default)
+# Uncomment and create vendor directory if needed
+# [source.crates-io]
+# replace-with = "vendored-sources"
+# 
+# [source.vendored-sources]
+# directory = "vendor"
+
+# Profile-specific settings
+[profile.dev]
+# Override workspace dev profile for faster compilation
+opt-level = 1           # Light optimization for faster builds
+debug = 1               # Reduce debug info size
+split-debuginfo = "packed"  # More efficient debug info
+incremental = true
+codegen-units = 256     # More parallel compilation units
+
+[profile.dev.package."*"]
+# Optimize dependencies even in dev mode for faster execution
+opt-level = 2
+debug = false
+
+# Fast development profile for rapid iteration
+[profile.fast-dev]
+inherits = "dev"
+opt-level = 1
+debug = 1
+lto = "off"
+codegen-units = 256
+incremental = true
+panic = "unwind"        # Faster than abort for development
+
+# Lightweight dev-check profile
+[profile.dev-check]
+inherits = "dev"
+opt-level = 0
+debug = false
+incremental = true
+codegen-units = 256
+
+# Build cache configuration - removed invalid rustc options
+# Note: share-generics is not a valid rustc configuration option

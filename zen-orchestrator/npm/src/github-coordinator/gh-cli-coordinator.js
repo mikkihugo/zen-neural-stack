@@ -1,5 +1,5 @@
 /**
- * GitHub CLI-based Coordinator for ruv-swarm
+ * GitHub CLI-based Coordinator for zen-swarm
  * Uses gh CLI for all GitHub operations - simpler and more reliable
  */
 

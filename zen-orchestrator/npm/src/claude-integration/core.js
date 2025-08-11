@@ -27,7 +27,7 @@ class ClaudeIntegrationCore {
   }
 
   /**
-   * Add ruv-swarm MCP server to Claude Code
+   * Add zen-swarm MCP server to Claude Code
    */
   async addMcpServer() {
     if (!(await this.isClaudeAvailable())) {
@@ -37,12 +37,12 @@ class ClaudeIntegrationCore {
     }
 
     try {
-      // Add ruv-swarm MCP server using stdio (no port needed)
-      const mcpCommand = 'claude mcp add ruv-swarm npx ruv-swarm mcp start';
+      // Add zen-swarm MCP server using stdio (no port needed)
+      const mcpCommand = 'claude mcp add zen-swarm npx zen-swarm mcp start';
       execSync(mcpCommand, { stdio: 'inherit', cwd: this.workingDir });
       return {
         success: true,
-        message: 'Added ruv-swarm MCP server to Claude Code (stdio)',
+        message: 'Added zen-swarm MCP server to Claude Code (stdio)',
       };
     } catch (error) {
       throw new Error(`Failed to add MCP server: ${error.message}`);

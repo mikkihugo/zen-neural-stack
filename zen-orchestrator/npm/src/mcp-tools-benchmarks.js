@@ -1,6 +1,6 @@
 /**
  * MCP Tools Benchmarks - Separated for better organization
- * Contains all benchmark and testing functionality for ruv-swarm MCP tools
+ * Contains all benchmark and testing functionality for zen-swarm MCP tools
  */
 
 /**

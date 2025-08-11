@@ -15,7 +15,7 @@ class BenchmarkVisualizer {
   async loadBenchmarkData() {
     const benchmarkPath = path.join(
       process.cwd(),
-      '.ruv-swarm',
+      '.zen-swarm',
       'benchmarks',
       'neural-benchmark-1751398753060.json',
     );

@@ -628,7 +628,7 @@ impl DNNTrainer {
         }
         
         let batch_size = predictions.batch_size();
-        let feature_dim = predictions.feature_dim();
+        let _feature_dim = predictions.feature_dim();
         let mut correct = 0;
         
         for batch_idx in 0..batch_size {

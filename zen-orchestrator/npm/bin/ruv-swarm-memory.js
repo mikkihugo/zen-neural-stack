@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Memory optimization command for ruv-swarm
+ * Memory optimization command for zen-swarm
  * Demonstrates memory usage optimization across cognitive patterns
  */
 
@@ -10,7 +10,7 @@ const { NeuralAgentFactory, COGNITIVE_PATTERNS } = require('../src/neural-agent'
 const chalk = require('chalk');
 
 async function runMemoryOptimizationDemo() {
-    console.log(chalk.bold.cyan('\n🧠 ruv-swarm Memory Optimization Demo\n'));
+    console.log(chalk.bold.cyan('\n🧠 zen-swarm Memory Optimization Demo\n'));
     
     const neuralCLI = new NeuralCLI();
     await neuralCLI.initialize();

@@ -5,6 +5,27 @@ members = [
     "zen-forecasting", 
     "zen-compute",
     "zen-orchestrator",
+    # Include tests directory
+    "tests",
+    # Include zen-forecasting subdirectories  
+    "zen-forecasting/neuro-divergent-core",
+    "zen-forecasting/neuro-divergent-models",
+    "zen-forecasting/neuro-divergent-data", 
+    "zen-forecasting/neuro-divergent-registry",
+    "zen-forecasting/neuro-divergent-training",
+    # Include zen-orchestrator zen-swarm crates
+    "zen-orchestrator/crates/zen-swarm-core",
+    "zen-orchestrator/crates/zen-swarm-agents",
+    "zen-orchestrator/crates/zen-swarm-cli",
+    "zen-orchestrator/crates/zen-swarm-daa", 
+    "zen-orchestrator/crates/zen-swarm-mcp",
+    "zen-orchestrator/crates/zen-swarm-ml",
+    "zen-orchestrator/crates/zen-swarm-persistence",
+    "zen-orchestrator/crates/zen-swarm-transport",
+    "zen-orchestrator/crates/zen-swarm-wasm",
+    "zen-orchestrator/crates/zen-swarm-wasm-unified",
+    "zen-orchestrator/crates/claude-parser",
+    "zen-orchestrator/crates/swe-bench-adapter",
 ]
 
 [workspace.package]
@@ -17,32 +38,101 @@ repository = "https://github.com/mikkihugo/zen-neural-stack"
 
 [workspace.dependencies]
 # Shared dependencies across all zen-* crates
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-thiserror = "1.0"
-anyhow = "1.0"
-tokio = { version = "1.0", features = ["full"] }
-rayon = "1.10"
-num-traits = "0.2"
-ndarray = "0.15"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.142"
+thiserror = "2.0.12"
+anyhow = "1.0.98"
+tokio = { version = "1.47.1", features = ["full"] }
+rayon = "1.10.0"
+num-traits = "0.2.19"
+ndarray = "0.16.1"
 
 # Neural network specific
-nalgebra = "0.34"
-rand = { version = "0.8", features = ["small_rng"] }
-rand_distr = "0.4"
+nalgebra = "0.34.0"
+rand = { version = "0.8.5", features = ["small_rng"] }
+rand_distr = "0.4.3"
+rand_chacha = "0.3.1"
 
 # GPU acceleration 
-wgpu = "0.19"
-candle-core = "0.3"
-candle-nn = "0.3"
+wgpu = "26.0.1"
+candle-core = "0.9.1"
+candle-nn = "0.9.1"
+
+# Database - libSQL for better SQLite maintenance
+libsql = { version = "0.9.20", features = ["core", "serde"] }
+
+# Legacy dependencies for compatibility during migration
+rusqlite = { version = "0.32.1", features = ["bundled"] }
+r2d2 = "0.8.10"
+r2d2_sqlite = "0.26.0"
+
+# Async and concurrency
+async-trait = "0.1.88"
+futures = "0.3.31"
+parking_lot = "0.12.4"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+uuid = { version = "1.11.0", features = ["v4", "serde"] }
+dashmap = "5.5.3"
+
+# Additional dependencies for ruv-swarm crates  
+pin-project = "1.1.8"
+no-std-compat = "0.4.1"
+heapless = "0.8.0"
+getrandom = { version = "0.2.15", features = ["js"] }
+shared_memory = "0.12.4"
+tungstenite = "0.27.0"
+tokio-tungstenite = "0.27.0"
+mcp = "0.1.0"
+
+# Testing and benchmarking
+criterion = "0.5.1"
+proptest = "1.7.0"
+tempfile = "3.15.0"
+
+# WASM support
+wasm-bindgen = "0.2.100"
+js-sys = "0.3.77"
+web-sys = "0.3.77"
 
 [workspace.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
+# Optimized development profile for <30s builds
 [profile.dev]
+opt-level = 1              # Light optimization for faster execution without slow compile times
+debug = 1                  # Line tables only (faster than full debug info)
+split-debuginfo = "packed" # More efficient debug info storage
+incremental = true         # Enable incremental compilation
+codegen-units = 256        # High parallelism for faster compilation
+lto = "off"                # Disable LTO in dev (too slow)
+panic = "unwind"           # Faster than abort for development
+overflow-checks = true     # Keep safety checks in dev
+
+# Optimize dependencies even in dev mode (they rarely change)
+[profile.dev.package."*"]
+opt-level = 2
+debug = false
+incremental = false
+
+# Ultra-fast development profile for rapid iteration
+[profile.fast-dev]
+inherits = "dev"
+opt-level = 0              # No optimization for maximum compile speed
+debug = 0                  # No debug info for fastest builds
+codegen-units = 256
+incremental = true
+overflow-checks = false    # Skip checks for maximum speed
+
+# Lightweight dev-check profile for syntax/type checking
+[profile.dev-check]
+inherits = "dev"
 opt-level = 0
-debug = true
+debug = false
+lto = "off"
+codegen-units = 256
+incremental = true
 
 [profile.release]
 lto = "fat"

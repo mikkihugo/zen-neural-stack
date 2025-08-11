@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * WASM Loading Validation Test for ruv-swarm v1.0.6
+ * WASM Loading Validation Test for zen-swarm v1.0.6
  * Ensures WASM loads without fallback and validates memory allocation
  */
 
@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 console.log('================================================');
-console.log('ruv-swarm v1.0.6 WASM Loading Validation');
+console.log('zen-swarm v1.0.6 WASM Loading Validation');
 console.log('================================================');
 console.log(`Date: ${new Date().toISOString()}`);
 console.log(`Node Version: ${process.version}`);

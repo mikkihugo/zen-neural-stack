@@ -1,5 +1,5 @@
 /**
- * Comprehensive MCP Workflow Examples for ruv-swarm
+ * Comprehensive MCP Workflow Examples for zen-swarm
  * Demonstrates all MCP tool capabilities with real-world scenarios
  */
 
@@ -16,7 +16,7 @@ class RuvSwarmMCP {
     this.eventHandlers = new Map();
   }
 
-  async connect(clientInfo = { name: 'ruv-swarm-client', version: '1.0.0' }) {
+  async connect(clientInfo = { name: 'zen-swarm-client', version: '1.0.0' }) {
     return new Promise((resolve, reject) => {
       this.ws = new WebSocket(this.url);
 
@@ -96,7 +96,7 @@ class RuvSwarmMCP {
 
   // Helper methods for common operations
   async spawnAgent(type, name = null, capabilities = {}) {
-    return this.tool('ruv-swarm.spawn', {
+    return this.tool('zen-swarm.spawn', {
       agent_type: type,
       name,
       capabilities,
@@ -104,7 +104,7 @@ class RuvSwarmMCP {
   }
 
   async orchestrate(objective, options = {}) {
-    return this.tool('ruv-swarm.orchestrate', {
+    return this.tool('zen-swarm.orchestrate', {
       objective,
       strategy: options.strategy || 'development',
       mode: options.mode || 'hierarchical',
@@ -114,7 +114,7 @@ class RuvSwarmMCP {
   }
 
   async storeMemory(key, value, ttl = null) {
-    return this.tool('ruv-swarm.memory.store', {
+    return this.tool('zen-swarm.memory.store', {
       key,
       value,
       ttl_secs: ttl,
@@ -122,7 +122,7 @@ class RuvSwarmMCP {
   }
 
   async getMemory(key) {
-    return this.tool('ruv-swarm.memory.get', { key });
+    return this.tool('zen-swarm.memory.get', { key });
   }
 
   async createTask(
@@ -131,7 +131,7 @@ class RuvSwarmMCP {
     priority = 'medium',
     assignedAgent = null,
   ) {
-    return this.tool('ruv-swarm.task.create', {
+    return this.tool('zen-swarm.task.create', {
       task_type: type,
       description,
       priority,
@@ -140,14 +140,14 @@ class RuvSwarmMCP {
   }
 
   async query(filter = {}, includeMetrics = false) {
-    return this.tool('ruv-swarm.query', {
+    return this.tool('zen-swarm.query', {
       filter,
       include_metrics: includeMetrics,
     });
   }
 
   async monitor(eventTypes = ['all'], duration = 60) {
-    return this.tool('ruv-swarm.monitor', {
+    return this.tool('zen-swarm.monitor', {
       event_types: eventTypes,
       duration_secs: duration,
     });
@@ -158,7 +158,7 @@ class RuvSwarmMCP {
     constraints = {},
     autoApply = false,
   ) {
-    return this.tool('ruv-swarm.optimize', {
+    return this.tool('zen-swarm.optimize', {
       target_metric: targetMetric,
       constraints,
       auto_apply: autoApply,
@@ -166,7 +166,7 @@ class RuvSwarmMCP {
   }
 
   async executeWorkflow(path, parameters = {}, async = false) {
-    return this.tool('ruv-swarm.workflow.execute', {
+    return this.tool('zen-swarm.workflow.execute', {
       workflow_path: path,
       parameters,
       async_execution: async,
@@ -174,7 +174,7 @@ class RuvSwarmMCP {
   }
 
   async listAgents(includeInactive = false, sortBy = 'created_at') {
-    return this.tool('ruv-swarm.agent.list', {
+    return this.tool('zen-swarm.agent.list', {
       include_inactive: includeInactive,
       sort_by: sortBy,
     });
@@ -364,7 +364,7 @@ async function webAppDevelopmentWorkflow(client) {
   console.log('\n📡 Phase 5: Development Monitoring');
 
   // Set up event monitoring
-  client.on('ruv-swarm/event', (event) => {
+  client.on('zen-swarm/event', (event) => {
     console.log(
       `  📢 Event: ${event.event.type} - ${event.event.data.message || ''}`,
     );
@@ -947,7 +947,7 @@ async function swarmCoordinationWorkflow(client) {
   // Monitor swarm behavior
   console.log('\n  👁️  Monitoring Swarm Behavior');
 
-  client.on('ruv-swarm/event', (event) => {
+  client.on('zen-swarm/event', (event) => {
     if (event.event.type === 'swarm_consensus') {
       console.log(`    🤝 Consensus reached: ${event.event.data.decision}`);
     } else if (event.event.type === 'task_handoff') {

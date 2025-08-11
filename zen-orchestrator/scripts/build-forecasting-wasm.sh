@@ -22,18 +22,18 @@ fi
 cd "$(dirname "$0")/.."
 
 # Build the ML crate first
-echo -e "${YELLOW}Building ruv-swarm-ml...${NC}"
-cargo build --manifest-path crates/ruv-swarm-ml/Cargo.toml --target wasm32-unknown-unknown --features wasm
+echo -e "${YELLOW}Building zen-swarm-ml...${NC}"
+cargo build --manifest-path crates/zen-swarm-ml/Cargo.toml --target wasm32-unknown-unknown --features wasm
 
 # Build the main WASM module with ML features
-echo -e "${YELLOW}Building ruv-swarm-wasm with ML features...${NC}"
-cd crates/ruv-swarm-wasm
+echo -e "${YELLOW}Building zen-swarm-wasm with ML features...${NC}"
+cd crates/zen-swarm-wasm
 wasm-pack build --target web --features ml
 
 # Check if build was successful
 if [ -d "pkg" ]; then
     echo -e "${GREEN}✓ WASM build successful!${NC}"
-    echo -e "${GREEN}✓ Output in: crates/ruv-swarm-wasm/pkg/${NC}"
+    echo -e "${GREEN}✓ Output in: crates/zen-swarm-wasm/pkg/${NC}"
     
     # Show the generated files
     echo -e "\n${YELLOW}Generated files:${NC}"
@@ -57,7 +57,7 @@ fi
 # Run tests
 echo -e "\n${YELLOW}Running forecasting tests...${NC}"
 cd ../..
-cargo test --manifest-path crates/ruv-swarm-ml/Cargo.toml
+cargo test --manifest-path crates/zen-swarm-ml/Cargo.toml
 
 echo -e "\n${GREEN}✓ Build and tests complete!${NC}"
 echo -e "\n${YELLOW}To use the forecasting features:${NC}"

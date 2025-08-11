@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🦀 Publishing ruv-swarm Rust crates to crates.io..."
+echo "🦀 Publishing zen-swarm Rust crates to crates.io..."
 
 # Check if we're logged in to crates.io
 if ! cargo login 2>/dev/null; then
@@ -44,17 +44,17 @@ cd "$(dirname "$0")/.."
 
 # Publish in dependency order
 echo "📋 Publishing order (based on dependencies):"
-echo "1. ruv-swarm-core (no ruv-swarm dependencies)"
-echo "2. ruv-swarm-transport (depends on core)"
-echo "3. ruv-swarm-persistence (depends on core)"
-echo "4. ruv-swarm-agents (depends on core)"
-echo "5. ruv-swarm-ml (depends on core)"
-echo "6. claude-parser (no ruv-swarm dependencies)"
-echo "7. ruv-swarm-daa (depends on core, agents, ml)"
-echo "8. ruv-swarm-mcp (depends on core, agents, persistence)"
+echo "1. zen-swarm-core (no zen-swarm dependencies)"
+echo "2. zen-swarm-transport (depends on core)"
+echo "3. zen-swarm-persistence (depends on core)"
+echo "4. zen-swarm-agents (depends on core)"
+echo "5. zen-swarm-ml (depends on core)"
+echo "6. claude-parser (no zen-swarm dependencies)"
+echo "7. zen-swarm-daa (depends on core, agents, ml)"
+echo "8. zen-swarm-mcp (depends on core, agents, persistence)"
 echo "9. swe-bench-adapter (depends on core, agents)"
-echo "10. ruv-swarm-wasm (depends on core, agents, ml)"
-echo "11. ruv-swarm-cli (depends on all)"
+echo "10. zen-swarm-wasm (depends on core, agents, ml)"
+echo "11. zen-swarm-cli (depends on all)"
 echo ""
 
 read -p "Continue with publishing? (y/n) " -n 1 -r
@@ -64,17 +64,17 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Publish each crate in order
-publish_crate "crates/ruv-swarm-core" "ruv-swarm-core"
-publish_crate "crates/ruv-swarm-transport" "ruv-swarm-transport"
-publish_crate "crates/ruv-swarm-persistence" "ruv-swarm-persistence"
-publish_crate "crates/ruv-swarm-agents" "ruv-swarm-agents"
-publish_crate "crates/ruv-swarm-ml" "ruv-swarm-ml"
+publish_crate "crates/zen-swarm-core" "zen-swarm-core"
+publish_crate "crates/zen-swarm-transport" "zen-swarm-transport"
+publish_crate "crates/zen-swarm-persistence" "zen-swarm-persistence"
+publish_crate "crates/zen-swarm-agents" "zen-swarm-agents"
+publish_crate "crates/zen-swarm-ml" "zen-swarm-ml"
 publish_crate "crates/claude-parser" "claude-parser"
-publish_crate "crates/ruv-swarm-daa" "ruv-swarm-daa"
-publish_crate "crates/ruv-swarm-mcp" "ruv-swarm-mcp"
+publish_crate "crates/zen-swarm-daa" "zen-swarm-daa"
+publish_crate "crates/zen-swarm-mcp" "zen-swarm-mcp"
 publish_crate "crates/swe-bench-adapter" "swe-bench-adapter"
-publish_crate "crates/ruv-swarm-wasm" "ruv-swarm-wasm"
-publish_crate "crates/ruv-swarm-cli" "ruv-swarm-cli"
+publish_crate "crates/zen-swarm-wasm" "zen-swarm-wasm"
+publish_crate "crates/zen-swarm-cli" "zen-swarm-cli"
 
 echo "🎉 All Rust crates published successfully!"
 echo "📝 Next steps:"

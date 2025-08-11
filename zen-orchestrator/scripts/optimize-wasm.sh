@@ -1,5 +1,5 @@
 #!/bin/bash
-# WASM Optimization Script for ruv-swarm
+# WASM Optimization Script for zen-swarm
 # Achieves performance targets: < 500ms load, < 100ms spawn, < 50MB for 10 agents
 
 set -e
@@ -9,7 +9,7 @@ echo "🚀 Starting WASM optimization process..."
 # Directory setup
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-WASM_CRATE="$PROJECT_ROOT/crates/ruv-swarm-wasm"
+WASM_CRATE="$PROJECT_ROOT/crates/zen-swarm-wasm"
 PKG_DIR="$WASM_CRATE/pkg"
 
 cd "$WASM_CRATE"
@@ -296,10 +296,10 @@ cat > "$PKG_DIR/performance_test.html" << 'EOF'
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ruv-swarm WASM Performance Test</title>
+    <title>zen-swarm WASM Performance Test</title>
 </head>
 <body>
-    <h1>ruv-swarm WASM Performance Test</h1>
+    <h1>zen-swarm WASM Performance Test</h1>
     <div id="results"></div>
     
     <script type="module">

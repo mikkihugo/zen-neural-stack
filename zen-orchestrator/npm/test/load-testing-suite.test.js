@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Load Testing Suite for ruv-swarm
+ * Load Testing Suite for zen-swarm
  * Tests concurrent operation of 50+ agents with stress testing scenarios
  */
 
@@ -877,7 +877,7 @@ class LoadTestingSuite extends EventEmitter {
 
     // Save detailed report
     const reportPath =
-      '/workspaces/ruv-FANN/ruv-swarm/npm/test/load-test-report.json';
+      '/workspaces/ruv-FANN/zen-swarm/npm/test/load-test-report.json';
     await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
 
     // Console summary

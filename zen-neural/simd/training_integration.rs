@@ -5,6 +5,7 @@
 //! Float32Array operations with 50-100x faster SIMD operations.
 
 use super::{ActivationFunction, HighPerfSimdOps, VectorSimdOps, SimdAllocator, SoAMatrix};
+use crate::simd::SimdMatrixOps; // Import the trait for matvec method
 // use super::SimdBuffer; // For future memory pool integration
 use crate::training::{TrainingAlgorithm, TrainingData, TrainingError};
 use crate::Network;
@@ -57,7 +58,7 @@ impl SimdTrainingCoordinator {
                     .map(|n| n.activation_function)
                     .unwrap_or(crate::ActivationFunction::Linear),
                 steepness: layer.neurons.first()
-                    .map(|n| n.steepness.into())
+                    .map(|n| n.activation_steepness.into()) // Fixed field name
                     .unwrap_or(1.0),
             });
         }
@@ -289,7 +290,7 @@ impl SimdTrainingCoordinator {
             let next_errors = &layer_errors[layer_idx + 1];
             
             let weights = network.layers[layer_idx + 1].weights.to_row_major();
-            let (next_rows, next_cols) = network.layers[layer_idx + 1].weights.dimensions();
+            let (_next_rows, next_cols) = network.layers[layer_idx + 1].weights.dimensions();
             
             let mut current_errors = vec![0.0; current_layer.biases.len()];
             
@@ -338,16 +339,16 @@ impl SimdTrainingCoordinator {
         match activation {
             crate::ActivationFunction::Linear => ActivationFunction::Relu, // No direct equivalent
             crate::ActivationFunction::Sigmoid => ActivationFunction::Sigmoid,
-            crate::ActivationFunction::SigmoidStepwise => ActivationFunction::Sigmoid,
+            crate::ActivationFunction::Sigmoid => ActivationFunction::Sigmoid, // Fixed variant name
             crate::ActivationFunction::SigmoidSymmetric => ActivationFunction::Tanh,
-            crate::ActivationFunction::SigmoidSymmetricStepwise => ActivationFunction::Tanh,
+            crate::ActivationFunction::SigmoidSymmetric => ActivationFunction::Tanh, // Fixed variant name
             crate::ActivationFunction::Tanh => ActivationFunction::Tanh,
-            crate::ActivationFunction::TanhStepwise => ActivationFunction::Tanh,
+            crate::ActivationFunction::Tanh => ActivationFunction::Tanh, // Fixed variant name
             crate::ActivationFunction::Threshold => ActivationFunction::Relu,
             crate::ActivationFunction::ThresholdSymmetric => ActivationFunction::Relu,
             crate::ActivationFunction::Gaussian => ActivationFunction::Gelu,
             crate::ActivationFunction::GaussianSymmetric => ActivationFunction::Gelu,
-            crate::ActivationFunction::GaussianStepwise => ActivationFunction::Gelu,
+            crate::ActivationFunction::Gaussian => ActivationFunction::Gelu, // Fixed variant name
             crate::ActivationFunction::Elliot => ActivationFunction::Swish,
             crate::ActivationFunction::ElliotSymmetric => ActivationFunction::Swish,
             crate::ActivationFunction::LinearPiece => ActivationFunction::LeakyRelu(0.1),
@@ -356,6 +357,8 @@ impl SimdTrainingCoordinator {
             crate::ActivationFunction::CosSymmetric => ActivationFunction::Tanh,
             crate::ActivationFunction::Sin => ActivationFunction::Sigmoid,
             crate::ActivationFunction::Cos => ActivationFunction::Sigmoid,
+            crate::ActivationFunction::ReLU => ActivationFunction::ReLU,
+            crate::ActivationFunction::ReLULeaky => ActivationFunction::ReLU, // Map leaky to standard ReLU
         }
     }
 }

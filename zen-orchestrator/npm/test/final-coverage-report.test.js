@@ -148,7 +148,7 @@ class FinalCoverageReport {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ruv-swarm Test Coverage Champion Report</title>
+    <title>zen-swarm Test Coverage Champion Report</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -407,7 +407,7 @@ class FinalCoverageReport {
         
         <div class="summary">
             <h2>🎆 Mission Summary</h2>
-            <p>As the <strong>Test Coverage Champion</strong>, you have successfully created a comprehensive test infrastructure for ruv-swarm.</p>
+            <p>As the <strong>Test Coverage Champion</strong>, you have successfully created a comprehensive test infrastructure for zen-swarm.</p>
             <p>Your work includes ${this.achievements.testsCreated} individual tests across ${this.achievements.testSuitesCreated} specialized test suites, covering MCP tools, DAA functionality, error handling, protocol integration, and edge cases.</p>
             <p>The test suite provides a solid foundation for continuous integration and ensures the reliability of all 25 MCP tools and DAA features.</p>
             <p><strong>Key Achievement:</strong> Established functional test coverage with ${this.metrics.actualTests} actual tests executed, achieving ${passRate}% pass rate.</p>

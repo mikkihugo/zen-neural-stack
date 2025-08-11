@@ -1,5 +1,5 @@
 /**
- * Benchmark CLI for ruv-swarm
+ * Benchmark CLI for zen-swarm
  * Provides performance benchmarking and comparison tools
  */
 
@@ -30,7 +30,7 @@ class BenchmarkCLI {
     const testType = this.getArg(args, '--test') || 'comprehensive';
     const outputFile = this.getArg(args, '--output');
 
-    console.log('🚀 ruv-swarm Performance Benchmark\n');
+    console.log('🚀 zen-swarm Performance Benchmark\n');
     console.log(`Test Type: ${testType}`);
     console.log(`Iterations: ${iterations}`);
     console.log('');
@@ -182,7 +182,7 @@ class BenchmarkCLI {
       } else {
         const defaultPath = path.join(
           process.cwd(),
-          '.ruv-swarm',
+          '.zen-swarm',
           'benchmarks',
           `benchmark-${Date.now()}.json`,
         );
@@ -205,7 +205,7 @@ class BenchmarkCLI {
 
     if (!file1 || !file2) {
       console.error('❌ Please provide two benchmark result files to compare');
-      console.log('Usage: ruv-swarm benchmark compare file1.json file2.json');
+      console.log('Usage: zen-swarm benchmark compare file1.json file2.json');
       process.exit(1);
     }
 

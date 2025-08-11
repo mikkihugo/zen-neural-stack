@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 console.log('================================================');
-console.log('ruv-swarm MCP Server Reliability Test v1.0.13');
+console.log('zen-swarm MCP Server Reliability Test v1.0.13');
 console.log('================================================');
 console.log(`Date: ${new Date().toISOString()}`);
 console.log(`Node Version: ${process.version}`);
@@ -70,7 +70,7 @@ async function testServerStartup() {
   const initializationLogs = [];
 
   return new Promise((resolve, reject) => {
-    mcpProcess = spawn('node', ['bin/ruv-swarm-clean.js', 'mcp', 'start'], {
+    mcpProcess = spawn('node', ['bin/zen-swarm-clean.js', 'mcp', 'start'], {
       env: { ...process.env, MCP_TEST_MODE: 'true', LOG_LEVEL: 'DEBUG' },
       cwd: path.join(__dirname, '..'),
     });
@@ -178,7 +178,7 @@ async function testStdioCommunication() {
     const testRequest = {
       jsonrpc: '2.0',
       id: 1,
-      method: 'ruv-swarm/swarm_status',
+      method: 'zen-swarm/swarm_status',
       params: {},
     };
 
@@ -256,11 +256,11 @@ async function testServerStability() {
   }
 
   const requests = [
-    { method: 'ruv-swarm/swarm_status', params: {} },
-    { method: 'ruv-swarm/memory_usage', params: { action: 'status' } },
-    { method: 'ruv-swarm/features_detect', params: {} },
-    { method: 'ruv-swarm/neural_status', params: {} },
-    { method: 'ruv-swarm/benchmark_run', params: { type: 'quick' } },
+    { method: 'zen-swarm/swarm_status', params: {} },
+    { method: 'zen-swarm/memory_usage', params: { action: 'status' } },
+    { method: 'zen-swarm/features_detect', params: {} },
+    { method: 'zen-swarm/neural_status', params: {} },
+    { method: 'zen-swarm/benchmark_run', params: { type: 'quick' } },
   ];
 
   let responsesReceived = 0;

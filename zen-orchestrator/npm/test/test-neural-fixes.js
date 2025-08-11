@@ -82,7 +82,7 @@ async function testPatternParsing() {
     `\n${colors.yellow}Test 1.1: Testing --pattern all${colors.reset}`,
   );
   const result1 = await runCommand(
-    'npx ruv-swarm neural patterns --pattern all',
+    'npx zen-swarm neural patterns --pattern all',
   );
 
   if (result1.success) {
@@ -133,7 +133,7 @@ async function testPatternParsing() {
     `\n${colors.yellow}Test 1.2: Testing --pattern convergent${colors.reset}`,
   );
   const result2 = await runCommand(
-    'npx ruv-swarm neural patterns --pattern convergent',
+    'npx zen-swarm neural patterns --pattern convergent',
   );
 
   if (result2.success) {
@@ -170,7 +170,7 @@ async function testPatternParsing() {
     `\n${colors.yellow}Test 1.3: Testing --pattern invalid${colors.reset}`,
   );
   const result3 = await runCommand(
-    'npx ruv-swarm neural patterns --pattern invalid',
+    'npx zen-swarm neural patterns --pattern invalid',
   );
 
   if (result3.success) {
@@ -221,7 +221,7 @@ async function testMemoryOptimization() {
       `\n${colors.yellow}Testing memory for ${pattern} pattern${colors.reset}`,
     );
     const result = await runCommand(
-      `npx ruv-swarm neural patterns --pattern ${pattern}`,
+      `npx zen-swarm neural patterns --pattern ${pattern}`,
     );
 
     if (result.success) {
@@ -285,14 +285,14 @@ async function testPersistenceIndicators() {
   // First, create some training data to ensure we have persistence
   console.log(`\n${colors.yellow}Creating training data...${colors.reset}`);
   await runCommand(
-    'npx ruv-swarm neural train --model attention --iterations 5',
+    'npx zen-swarm neural train --model attention --iterations 5',
   );
 
   // Now test neural status
   console.log(
     `\n${colors.yellow}Testing neural status persistence indicators${colors.reset}`,
   );
-  const result = await runCommand('npx ruv-swarm neural status');
+  const result = await runCommand('npx zen-swarm neural status');
 
   if (result.success) {
     // Check for training session count
@@ -386,7 +386,7 @@ async function testPatternSwitching() {
   for (let i = 0; i < 3; i++) {
     for (const pattern of patterns) {
       const result = await runCommand(
-        `npx ruv-swarm neural patterns --pattern ${pattern}`,
+        `npx zen-swarm neural patterns --pattern ${pattern}`,
       );
       if (result.success) {
         const memoryMatch = result.stdout.match(/Memory Usage:\s*(\d+)\s*MB/);

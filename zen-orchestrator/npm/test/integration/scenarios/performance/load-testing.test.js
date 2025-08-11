@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const os = require('os');
-const RuvSwarm = require('../../../../src/core/ruv-swarm');
+const RuvSwarm = require('../../../../src/core/zen-swarm');
 const PerformanceMonitor = require('../../../../src/performance-monitor');
 
 describe('Performance Under Load Integration Tests', () => {

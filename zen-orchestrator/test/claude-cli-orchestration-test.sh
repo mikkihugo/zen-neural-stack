@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Claude Code CLI Integration Test via ruv-swarm
+# Claude Code CLI Integration Test via zen-swarm
 # Agent 5 (epsilon-lateral): Testing Claude CLI orchestration capabilities
 
 echo "🎯 Agent 5 (epsilon-lateral): Claude Code CLI Integration Test"
 echo "============================================================="
 
-# Test orchestrating Claude Code commands through ruv-swarm
+# Test orchestrating Claude Code commands through zen-swarm
 echo "1️⃣ Testing Claude CLI command orchestration..."
 
 # Simulate the exact command requested by user
@@ -16,14 +16,14 @@ echo "📋 Simulating Claude CLI orchestration:"
 echo "Command: $CLAUDE_COMMAND"
 echo ""
 
-# Test through ruv-swarm task orchestration
-cd /workspaces/ruv-FANN/ruv-swarm/npm
+# Test through zen-swarm task orchestration
+cd /workspaces/ruv-FANN/zen-swarm/npm
 
 echo "2️⃣ Testing task orchestration with Claude-style commands..."
 
 # Test the enhanced CLI with Claude-style task
-echo "🔄 Orchestrating through ruv-swarm enhanced CLI..."
-ruv-swarm-enhanced.js orchestrate "Initialize comprehensive 5-agent WASM validation swarm with: Agent Alpha (WASM performance analysis), Agent Beta (neural network exploration), Agent Gamma (MCP protocol validation), Agent Delta (topology stress testing), Agent Epsilon (CLI integration testing)" 2>&1
+echo "🔄 Orchestrating through zen-swarm enhanced CLI..."
+zen-swarm-enhanced.js orchestrate "Initialize comprehensive 5-agent WASM validation swarm with: Agent Alpha (WASM performance analysis), Agent Beta (neural network exploration), Agent Gamma (MCP protocol validation), Agent Delta (topology stress testing), Agent Epsilon (CLI integration testing)" 2>&1
 
 echo ""
 echo "3️⃣ Testing Claude Code workflow integration patterns..."
@@ -60,19 +60,19 @@ echo "5️⃣ Testing actual CLI integration..."
 
 # Test real CLI commands that work
 echo "✅ Testing working CLI commands:"
-ruv-swarm-enhanced.js --version 2>&1
+zen-swarm-enhanced.js --version 2>&1
 echo ""
-ruv-swarm-enhanced.js features 2>&1
+zen-swarm-enhanced.js features 2>&1
 echo ""
 
 echo "6️⃣ Testing NPX package integration..."
 echo "📦 NPX command validation:"
 echo "Available commands:"
-echo "- npx ruv-swarm init mesh 5"
-echo "- npx ruv-swarm spawn researcher agent-test"
-echo "- npx ruv-swarm benchmark wasm --iterations 5"
-echo "- npx ruv-swarm neural status"
-echo "- npx ruv-swarm forecast models"
+echo "- npx zen-swarm init mesh 5"
+echo "- npx zen-swarm spawn researcher agent-test"
+echo "- npx zen-swarm benchmark wasm --iterations 5"
+echo "- npx zen-swarm neural status"
+echo "- npx zen-swarm forecast models"
 
 echo ""
 echo "🎉 Agent 5 Analysis Complete"
@@ -84,7 +84,7 @@ echo "✅ NPX integration confirmed"
 echo "✅ Lateral thinking patterns operational"
 echo ""
 echo "🔍 Key Findings:"
-echo "- ruv-swarm can orchestrate complex multi-agent workflows"
+echo "- zen-swarm can orchestrate complex multi-agent workflows"
 echo "- CLI integration supports various command patterns"
 echo "- Cross-domain synthesis enables novel combinations"
 echo "- System ready for Claude Code integration"

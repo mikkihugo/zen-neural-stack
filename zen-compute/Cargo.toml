@@ -15,20 +15,20 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 # Core dependencies
-thiserror = "1.0"
-anyhow = "1.0"
-clap = { version = "4.4", features = ["derive"] }
+thiserror = "2.0.12"
+anyhow = "1.0.98"
+clap = { version = "4.5.35", features = ["derive"] }
 
 # Parser dependencies
-nom = "7.1"  # Parser combinator for CUDA parsing
-logos = "0.14"  # Lexer generator
-syn = "2.0"  # Rust code generation
-quote = "1.0"  # Rust code generation
-proc-macro2 = "1.0"
+nom = "7.1.3"  # Parser combinator for CUDA parsing
+logos = "0.14.4"  # Lexer generator
+syn = "2.0.95"  # Rust code generation
+quote = "1.0.37"  # Rust code generation
+proc-macro2 = "1.0.96"
 
 # Async runtime
-tokio = { version = "1.35", features = ["rt", "sync", "time"], default-features = false }
-futures = "0.3"
+tokio = { version = "1.47.1", features = ["rt", "sync", "time"], default-features = false }
+futures = "0.3.31"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"], optional = true }
@@ -36,19 +36,19 @@ serde_json = { version = "1.0", optional = true }
 bincode = { version = "1.3", optional = true }
 
 # GPU backends
-wgpu = { version = "0.19", features = ["webgl", "webgpu"] }
-bytemuck = { version = "1.14", features = ["derive"] }
+wgpu = { version = "26.0.1", features = ["webgl", "webgpu"] }
+bytemuck = { version = "1.21.0", features = ["derive"] }
 
 # Memory management
-parking_lot = "0.12"  # Faster mutex implementation
-crossbeam = "0.8"  # Concurrent data structures
+parking_lot = "0.12.4"  # Faster mutex implementation
+crossbeam = "0.8.4"  # Concurrent data structures
 
 # Logging and debugging
-log = "0.4"
-env_logger = "0.11"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-rand = "0.8"
+log = "0.4.27"
+env_logger = "0.11.6"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+rand = "0.8.5"
 num-traits = "0.2.19"
 pollster = "0.4.0"
 async-trait = "0.1.88"
@@ -78,8 +78,8 @@ web-sys = { version = "0.3", features = [
 js-sys = "0.3"
 console_error_panic_hook = "0.1"
 # Override tokio for WASM to exclude net features
-tokio = { version = "1.35", features = ["rt", "sync", "time"], default-features = false }
-wgpu = { version = "0.19", features = ["webgl"] }
+tokio = { version = "1.47.1", features = ["rt", "sync", "time"], default-features = false }
+wgpu = { version = "26.0.1", features = ["webgl"] }
 getrandom = { version = "0.2", features = ["js"] }
 
 # Native GPU support
@@ -90,29 +90,29 @@ vulkano = { version = "0.34", optional = true }
 
 [dev-dependencies]
 # Benchmarking
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.5.1", features = ["html_reports"] }
 
 # Property-based testing
-proptest = "1.4"
-quickcheck = "1.0"
+proptest = "1.7.0"
+quickcheck = "1.0.3"
 
 # Test utilities
-pretty_assertions = "1.4"
-approx = "0.5"  # For floating point comparisons
-rand = "0.8"
-tempfile = "3.8"
+pretty_assertions = "1.4.1"
+approx = "0.5.1"  # For floating point comparisons
+rand = "0.8.5"
+tempfile = "3.15.0"
 
 # Async testing
-tokio-test = "0.4"
+tokio-test = "0.4.4"
 
 # Coverage
 cargo-tarpaulin = "0.27"
 
 [build-dependencies]
-lalrpop = "0.20"  # Parser generator for complex grammars
-bindgen = { version = "0.69", optional = true }  # For native bindings
-cc = "1.0"  # C/C++ compilation
-pkg-config = "0.3"  # System dependency detection
+lalrpop = "0.22.0"  # Parser generator for complex grammars
+bindgen = { version = "0.72.0", optional = true }  # For native bindings
+cc = "1.2.32"  # C/C++ compilation
+pkg-config = "0.3.31"  # System dependency detection
 
 [features]
 default = ["native-gpu", "serde"]

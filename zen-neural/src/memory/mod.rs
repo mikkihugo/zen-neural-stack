@@ -244,7 +244,7 @@ pub enum TensorType {
 
 /// Pre-allocation strategies for common use patterns
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PreAllocationStrategy {
     /// Allocate based on historical usage patterns
     Adaptive,
@@ -262,7 +262,7 @@ pub enum PreAllocationStrategy {
 
 /// Tensor shape specification for pre-allocation
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq)] // Can't derive Eq/Hash due to f32 field
 pub struct TensorShape {
     /// Tensor dimensions
     pub dims: Vec<usize>,
@@ -287,7 +287,7 @@ pub enum MemoryError {
     #[error("Pool exhausted: {pool_type} pool has no available slots")]
     PoolExhausted { pool_type: String },
     
-    #[error("Memory alignment error: address {address:p} not aligned to {alignment} bytes")]
+    #[error("Memory alignment error: address {address:#x} not aligned to {alignment} bytes")] // Fixed pointer formatting
     AlignmentError { address: usize, alignment: usize },
     
     #[error("Bounds violation: access at offset {offset} exceeds buffer size {size}")]
@@ -379,6 +379,18 @@ impl TensorShape {
     }
 }
 
+// Custom Eq implementation ignoring f32 for comparison
+impl Eq for TensorShape {}
+
+// Custom Hash implementation for TensorShape
+impl std::hash::Hash for TensorShape {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.dims.hash(state);
+        self.dtype.hash(state);
+        // Skip f32 frequency for hash stability
+    }
+}
+
 impl ZenMemorySystem {
     /// Create a new memory management system
     pub fn new(config: MemoryConfig) -> MemoryResult<Self> {
@@ -390,24 +402,24 @@ impl ZenMemorySystem {
         let gradient_pool_size = (config.total_pool_size as f32 * config.gradient_pool_ratio) as usize;
         let activation_pool_size = (config.total_pool_size as f32 * config.activation_pool_ratio) as usize;
         
-        // Initialize memory pools
-        let tensor_pool = Arc::new(ThreadSafePool::new(
+        // Initialize memory pools  
+        let tensor_pool = Arc::new(ThreadSafePool::<f32>::new(
             tensor_pool_size,
             config.max_size_classes,
             config.cache_line_size,
-        )?);
+        )?); // Explicitly specify f32 type
         
-        let gradient_pool = Arc::new(ThreadSafePool::new(
+        let gradient_pool = Arc::new(ThreadSafePool::<f32>::new(
             gradient_pool_size,
             config.max_size_classes,
             config.cache_line_size,
-        )?);
+        )?); // Explicitly specify f32 type
         
-        let activation_pool = Arc::new(ThreadSafePool::new(
+        let activation_pool = Arc::new(ThreadSafePool::<f32>::new(
             activation_pool_size,
             config.max_size_classes,
             config.cache_line_size,
-        )?);
+        )?); // Explicitly specify f32 type
         
         // Initialize profiler
         let profiler = Arc::new(Mutex::new(MemoryProfiler::new(
@@ -487,7 +499,7 @@ impl ZenMemorySystem {
         
         // Update profiler
         if self.config.enable_profiling {
-            if let Ok(mut profiler) = self.profiler.lock() {
+            if let Ok(profiler) = self.profiler.lock() {
                 profiler.record_allocation(total_size, tensor_type);
             }
         }
@@ -501,7 +513,7 @@ impl ZenMemorySystem {
         let buffer = self.gradient_pool.allocate(size * size_of::<f32>())?;
         
         if self.config.enable_profiling {
-            if let Ok(mut profiler) = self.profiler.lock() {
+            if let Ok(profiler) = self.profiler.lock() {
                 profiler.record_gradient_allocation(size * size_of::<f32>());
             }
         }
@@ -514,7 +526,7 @@ impl ZenMemorySystem {
         let buffer = self.activation_pool.allocate(size * size_of::<f32>())?;
         
         if self.config.enable_profiling {
-            if let Ok(mut profiler) = self.profiler.lock() {
+            if let Ok(profiler) = self.profiler.lock() {
                 profiler.record_activation_allocation(size * size_of::<f32>());
             }
         }
@@ -557,7 +569,7 @@ impl ZenMemorySystem {
                 message: "Failed to lock layout optimizer".to_string()
             })?;
         
-        optimizer.optimize_layout()?
+        optimizer.optimize_layout()?;
         Ok(())
     }
     

@@ -2,7 +2,7 @@
 
 /**
  * Security Audit and Memory Safety Validation Suite
- * Comprehensive security testing for ruv-swarm
+ * Comprehensive security testing for zen-swarm
  */
 
 const { RuvSwarm } = require('../src/index-enhanced');
@@ -1095,7 +1095,7 @@ class SecurityAuditor {
 
     // Save report
     const reportPath =
-      '/workspaces/ruv-FANN/ruv-swarm/npm/test/security-audit-report.json';
+      '/workspaces/ruv-FANN/zen-swarm/npm/test/security-audit-report.json';
     await fs.writeFile(reportPath, JSON.stringify(this.auditResults, null, 2));
 
     // Console summary

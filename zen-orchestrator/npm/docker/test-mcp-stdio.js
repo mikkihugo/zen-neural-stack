@@ -172,7 +172,7 @@ async function testDatabasePersistence() {
 
   const dbPath =
     process.env.DATABASE_PATH ||
-    path.join(__dirname, '..', 'data', 'ruv-swarm.db');
+    path.join(__dirname, '..', 'data', 'zen-swarm.db');
 
   try {
     // Open database connection
@@ -374,7 +374,7 @@ async function testMCPStdioCommunication() {
   return new Promise((resolve) => {
     const mcpProcess = spawn(
       'node',
-      ['bin/ruv-swarm-clean.js', 'mcp', 'start'],
+      ['bin/zen-swarm-clean.js', 'mcp', 'start'],
       {
         env: { ...process.env, MCP_MODE: 'stdio' },
       },
@@ -475,7 +475,7 @@ async function testErrorHandling() {
   return new Promise((resolve) => {
     const mcpProcess = spawn(
       'node',
-      ['bin/ruv-swarm-clean.js', 'mcp', 'start'],
+      ['bin/zen-swarm-clean.js', 'mcp', 'start'],
       {
         env: { ...process.env, MCP_MODE: 'stdio' },
       },
@@ -551,7 +551,7 @@ async function testConcurrentOperations() {
 
   const dbPath =
     process.env.DATABASE_PATH ||
-    path.join(__dirname, '..', 'data', 'ruv-swarm.db');
+    path.join(__dirname, '..', 'data', 'zen-swarm.db');
 
   try {
     const db = await open({

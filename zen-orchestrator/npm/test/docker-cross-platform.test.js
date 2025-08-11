@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Cross-Platform Validation Test for ruv-swarm v1.0.6
+ * Cross-Platform Validation Test for zen-swarm v1.0.6
  * Tests compatibility across different operating systems and architectures
  */
 
@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 console.log('================================================');
-console.log('ruv-swarm v1.0.6 Cross-Platform Validation');
+console.log('zen-swarm v1.0.6 Cross-Platform Validation');
 console.log('================================================');
 console.log(`Date: ${new Date().toISOString()}`);
 console.log(`Platform: ${process.platform}`);
@@ -67,7 +67,7 @@ async function testFileSystemOps() {
 
   try {
     // Test path resolution
-    const testPath = path.join(os.tmpdir(), 'ruv-swarm-test');
+    const testPath = path.join(os.tmpdir(), 'zen-swarm-test');
     await fs.mkdir(testPath, { recursive: true });
 
     // Test file writing

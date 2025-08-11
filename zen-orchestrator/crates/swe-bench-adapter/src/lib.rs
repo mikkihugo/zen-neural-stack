@@ -5,11 +5,11 @@
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use ruv_swarm_core::{
+use zen_swarm_core::{
     agent::Agent as AgentTrait,
     task::{Task, TaskId, TaskPayload, TaskPriority},
 };
-use ruv_swarm_persistence::SqliteStorage;
+use zen_swarm_persistence::SqliteStorage;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;

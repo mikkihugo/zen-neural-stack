@@ -593,3 +593,8 @@ mod tests {
         }
     }
 }
+
+// === LEGACY COMPATIBILITY ===
+
+/// Legacy alias for RuvFannError for backward compatibility
+pub type ZenNeuralError = RuvFannError;

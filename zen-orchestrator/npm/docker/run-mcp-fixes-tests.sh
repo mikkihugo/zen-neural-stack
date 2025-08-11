@@ -183,7 +183,7 @@ docker-compose -f docker/docker-compose.mcp-fixes-test.yml run db-persistence-te
    - Confirm all logs appear in stderr
 
 2. **Verify Database Persistence**:
-   - Inspect the SQLite database at \`data/ruv-swarm.db\`
+   - Inspect the SQLite database at \`data/zen-swarm.db\`
    - Check that all tables contain test data
 
 3. **Verify Error Handling**:

@@ -266,8 +266,7 @@ impl GraphData {
             if edges.nrows() != num_edges {
                 return Err(GNNError::DimensionMismatch(
                     format!(
-                        "Edge feature count mismatch: expected {}, got {}. " +
-                        "Each edge in the adjacency list must have corresponding features.",
+                        "Edge feature count mismatch: expected {}, got {}. Each edge in the adjacency list must have corresponding features.",
                         num_edges, edges.nrows()
                     )
                 ));
@@ -279,8 +278,7 @@ impl GraphData {
             if *source >= num_nodes || *target >= num_nodes {
                 return Err(GNNError::InvalidInput(
                     format!(
-                        "Invalid edge ({}, {}): node indices must be in range [0, {}]. " +
-                        "Check your adjacency list for out-of-bounds node references.",
+                        "Invalid edge ({}, {}): node indices must be in range [0, {}]. Check your adjacency list for out-of-bounds node references.",
                         source, target, num_nodes - 1
                     )
                 ));
@@ -323,8 +321,7 @@ impl GraphData {
         if node_data.len() % node_feature_dim != 0 {
             return Err(GNNError::DimensionMismatch(
                 format!(
-                    "Node data length {} is not divisible by feature dimension {}. " +
-                    "This suggests a mismatch between your data shape and the specified dimensions.",
+                    "Node data length {} is not divisible by feature dimension {}. This suggests a mismatch between your data shape and the specified dimensions.",
                     node_data.len(), node_feature_dim
                 )
             ));

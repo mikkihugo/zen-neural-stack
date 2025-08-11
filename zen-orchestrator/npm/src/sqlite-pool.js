@@ -1,5 +1,5 @@
 /**
- * High-Availability SQLite Connection Pool for ruv-swarm
+ * High-Availability SQLite Connection Pool for zen-swarm
  *
  * This implementation addresses the production readiness concerns:
  * - Connection exhaustion prevention

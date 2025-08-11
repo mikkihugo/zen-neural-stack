@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Documentation Generation Script for ruv-swarm
+ * Documentation Generation Script for zen-swarm
  * Automatically generates comprehensive documentation from code and metadata
  */
 
@@ -313,7 +313,7 @@ async function extractExamples() {
 
 // Generate API reference documentation
 async function generateAPIReference(apiInfo, packageInfo) {
-  const content = `# ruv-swarm API Reference
+  const content = `# zen-swarm API Reference
 
 *Generated automatically from source code*
 
@@ -459,9 +459,9 @@ For more information, visit:
 
 // Generate examples documentation
 async function generateExamplesDoc(examples) {
-  const content = `# ruv-swarm Examples
+  const content = `# zen-swarm Examples
 
-*Code examples demonstrating ruv-swarm usage*
+*Code examples demonstrating zen-swarm usage*
 
 ## Table of Contents
 
@@ -490,7 +490,7 @@ All examples can be run using Node.js:
 \`\`\`bash
 # Clone the repository
 git clone https://github.com/ruvnet/ruv-FANN.git
-cd ruv-FANN/ruv-swarm/npm
+cd ruv-FANN/zen-swarm/npm
 
 # Install dependencies
 npm install
@@ -510,37 +510,37 @@ For more examples and use cases, see:
 
 // Generate CLI documentation
 async function generateCLIDoc(packageInfo) {
-  const content = `# ruv-swarm CLI Reference
+  const content = `# zen-swarm CLI Reference
 
-*Command-line interface for ruv-swarm*
+*Command-line interface for zen-swarm*
 
 ## Installation
 
 \`\`\`bash
 # NPX (no installation required)
-npx ruv-swarm --help
+npx zen-swarm --help
 
 # Global installation
-npm install -g ruv-swarm
+npm install -g zen-swarm
 
 # Local installation
-npm install ruv-swarm
+npm install zen-swarm
 \`\`\`
 
 ## Quick Start
 
 \`\`\`bash
 # Initialize a swarm
-npx ruv-swarm init mesh 5
+npx zen-swarm init mesh 5
 
 # Spawn an agent
-npx ruv-swarm spawn researcher "AI Research Assistant"
+npx zen-swarm spawn researcher "AI Research Assistant"
 
 # Orchestrate a task
-npx ruv-swarm orchestrate "Analyze neural architecture trends"
+npx zen-swarm orchestrate "Analyze neural architecture trends"
 
 # Check status
-npx ruv-swarm status
+npx zen-swarm status
 \`\`\`
 
 ## Commands
@@ -562,9 +562,9 @@ Initialize a new swarm with specified topology and agent limit.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm init mesh 10
-npx ruv-swarm init hierarchical 20 --claude
-npx ruv-swarm init mesh 5 --claude --force
+npx zen-swarm init mesh 10
+npx zen-swarm init hierarchical 20 --claude
+npx zen-swarm init mesh 5 --claude --force
 \`\`\`
 
 #### \`spawn <type> [name]\`
@@ -580,9 +580,9 @@ Spawn a new agent in the swarm.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm spawn researcher
-npx ruv-swarm spawn coder "Senior Developer"
-npx ruv-swarm spawn analyst "Data Scientist" --no-neural
+npx zen-swarm spawn researcher
+npx zen-swarm spawn coder "Senior Developer"
+npx zen-swarm spawn analyst "Data Scientist" --no-neural
 \`\`\`
 
 #### \`orchestrate <task>\`
@@ -594,9 +594,9 @@ Orchestrate a task across the swarm.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm orchestrate "Build a REST API with authentication"
-npx ruv-swarm orchestrate "Analyze customer behavior patterns"
-npx ruv-swarm orchestrate "Optimize database query performance"
+npx zen-swarm orchestrate "Build a REST API with authentication"
+npx zen-swarm orchestrate "Analyze customer behavior patterns"
+npx zen-swarm orchestrate "Optimize database query performance"
 \`\`\`
 
 #### \`status [--verbose]\`
@@ -608,8 +608,8 @@ Show current swarm status and metrics.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm status
-npx ruv-swarm status --verbose
+npx zen-swarm status
+npx zen-swarm status --verbose
 \`\`\`
 
 #### \`monitor [duration]\`
@@ -621,8 +621,8 @@ Monitor swarm activity in real-time.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm monitor
-npx ruv-swarm monitor 30000  # Monitor for 30 seconds
+npx zen-swarm monitor
+npx zen-swarm monitor 30000  # Monitor for 30 seconds
 \`\`\`
 
 ### MCP Commands
@@ -638,8 +638,8 @@ Start MCP server for Claude Code integration.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm mcp start
-npx ruv-swarm mcp start --host 0.0.0.0 --port 3000
+npx zen-swarm mcp start
+npx zen-swarm mcp start --host 0.0.0.0 --port 3000
 \`\`\`
 
 #### \`mcp status\`
@@ -668,9 +668,9 @@ Neural network operations.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm neural status
-npx ruv-swarm neural train --model attention --iterations 100
-npx ruv-swarm neural patterns --model attention
+npx zen-swarm neural status
+npx zen-swarm neural train --model attention --iterations 100
+npx zen-swarm neural patterns --model attention
 \`\`\`
 
 #### \`benchmark <subcommand>\`
@@ -683,9 +683,9 @@ Performance benchmarking.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm benchmark run --iterations 10
-npx ruv-swarm benchmark run --test swarm-coordination
-npx ruv-swarm benchmark compare results-1.json results-2.json
+npx zen-swarm benchmark run --iterations 10
+npx zen-swarm benchmark run --test swarm-coordination
+npx zen-swarm benchmark compare results-1.json results-2.json
 \`\`\`
 
 #### \`performance <subcommand>\`
@@ -699,9 +699,9 @@ Performance analysis and optimization.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm performance analyze --task-id recent
-npx ruv-swarm performance optimize --target speed
-npx ruv-swarm performance suggest
+npx zen-swarm performance analyze --task-id recent
+npx zen-swarm performance optimize --target speed
+npx zen-swarm performance suggest
 \`\`\`
 
 #### \`hook <type> [options]\`
@@ -717,9 +717,9 @@ Claude Code hooks integration.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm hook pre-task --description "Build authentication"
-npx ruv-swarm hook post-edit --file app.js --memory-key edit-history
-npx ruv-swarm hook git-commit --agent coder-123 --generate-report
+npx zen-swarm hook pre-task --description "Build authentication"
+npx zen-swarm hook post-edit --file app.js --memory-key edit-history
+npx zen-swarm hook git-commit --agent coder-123 --generate-report
 \`\`\`
 
 #### \`claude-invoke <prompt>\`
@@ -731,8 +731,8 @@ Invoke Claude Code with swarm integration.
 
 **Examples:**
 \`\`\`bash
-npx ruv-swarm claude-invoke "Create a development swarm for my project"
-npx ruv-swarm claude-invoke "Analyze this codebase and suggest improvements"
+npx zen-swarm claude-invoke "Create a development swarm for my project"
+npx zen-swarm claude-invoke "Analyze this codebase and suggest improvements"
 \`\`\`
 
 ### Utility Commands
@@ -761,21 +761,21 @@ All commands include comprehensive error handling and validation:
 
 \`\`\`bash
 # Invalid topology
-npx ruv-swarm init invalid 5
+npx zen-swarm init invalid 5
 # Output: ❌ Validation Error: Invalid topology 'invalid'
 
 # Invalid agent count
-npx ruv-swarm init mesh 999
+npx zen-swarm init mesh 999
 # Output: ❌ Validation Error: Invalid maxAgents '999'. Must be between 1 and 100
 
 # Invalid agent type
-npx ruv-swarm spawn invalid-type
+npx zen-swarm spawn invalid-type
 # Output: ❌ Validation Error: Invalid agent type 'invalid-type'
 \`\`\`
 
 ## Environment Variables
 
-Configure ruv-swarm behavior with environment variables:
+Configure zen-swarm behavior with environment variables:
 
 \`\`\`bash
 # Core configuration
@@ -791,22 +791,22 @@ export RUVA_SWARM_WORKER_THREADS=4
 # Debugging
 export RUST_LOG=info
 export RUVA_SWARM_DEBUG=true
-export DEBUG=ruv-swarm:*
+export DEBUG=zen-swarm:*
 \`\`\`
 
 ## Remote Server Usage
 
-ruv-swarm works seamlessly on remote servers using npx:
+zen-swarm works seamlessly on remote servers using npx:
 
 \`\`\`bash
 # Execute on remote server via SSH
-ssh user@remote-server 'npx ruv-swarm init mesh 10'
+ssh user@remote-server 'npx zen-swarm init mesh 10'
 
 # Start MCP server on remote host
-ssh user@remote-server 'npx ruv-swarm mcp start --host 0.0.0.0 &'
+ssh user@remote-server 'npx zen-swarm mcp start --host 0.0.0.0 &'
 
 # Monitor remote swarm
-ssh user@remote-server 'npx ruv-swarm monitor --duration 60000'
+ssh user@remote-server 'npx zen-swarm monitor --duration 60000'
 \`\`\`
 
 ## Exit Codes
@@ -824,18 +824,18 @@ ssh user@remote-server 'npx ruv-swarm monitor --duration 60000'
 
 **WASM Module Loading**:
 \`\`\`bash
-npx ruv-swarm features  # Check WASM support
+npx zen-swarm features  # Check WASM support
 \`\`\`
 
 **Network Issues**:
 \`\`\`bash
-npx ruv-swarm mcp start --host 0.0.0.0  # Bind to all interfaces
+npx zen-swarm mcp start --host 0.0.0.0  # Bind to all interfaces
 \`\`\`
 
 **Performance Problems**:
 \`\`\`bash
-npx ruv-swarm benchmark run  # Run performance tests
-npx ruv-swarm performance analyze  # Analyze bottlenecks
+npx zen-swarm benchmark run  # Run performance tests
+npx zen-swarm performance analyze  # Analyze bottlenecks
 \`\`\`
 
 ### Debug Mode
@@ -843,9 +843,9 @@ npx ruv-swarm performance analyze  # Analyze bottlenecks
 Enable detailed logging for troubleshooting:
 
 \`\`\`bash
-export DEBUG=ruv-swarm:*
+export DEBUG=zen-swarm:*
 export RUVA_SWARM_DEBUG=true
-npx ruv-swarm --verbose [command]
+npx zen-swarm --verbose [command]
 \`\`\`
 
 ## Support
@@ -856,7 +856,7 @@ npx ruv-swarm --verbose [command]
 
 ---
 
-*CLI documentation generated for ruv-swarm v${packageInfo.version}*
+*CLI documentation generated for zen-swarm v${packageInfo.version}*
 `;
 
   return content;
@@ -929,7 +929,7 @@ ${(await findSourceFiles(CONFIG.sourceDir)).map(file => `- ${path.relative(CONFI
 
 ---
 
-*Generated by ruv-swarm documentation generator*
+*Generated by zen-swarm documentation generator*
 `;
     
     await fs.writeFile(path.join(CONFIG.outputDir, 'GENERATION_SUMMARY.md'), summary);

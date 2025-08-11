@@ -1,5 +1,5 @@
 /**
- * Persistence Layer Tests for ruv-swarm
+ * Persistence Layer Tests for zen-swarm
  * Tests database persistence, state recovery, and data integrity
  */
 

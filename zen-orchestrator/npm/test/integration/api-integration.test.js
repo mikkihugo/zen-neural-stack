@@ -1,5 +1,5 @@
 /**
- * Integration tests for ruv-swarm API
+ * Integration tests for zen-swarm API
  */
 
 import { RuvSwarm } from '../../src/index-enhanced.js';

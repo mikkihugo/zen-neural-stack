@@ -534,7 +534,7 @@ class PerformanceValidator {
 
     // Save detailed report
     const reportPath =
-      '/workspaces/ruv-FANN/ruv-swarm/npm/test/validation-report.json';
+      '/workspaces/ruv-FANN/zen-swarm/npm/test/validation-report.json';
     await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
 
     // Generate readable summary

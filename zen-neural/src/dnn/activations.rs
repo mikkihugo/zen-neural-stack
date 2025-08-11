@@ -215,7 +215,7 @@ impl ActivationFunctions {
     
     /// Swish derivative: f'(x) = sigmoid(x) + x * sigmoid(x) * (1 - sigmoid(x))
     pub fn swish_derivative(input: &DNNTensor) -> Result<DNNTensor, DNNError> {
-        let sigmoid_out = Self::sigmoid(input)?;
+        let _sigmoid_out = Self::sigmoid(input)?;
         TensorOps::apply_elementwise(input, |x| {
             let sig_x = 1.0 / (1.0 + (-x).exp());
             sig_x + x * sig_x * (1.0 - sig_x)

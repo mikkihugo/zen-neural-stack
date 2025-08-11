@@ -588,7 +588,7 @@ pub struct MemoryHierarchy {
 }
 
 /// Different layout strategies for optimization
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LayoutStrategy {
     /// Optimize for sequential access patterns
     Sequential,
@@ -637,8 +637,12 @@ impl MemoryHierarchy {
     
     /// Optimize memory layout based on access patterns
     pub fn optimize_layout(&mut self) -> MemoryResult<()> {
+        // Clone optimization strategies to avoid borrow checker conflicts
+        // This is efficient since LayoutStrategy is a small Copy enum
+        let strategies = self.optimization_strategies.clone();
+        
         // Analyze current access patterns and optimize accordingly
-        for strategy in &self.optimization_strategies {
+        for strategy in strategies {
             match strategy {
                 LayoutStrategy::Sequential => {
                     self.optimize_sequential_access()?
@@ -833,54 +837,3 @@ mod tests {
     }
 }
 
-/**
- * ## Cache-Optimized Memory Layout System Summary
- * 
- * This module implements advanced memory layout optimizations specifically
- * designed for neural network workloads and high-performance computing.
- * 
- * ### Key Features Implemented:
- * 
- * 1. **Cache-Aligned Arrays**:
- *    - Arrays aligned to CPU cache line boundaries
- *    - Automatic padding to eliminate false sharing
- *    - Prefetch hints for improved cache utilization
- *    - Support for sequential and random access patterns
- * 
- * 2. **SIMD-Optimized Layouts**:
- *    - Memory aligned to SIMD register boundaries (AVX2/AVX-512)
- *    - Automatic padding to enable full vector utilization
- *    - Support for vectorized operations on neural network data
- *    - Separate handling of valid data vs. padding
- * 
- * 3. **Graph-Specific Optimizations**:
- *    - Memory layout optimized for graph traversal patterns
- *    - Cache-friendly adjacency list representation
- *    - Prefetching strategies for neighborhood exploration
- *    - Spatial locality optimization for node and edge data
- * 
- * 4. **Memory Hierarchy Management**:
- *    - Automatic detection of cache configuration
- *    - Multiple optimization strategies for different access patterns
- *    - Performance metrics and analysis capabilities
- *    - Adaptive layout optimization based on usage patterns
- * 
- * ### Performance Benefits:
- * 
- * - ✅ **Cache-line alignment** eliminates false sharing and improves locality
- * - ✅ **SIMD alignment** enables efficient vectorized operations
- * - ✅ **Graph optimizations** reduce cache misses during traversal
- * - ✅ **Prefetching strategies** improve memory bandwidth utilization
- * - ✅ **Adaptive layouts** optimize for actual usage patterns
- * 
- * ### Integration Points:
- * 
- * - **SIMD Operations**: Provides aligned memory for vectorization
- * - **Neural Networks**: Optimized layouts for matrix operations
- * - **Graph Networks**: Cache-friendly graph traversal patterns
- * - **Memory Pools**: Alignment requirements for pool allocations
- * 
- * This layout system works in conjunction with the memory pool and tensor
- * systems to achieve optimal memory performance and contribute to the
- * overall 70% memory reduction target through improved efficiency.
- */

@@ -1,6 +1,6 @@
 # SWE-Bench Adapter
 
-A high-performance adapter for integrating SWE-Bench evaluation with the ruv-swarm orchestration system and Claude Code CLI.
+A high-performance adapter for integrating SWE-Bench evaluation with the zen-swarm orchestration system and Claude Code CLI.
 
 ## Features
 

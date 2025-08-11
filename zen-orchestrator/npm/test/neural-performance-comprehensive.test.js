@@ -1572,7 +1572,7 @@ describe('🧠 Neural Performance Comprehensive Test Suite', () => {
       await benchmarkCLI.run([]);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('ruv-swarm Performance Benchmark'),
+        expect.stringContaining('zen-swarm Performance Benchmark'),
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('Test Type: comprehensive'),

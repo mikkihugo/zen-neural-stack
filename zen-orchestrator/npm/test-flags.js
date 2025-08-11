@@ -40,7 +40,7 @@ async function testForceFlag() {
 
     // Check file was overwritten
     const content = await fs.readFile(filePath, 'utf8');
-    const hasRuvSwarmContent = content.includes('ruv-swarm');
+    const hasRuvSwarmContent = content.includes('zen-swarm');
     const noOriginalContent = !content.includes(
       'Original content that should be overwritten',
     );
@@ -97,7 +97,7 @@ async function testBackupFlag() {
 
     // Check file was overwritten with new content
     const newContent = await fs.readFile(filePath, 'utf8');
-    const hasRuvSwarmContent = newContent.includes('ruv-swarm');
+    const hasRuvSwarmContent = newContent.includes('zen-swarm');
     const noOriginalContent = !newContent.includes(
       'Original content to backup',
     );
@@ -152,11 +152,11 @@ More custom content.
     const mergedContent = await fs.readFile(filePath, 'utf8');
 
     const hasOriginalContent = mergedContent.includes('My Custom Section');
-    const hasRuvSwarmContent = mergedContent.includes('ruv-swarm');
+    const hasRuvSwarmContent = mergedContent.includes('zen-swarm');
     const isNotSimpleAppend = !mergedContent.endsWith(existingContent);
 
     console.log(`   ✅ Original content preserved: ${hasOriginalContent}`);
-    console.log(`   ✅ ruv-swarm content added: ${hasRuvSwarmContent}`);
+    console.log(`   ✅ zen-swarm content added: ${hasRuvSwarmContent}`);
     console.log(`   ✅ Intelligent merge (not append): ${isNotSimpleAppend}`);
 
     await cleanup(testDir);
@@ -227,7 +227,7 @@ async function testFlagCombinations() {
 
     // Check file was overwritten
     const newContent = await fs.readFile(filePath, 'utf8');
-    const hasRuvSwarmContent = newContent.includes('ruv-swarm');
+    const hasRuvSwarmContent = newContent.includes('zen-swarm');
 
     console.log(
       `   ✅ --force + --backup creates backup: ${backupFiles.length > 0}`,

@@ -1,4 +1,4 @@
-// Example demonstrating ruv-swarm WASM capabilities with neural coordination
+// Example demonstrating zen-swarm WASM capabilities with neural coordination
 
 import init, {
   WasmSwarmOrchestrator,
@@ -11,7 +11,7 @@ async function runSwarmDemo() {
   // Initialize WASM module
   await init();
 
-  console.log('🚀 ruv-swarm WASM Demo - Neural Swarm Orchestration');
+  console.log('🚀 zen-swarm WASM Demo - Neural Swarm Orchestration');
   console.log('=====================================================\n');
 
   // 1. Create Swarm Orchestrator

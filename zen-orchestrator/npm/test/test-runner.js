@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Comprehensive Test Runner for ruv-swarm
+ * Comprehensive Test Runner for zen-swarm
  * Handles ES modules, CommonJS compatibility, and different test frameworks
  */
 

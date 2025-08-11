@@ -1,5 +1,5 @@
 /**
- * Security module for ruv-swarm
+ * Security module for zen-swarm
  * Provides integrity verification and security controls
  */
 

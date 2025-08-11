@@ -92,7 +92,7 @@ async function runTest(
   return new Promise((resolve) => {
     console.log(`\n🧪 Testing ${testName}...`);
 
-    const child = spawn('npx', ['ruv-swarm', command, ...args], {
+    const child = spawn('npx', ['zen-swarm', command, ...args], {
       cwd: join(__dirname, '..'),
       stdio: ['pipe', 'pipe', 'pipe'],
     });

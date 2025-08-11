@@ -4,7 +4,7 @@
  */
 
 /**
- * Base error class for all ruv-swarm MCP errors
+ * Base error class for all zen-swarm MCP errors
  */
 class RuvSwarmError extends Error {
   constructor(message, code = 'GENERAL_ERROR', details = {}) {

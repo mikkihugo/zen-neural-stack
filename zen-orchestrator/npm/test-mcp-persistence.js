@@ -12,7 +12,7 @@ async function testMCPDatabasePersistence() {
   console.log('🧪 Testing MCP Database Persistence\n');
 
   // Database path
-  const dbPath = join(__dirname, 'data', 'ruv-swarm.db');
+  const dbPath = join(__dirname, 'data', 'zen-swarm.db');
   console.log(`📂 Database location: ${dbPath}\n`);
 
   // Open database directly to check counts

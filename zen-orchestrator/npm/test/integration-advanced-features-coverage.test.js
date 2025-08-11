@@ -84,7 +84,7 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(orchestrator.options.autoSetup).toBe(false);
         expect(orchestrator.options.forceSetup).toBe(false);
         expect(orchestrator.options.workingDir).toBe(process.cwd());
-        expect(orchestrator.options.packageName).toBe('ruv-swarm');
+        expect(orchestrator.options.packageName).toBe('zen-swarm');
         expect(orchestrator.core).toBeDefined();
         expect(orchestrator.docs).toBeDefined();
         expect(orchestrator.remote).toBeDefined();
@@ -131,7 +131,7 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(result.modules.remote.success).toBe(true);
         expect(result.modules.core.manualSetup).toBe(true);
         expect(result.modules.core.instructions).toContain(
-          'Run: claude mcp add ruv-swarm npx ruv-swarm mcp start',
+          'Run: claude mcp add zen-swarm npx zen-swarm mcp start',
         );
       });
 

@@ -54,52 +54,53 @@ path = "lib.rs"
 
 [dependencies]
 # Core dependencies
-serde = { version = "1.0", features = ["derive"], optional = true }
-serde_json = { version = "1.0", optional = true }
-thiserror = "1.0"
-num-traits = "0.2"
+serde = { version = "1.0.219", features = ["derive"], optional = true }
+serde_json = { version = "1.0.142", optional = true }
+thiserror = "2.0.12"
+num-traits = "0.2.19"
 
 # Parallel processing
-rayon = { version = "1.8", optional = true }
+rayon = { version = "1.10.0", optional = true }
 
 # Random number generation
-rand = { version = "0.8", features = ["small_rng"] }
-rand_distr = "0.4"
+rand = { version = "0.8.5", features = ["small_rng"] }
+rand_distr = "0.4.3"
+rand_chacha = "0.3.1"
 
 # Memory management
-lazy_static = "1.4"
+lazy_static = "1.5.0"
 
 # Logging
 log = { version = "0.4", optional = true }
 
 # I/O and serialization
-bincode = { version = "1.3", optional = true }
-flate2 = { version = "1.0", optional = true }
+bincode = { version = "1.3.3", optional = true }
+flate2 = { version = "1.1.2", optional = true }
 
 # Additional dependencies for our implementation  
 num_cpus = { version = "1.16", optional = true }
 
 # GPU acceleration dependencies
-wgpu = { version = "0.19", optional = true }
-futures = { version = "0.3", optional = true }
-pollster = { version = "0.3", optional = true }
-bytemuck = { version = "1.14", features = ["derive"], optional = true }
-tokio = { version = "1.0", features = ["rt", "sync", "time"], optional = true }
-async-trait = { version = "0.1", optional = true }
+wgpu = { version = "26.0.1", optional = true }
+futures = { version = "0.3.31", optional = true }
+pollster = { version = "0.4.0", optional = true }
+bytemuck = { version = "1.21.0", features = ["derive"], optional = true }
+tokio = { version = "1.47.1", features = ["rt", "sync", "time"], optional = true }
+async-trait = "0.1.88"
 
 # Additional dependencies for ndarray operations
-ndarray = { version = "0.15", features = ["serde"] }
-ndarray-rand = "0.14"
+ndarray = { version = "0.16.1", features = ["serde"] }
+ndarray-rand = "0.15.0"
 
 # Zen Neural Stack storage integration
-surrealdb = { version = "2.0", features = ["kv-rocksdb", "protocol-ws", "protocol-http"], optional = true }
-async-stream = { version = "0.3", optional = true }
-uuid = { version = "1.0", features = ["v4"], optional = true }
+surrealdb = { version = "2.3.7", features = ["kv-mem", "protocol-ws", "protocol-http"], optional = true }
+async-stream = { version = "0.3.6", optional = true }
+uuid = { version = "1.11.0", features = ["v4"], optional = true }
 
 # WASM dependencies
-wasm-bindgen = { version = "0.2", optional = true }
-js-sys = { version = "0.3", optional = true }
-web-sys = { version = "0.3", features = [
+wasm-bindgen = { version = "0.2.100", optional = true }
+js-sys = { version = "0.3.77", optional = true }
+web-sys = { version = "0.3.77", features = [
   "Window", "console", "Performance", "Navigator", "Worker", "MessageChannel", "MessagePort",
   "HtmlCanvasElement", "BroadcastChannel", "ServiceWorkerContainer",
   "Gpu", "GpuAdapter", "GpuDevice", "GpuQueue", "GpuBuffer", "GpuTexture", "GpuBindGroup",
@@ -107,23 +108,28 @@ web-sys = { version = "0.3", features = [
   "MessageEvent", "Storage", "GpuRequestAdapterOptions", "GpuPowerPreference", "GpuDeviceDescriptor",
   "Document", "Element", "CanvasRenderingContext2d", "ImageData"
 ], optional = true }
-console_error_panic_hook = { version = "0.1", optional = true }
-wasm-bindgen-futures = { version = "0.4", optional = true }
-getrandom = { version = "0.2", features = ["js"] }
+console_error_panic_hook = { version = "0.1.7", optional = true }
+wasm-bindgen-futures = { version = "0.4.50", optional = true }
+getrandom = { version = "0.2.15", features = ["js"] }
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
-proptest = "1.4"
-approx = "0.5"
-pretty_assertions = "1.4"
-tokio = { version = "1.0", features = ["macros", "rt", "rt-multi-thread", "time", "process", "sync", "fs"] }
-futures = "0.3"
-uuid = { version = "1.0", features = ["v4"] }
-anyhow = "1.0"
-chrono = { version = "0.4", features = ["serde"] }
+criterion = { version = "0.5.1", features = ["html_reports"] }
+proptest = "1.7.0"
+approx = "0.5.1"
+pretty_assertions = "1.4.1"
+tokio = { version = "1.47.1", features = ["macros", "rt", "rt-multi-thread", "time", "process", "sync", "fs"] }
+futures = "0.3.31"
+uuid = { version = "1.11.0", features = ["v4"] }
+anyhow = "1.0.98"
+chrono = { version = "0.4.41", features = ["serde"] }
 
 [features]
-default = ["std", "serde", "parallel", "binary", "compression", "logging", "io", "gnn", "simd"]
+# Lightweight default for faster development builds
+default = ["std", "serde", "parallel", "logging"]
+# Full feature set (use for production builds)
+full = ["std", "serde", "parallel", "binary", "compression", "logging", "io", "gnn", "simd"]
+# Development-optimized features (minimal dependencies for fast builds)
+dev-fast = ["std", "serde", "logging"]
 std = []
 serde = ["dep:serde", "dep:serde_json"]
 parallel = ["dep:rayon", "dep:num_cpus", "std"]
@@ -144,17 +150,17 @@ no_std = []
 wasm = ["no_std", "serde", "logging", "dep:wasm-bindgen", "dep:js-sys", "dep:web-sys", "dep:console_error_panic_hook", "dep:wasm-bindgen-futures"]
 
 # GPU acceleration support
-gpu = ["dep:wgpu", "dep:futures", "dep:pollster", "dep:bytemuck", "dep:tokio", "dep:async-trait", "std"]
+gpu = ["dep:wgpu", "dep:futures", "dep:pollster", "dep:bytemuck", "dep:tokio", "std"]
 webgpu = ["dep:wgpu", "dep:futures", "dep:bytemuck", "wasm", "logging"]
 wasm-gpu = ["webgpu", "wasm"]
 
 # GNN features
-gnn = ["dep:async-trait", "std"]
+gnn = ["std"]
 gnn-gpu = ["gnn", "gpu"]
 
 # Zen Neural Stack integrations
 zen-storage = ["dep:surrealdb", "dep:async-stream", "dep:bincode", "dep:uuid"]
-zen-distributed = ["zen-storage", "dep:tokio", "dep:async-trait"]
+zen-distributed = ["zen-storage", "dep:tokio"]
 zen-collective = ["zen-distributed"]
 
 # Test configurations

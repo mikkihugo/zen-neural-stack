@@ -6,7 +6,7 @@ module.exports = {
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'ruv-swarm.js',
+    filename: 'zen-swarm.js',
     library: {
       name: 'RuvSwarm',
       type: 'umd',

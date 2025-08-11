@@ -140,7 +140,7 @@ describe('CLAUDE.md Protection Features', () => {
       expect(await docsGenerator.fileExists(claudePath)).toBe(true);
 
       const content = await fs.readFile(claudePath, 'utf8');
-      expect(content).toContain('Claude Code Configuration for ruv-swarm');
+      expect(content).toContain('Claude Code Configuration for zen-swarm');
     });
 
     test('should overwrite WITHOUT backup when --force is used (ruv spec)', async () => {
@@ -158,7 +158,7 @@ describe('CLAUDE.md Protection Features', () => {
 
       // Check original file was overwritten
       const newContent = await fs.readFile(claudePath, 'utf8');
-      expect(newContent).toContain('Claude Code Configuration for ruv-swarm');
+      expect(newContent).toContain('Claude Code Configuration for zen-swarm');
       expect(newContent).not.toBe(originalContent);
 
       // Check NO backup was created (ruv's requirement)
@@ -184,7 +184,7 @@ describe('CLAUDE.md Protection Features', () => {
 
       // Check original file was overwritten
       const newContent = await fs.readFile(claudePath, 'utf8');
-      expect(newContent).toContain('Claude Code Configuration for ruv-swarm');
+      expect(newContent).toContain('Claude Code Configuration for zen-swarm');
       expect(newContent).not.toBe(originalContent);
 
       // Check backup was created
@@ -217,7 +217,7 @@ describe('CLAUDE.md Protection Features', () => {
 
       // Check original file was overwritten
       const newContent = await fs.readFile(claudePath, 'utf8');
-      expect(newContent).toContain('Claude Code Configuration for ruv-swarm');
+      expect(newContent).toContain('Claude Code Configuration for zen-swarm');
       expect(newContent).not.toBe(originalContent);
 
       // Check backup was created
@@ -259,7 +259,7 @@ This is my existing project setup.
       expect(mergedContent).toContain('My Project Configuration');
       expect(mergedContent).toContain('Keep this content');
       expect(mergedContent).toContain(
-        'Claude Code Configuration for ruv-swarm',
+        'Claude Code Configuration for zen-swarm',
       );
 
       // Should intelligently position content, not just append to bottom
@@ -268,13 +268,13 @@ This is my existing project setup.
         line.includes('My Project Configuration'),
       );
       const ruvSwarmIndex = lines.findIndex((line) =>
-        line.includes('Claude Code Configuration for ruv-swarm'),
+        line.includes('Claude Code Configuration for zen-swarm'),
       );
       const notesIndex = lines.findIndex((line) =>
         line.includes('Important Notes'),
       );
 
-      // ruv-swarm content should be positioned intelligently, not necessarily at the end
+      // zen-swarm content should be positioned intelligently, not necessarily at the end
       expect(projectConfigIndex).toBeGreaterThanOrEqual(0);
       expect(ruvSwarmIndex).toBeGreaterThanOrEqual(0);
       expect(notesIndex).toBeGreaterThanOrEqual(0);
@@ -319,15 +319,15 @@ This is my existing project setup.`;
   });
 
   describe('Content Merging Logic', () => {
-    test('should replace existing ruv-swarm section in place (true combining)', async () => {
+    test('should replace existing zen-swarm section in place (true combining)', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = `# My Project
 
 Some content here.
 
-# Claude Code Configuration for ruv-swarm
+# Claude Code Configuration for zen-swarm
 
-Old ruv-swarm configuration that should be replaced.
+Old zen-swarm configuration that should be replaced.
 
 # Other Section
 
@@ -346,17 +346,17 @@ More content here.`;
       expect(mergedContent).toContain('My Project');
       expect(mergedContent).toContain('Other Section');
       expect(mergedContent).toContain('More content here');
-      expect(mergedContent).not.toContain('Old ruv-swarm configuration');
+      expect(mergedContent).not.toContain('Old zen-swarm configuration');
       expect(mergedContent).toContain('MANDATORY RULE #1: BATCH EVERYTHING');
 
       // Verify section replacement, not duplication
       const ruvSwarmOccurrences = (
-        mergedContent.match(/Claude Code Configuration for ruv-swarm/g) || []
+        mergedContent.match(/Claude Code Configuration for zen-swarm/g) || []
       ).length;
       expect(ruvSwarmOccurrences).toBe(1); // Should appear only once
     });
 
-    test('should intelligently insert ruv-swarm section when none exists (not just append)', async () => {
+    test('should intelligently insert zen-swarm section when none exists (not just append)', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = `# My Project Configuration
 
@@ -380,7 +380,7 @@ This is my existing project setup.
       expect(mergedContent).toContain('Setup Instructions');
       expect(mergedContent).toContain('---'); // Section separator
       expect(mergedContent).toContain(
-        'Claude Code Configuration for ruv-swarm',
+        'Claude Code Configuration for zen-swarm',
       );
 
       // Should intelligently position content (not necessarily at bottom)
@@ -389,7 +389,7 @@ This is my existing project setup.
         line.includes('Setup Instructions'),
       );
       const ruvSwarmIndex = lines.findIndex((line) =>
-        line.includes('Claude Code Configuration for ruv-swarm'),
+        line.includes('Claude Code Configuration for zen-swarm'),
       );
 
       // Content should be intelligently positioned
@@ -494,7 +494,7 @@ This is my existing project setup.
 
       const mergedContent = await fs.readFile(claudePath, 'utf8');
       expect(mergedContent).toContain(
-        'Claude Code Configuration for ruv-swarm',
+        'Claude Code Configuration for zen-swarm',
       );
     });
 
@@ -511,7 +511,7 @@ This is my existing project setup.
 
       const mergedContent = await fs.readFile(claudePath, 'utf8');
       expect(mergedContent).toContain(
-        'Claude Code Configuration for ruv-swarm',
+        'Claude Code Configuration for zen-swarm',
       );
     });
 
@@ -532,7 +532,7 @@ This is my existing project setup.
       const mergedContent = await fs.readFile(claudePath, 'utf8');
       expect(mergedContent).toContain('Large File');
       expect(mergedContent).toContain(
-        'Claude Code Configuration for ruv-swarm',
+        'Claude Code Configuration for zen-swarm',
       );
     });
   });

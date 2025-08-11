@@ -1,5 +1,5 @@
 /**
- * ESLint flat configuration for ruv-swarm
+ * ESLint flat configuration for zen-swarm
  * Comprehensive rules for TypeScript/ES modules, Node.js, and code quality
  * Using ESLint v9+ flat config format with simplified plugin loading
  */

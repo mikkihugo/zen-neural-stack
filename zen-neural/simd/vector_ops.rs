@@ -341,8 +341,8 @@ impl VectorSimdOps {
         let chunks = len / SIMD_WIDTH;
         for i in 0..chunks {
             let offset = i * SIMD_WIDTH;
-            let a_vec = _mm256_loadu_ps(a.as_ptr().add(offset));
-            let b_vec = _mm256_loadu_ps(b.as_ptr().add(offset));
+            let a_vec = unsafe { _mm256_loadu_ps(a.as_ptr().add(offset)) };
+            let b_vec = unsafe { _mm256_loadu_ps(b.as_ptr().add(offset)) };
             sum_vec = _mm256_fmadd_ps(a_vec, b_vec, sum_vec);
         }
 
@@ -367,10 +367,12 @@ impl VectorSimdOps {
 
         let mut i = 0;
         while i + SIMD_WIDTH <= len {
-            let ptr = x.as_mut_ptr().add(i);
-            let vec = _mm256_loadu_ps(ptr);
-            let result = _mm256_mul_ps(vec, alpha_vec);
-            _mm256_storeu_ps(ptr, result);
+            unsafe {
+                let ptr = x.as_mut_ptr().add(i);
+                let vec = _mm256_loadu_ps(ptr);
+                let result = _mm256_mul_ps(vec, alpha_vec);
+                _mm256_storeu_ps(ptr, result);
+            }
             i += SIMD_WIDTH;
         }
 
@@ -389,14 +391,16 @@ impl VectorSimdOps {
 
         let mut i = 0;
         while i + SIMD_WIDTH <= len {
-            let x_ptr = x.as_ptr().add(i);
-            let y_ptr = y.as_mut_ptr().add(i);
-            
-            let x_vec = _mm256_loadu_ps(x_ptr);
-            let y_vec = _mm256_loadu_ps(y_ptr);
-            let result = _mm256_fmadd_ps(alpha_vec, x_vec, y_vec);
-            
-            _mm256_storeu_ps(y_ptr, result);
+            unsafe {
+                let x_ptr = x.as_ptr().add(i);
+                let y_ptr = y.as_mut_ptr().add(i);
+                
+                let x_vec = _mm256_loadu_ps(x_ptr);
+                let y_vec = _mm256_loadu_ps(y_ptr);
+                let result = _mm256_fmadd_ps(alpha_vec, x_vec, y_vec);
+                
+                _mm256_storeu_ps(y_ptr, result);
+            }
             i += SIMD_WIDTH;
         }
 
@@ -653,10 +657,12 @@ impl VectorSimdOps {
 
         let mut i = 0;
         while i + SIMD_WIDTH <= len {
-            let ptr = data.as_mut_ptr().add(i);
-            let vec = _mm256_loadu_ps(ptr);
-            let result = _mm256_max_ps(vec, zero);
-            _mm256_storeu_ps(ptr, result);
+            unsafe {
+                let ptr = data.as_mut_ptr().add(i);
+                let vec = _mm256_loadu_ps(ptr);
+                let result = _mm256_max_ps(vec, zero);
+                _mm256_storeu_ps(ptr, result);
+            }
             i += SIMD_WIDTH;
         }
 

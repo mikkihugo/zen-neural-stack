@@ -17,7 +17,7 @@ class ClaudeIntegrationOrchestrator {
       noBackup: options.noBackup || false,
       interactive: options.interactive !== false, // Default to true
       workingDir: options.workingDir || process.cwd(),
-      packageName: options.packageName || 'ruv-swarm',
+      packageName: options.packageName || 'zen-swarm',
       ...options,
     };
 
@@ -82,8 +82,8 @@ class ClaudeIntegrationOrchestrator {
           success: true,
           manualSetup: true,
           instructions: [
-            'Run: claude mcp add ruv-swarm npx ruv-swarm mcp start',
-            'Test with: mcp__ruv-swarm__agent_spawn',
+            'Run: claude mcp add zen-swarm npx zen-swarm mcp start',
+            'Test with: mcp__zen-swarm__agent_spawn',
           ],
         };
       }
@@ -99,10 +99,10 @@ class ClaudeIntegrationOrchestrator {
 
       console.log('\n🔗 Next steps:');
       if (results.modules.core.manualSetup) {
-        console.log('   1. claude mcp add ruv-swarm npx ruv-swarm mcp start');
-        console.log('   2. Test with MCP tools: mcp__ruv-swarm__agent_spawn');
+        console.log('   1. claude mcp add zen-swarm npx zen-swarm mcp start');
+        console.log('   2. Test with MCP tools: mcp__zen-swarm__agent_spawn');
       } else {
-        console.log('   1. Test with MCP tools: mcp__ruv-swarm__agent_spawn');
+        console.log('   1. Test with MCP tools: mcp__zen-swarm__agent_spawn');
       }
       console.log('   3. Check .claude/commands/ for detailed usage guides');
       console.log('   4. Use wrapper scripts for remote execution');

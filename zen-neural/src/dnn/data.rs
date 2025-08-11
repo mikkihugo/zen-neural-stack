@@ -24,6 +24,7 @@
 use ndarray::{Array1, Array2, Array3, ArrayD, Axis, Dimension, IxDyn};
 use num_traits::{Float, Zero, One};
 use std::fmt;
+use std::ops::Index;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -47,15 +48,15 @@ pub struct DNNTensor {
     /// Underlying ndarray data (always 2D: [batch_size, features])
     pub data: Array2<f32>,
     /// Cached shape information for performance
-    shape_cache: TensorShape,
+    pub shape_cache: TensorShape,
     /// Whether tensor requires gradient computation
-    requires_grad: bool,
+    pub requires_grad: bool,
 }
 
 impl DNNTensor {
     /// Create a new tensor from 2D array data
     pub fn new(data: Array2<f32>) -> Result<Self, DNNError> {
-        let shape = TensorShape::new(data.dim().into_pattern().into());
+        let shape = TensorShape::new(vec![data.nrows(), data.ncols()]);
         Ok(Self {
             shape_cache: shape,
             data,
@@ -196,7 +197,7 @@ impl DNNTensor {
  * This provides shape validation and common operations.
  */
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TensorShape {
     /// Shape dimensions (always length 2 for DNN tensors)
     pub dims: Vec<usize>,
@@ -206,6 +207,16 @@ impl TensorShape {
     /// Create a new tensor shape
     pub fn new(dims: Vec<usize>) -> Self {
         Self { dims }
+    }
+    
+    /// Get the number of dimensions
+    pub fn len(&self) -> usize {
+        self.dims.len()
+    }
+    
+    /// Check if the shape is empty
+    pub fn is_empty(&self) -> bool {
+        self.dims.is_empty()
     }
     
     /// Create a 2D tensor shape
@@ -245,6 +256,15 @@ impl TensorShape {
         
         // For bias addition: [batch, features] + [features] or [1, features]
         other.dims[0] == 1 || other.dims[0] == self.dims[0]
+    }
+}
+
+/// Index implementation for TensorShape
+impl Index<usize> for TensorShape {
+    type Output = usize;
+    
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.dims[index]
     }
 }
 

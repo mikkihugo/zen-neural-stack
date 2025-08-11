@@ -6,7 +6,7 @@
  * This test validates that the hook notification system and MCP database
  * persistence work together seamlessly for cross-agent coordination.
  *
- * Addresses Issue #69: "ruv-swarm Memory System Analysis Report"
+ * Addresses Issue #69: "zen-swarm Memory System Analysis Report"
  */
 
 import hooksInstance, { handleHook } from '../src/hooks/index.js';

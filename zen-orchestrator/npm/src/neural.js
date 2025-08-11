@@ -1,5 +1,5 @@
 /**
- * Neural Network CLI for ruv-swarm
+ * Neural Network CLI for zen-swarm
  * Provides neural training, status, and pattern analysis using WASM
  */
 
@@ -203,7 +203,7 @@ class NeuralCLI {
         duration: iterations * 100,
       };
 
-      const outputDir = path.join(process.cwd(), '.ruv-swarm', 'neural');
+      const outputDir = path.join(process.cwd(), '.zen-swarm', 'neural');
       await fs.mkdir(outputDir, { recursive: true });
       const outputFile = path.join(
         outputDir,
@@ -586,7 +586,7 @@ class NeuralCLI {
   }
 
   async loadPersistenceInfo() {
-    const neuralDir = path.join(process.cwd(), '.ruv-swarm', 'neural');
+    const neuralDir = path.join(process.cwd(), '.zen-swarm', 'neural');
     const modelDetails = {};
     let totalSessions = 0;
     let savedModels = 0;

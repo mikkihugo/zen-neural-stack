@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Regression Testing Pipeline for ruv-swarm
+ * Regression Testing Pipeline for zen-swarm
  * Automated CI/CD integration with performance regression detection
  */
 
@@ -28,7 +28,7 @@ class RegressionTestingPipeline {
       overallStatus: 'UNKNOWN',
     };
     this.baselineFile =
-      '/workspaces/ruv-FANN/ruv-swarm/npm/test/baseline-performance.json';
+      '/workspaces/ruv-FANN/zen-swarm/npm/test/baseline-performance.json';
     this.thresholds = {
       performance: 0.05, // 5% degradation threshold
       memory: 0.1, // 10% memory increase threshold
@@ -165,7 +165,7 @@ class RegressionTestingPipeline {
       // Check dependencies
       const packageJson = JSON.parse(
         await fs.readFile(
-          '/workspaces/ruv-FANN/ruv-swarm/npm/package.json',
+          '/workspaces/ruv-FANN/zen-swarm/npm/package.json',
           'utf8',
         ),
       );
@@ -173,7 +173,7 @@ class RegressionTestingPipeline {
 
       // Initialize test database
       const testDbPath =
-        '/workspaces/ruv-FANN/ruv-swarm/npm/test/regression-test.db';
+        '/workspaces/ruv-FANN/zen-swarm/npm/test/regression-test.db';
       try {
         await fs.unlink(testDbPath);
       } catch (error) {
@@ -211,7 +211,7 @@ class RegressionTestingPipeline {
     try {
       // Run ESLint
       const lintResult = await this.runCommand('npm run lint:check', {
-        cwd: '/workspaces/ruv-FANN/ruv-swarm/npm',
+        cwd: '/workspaces/ruv-FANN/zen-swarm/npm',
       });
       qualityResult.data.linting.passed = lintResult.success;
       qualityResult.data.linting.issues = this.countLintIssues(
@@ -223,7 +223,7 @@ class RegressionTestingPipeline {
 
       // Check if TypeScript definitions exist
       const tsFiles = await this.findFiles(
-        '/workspaces/ruv-FANN/ruv-swarm/npm/src',
+        '/workspaces/ruv-FANN/zen-swarm/npm/src',
         '.d.ts',
       );
       qualityResult.data.typeChecking.passed = tsFiles.length > 0;
@@ -262,7 +262,7 @@ class RegressionTestingPipeline {
     try {
       // Run unit tests with coverage
       const testResult = await this.runCommand('npm run test:coverage', {
-        cwd: '/workspaces/ruv-FANN/ruv-swarm/npm',
+        cwd: '/workspaces/ruv-FANN/zen-swarm/npm',
         timeout: 120000,
       });
 
@@ -314,7 +314,7 @@ class RegressionTestingPipeline {
       const testResult = await this.runCommand(
         'node test/integration/run-integration-tests.js',
         {
-          cwd: '/workspaces/ruv-FANN/ruv-swarm/npm',
+          cwd: '/workspaces/ruv-FANN/zen-swarm/npm',
           timeout: 300000, // 5 minutes
         },
       );
@@ -327,7 +327,7 @@ class RegressionTestingPipeline {
       // Parse integration test results if available
       try {
         const resultsFile =
-          '/workspaces/ruv-FANN/ruv-swarm/npm/test-results/integration-results.json';
+          '/workspaces/ruv-FANN/zen-swarm/npm/test-results/integration-results.json';
         const results = JSON.parse(await fs.readFile(resultsFile, 'utf8'));
 
         integrationResult.data.scenarios = results.suites || [];
@@ -364,7 +364,7 @@ class RegressionTestingPipeline {
       const perfTestResult = await this.runCommand(
         'node test/comprehensive-performance-validation.test.js',
         {
-          cwd: '/workspaces/ruv-FANN/ruv-swarm/npm',
+          cwd: '/workspaces/ruv-FANN/zen-swarm/npm',
           timeout: 600000, // 10 minutes
         },
       );
@@ -374,7 +374,7 @@ class RegressionTestingPipeline {
       // Load performance results
       try {
         const resultsFile =
-          '/workspaces/ruv-FANN/ruv-swarm/npm/test/validation-report.json';
+          '/workspaces/ruv-FANN/zen-swarm/npm/test/validation-report.json';
         const results = JSON.parse(await fs.readFile(resultsFile, 'utf8'));
 
         perfResult.data = {
@@ -421,7 +421,7 @@ class RegressionTestingPipeline {
       const loadTestResult = await this.runCommand(
         'node test/load-testing-suite.test.js',
         {
-          cwd: '/workspaces/ruv-FANN/ruv-swarm/npm',
+          cwd: '/workspaces/ruv-FANN/zen-swarm/npm',
           timeout: 1800000, // 30 minutes
         },
       );
@@ -431,7 +431,7 @@ class RegressionTestingPipeline {
       // Load test results
       try {
         const resultsFile =
-          '/workspaces/ruv-FANN/ruv-swarm/npm/test/load-test-report.json';
+          '/workspaces/ruv-FANN/zen-swarm/npm/test/load-test-report.json';
         const results = JSON.parse(await fs.readFile(resultsFile, 'utf8'));
 
         loadResult.data = {
@@ -475,7 +475,7 @@ class RegressionTestingPipeline {
       const secTestResult = await this.runCommand(
         'node test/security-audit.test.js',
         {
-          cwd: '/workspaces/ruv-FANN/ruv-swarm/npm',
+          cwd: '/workspaces/ruv-FANN/zen-swarm/npm',
           timeout: 600000, // 10 minutes
         },
       );
@@ -483,7 +483,7 @@ class RegressionTestingPipeline {
       // Load security results
       try {
         const resultsFile =
-          '/workspaces/ruv-FANN/ruv-swarm/npm/test/security-audit-report.json';
+          '/workspaces/ruv-FANN/zen-swarm/npm/test/security-audit-report.json';
         const results = JSON.parse(await fs.readFile(resultsFile, 'utf8'));
 
         securityResult.data = {
@@ -542,7 +542,7 @@ class RegressionTestingPipeline {
       try {
         const {
           PersistenceManager,
-        } = require('/workspaces/ruv-FANN/ruv-swarm/npm/src/persistence');
+        } = require('/workspaces/ruv-FANN/zen-swarm/npm/src/persistence');
         const pm = new PersistenceManager(':memory:');
         await pm.initialize();
         platformResult.data.sqliteSupport = true;
@@ -680,7 +680,7 @@ class RegressionTestingPipeline {
 
       // Save reports
       const reportPath =
-        '/workspaces/ruv-FANN/ruv-swarm/npm/test/regression-pipeline-report.json';
+        '/workspaces/ruv-FANN/zen-swarm/npm/test/regression-pipeline-report.json';
       await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
 
       // Generate CI/CD compatible outputs
@@ -708,7 +708,7 @@ class RegressionTestingPipeline {
       const [cmd, ...args] = command.split(' ');
       const process = spawn(cmd, args, {
         stdio: 'pipe',
-        cwd: options.cwd || '/workspaces/ruv-FANN/ruv-swarm/npm',
+        cwd: options.cwd || '/workspaces/ruv-FANN/zen-swarm/npm',
         ...options,
       });
 
@@ -769,7 +769,7 @@ class RegressionTestingPipeline {
   async parseCoverageResults() {
     try {
       const coveragePath =
-        '/workspaces/ruv-FANN/ruv-swarm/npm/coverage/coverage-summary.json';
+        '/workspaces/ruv-FANN/zen-swarm/npm/coverage/coverage-summary.json';
       const coverage = JSON.parse(await fs.readFile(coveragePath, 'utf8'));
 
       return {
@@ -1012,14 +1012,14 @@ success_rate=${report.summary.successRate}
 `;
 
     await fs.writeFile(
-      '/workspaces/ruv-FANN/ruv-swarm/npm/test/github-outputs.txt',
+      '/workspaces/ruv-FANN/zen-swarm/npm/test/github-outputs.txt',
       githubOutput,
     );
 
     // Generate JUnit XML for test reporting
     const junitXml = this.generateJUnitXML(report);
     await fs.writeFile(
-      '/workspaces/ruv-FANN/ruv-swarm/npm/test/regression-results.xml',
+      '/workspaces/ruv-FANN/zen-swarm/npm/test/regression-results.xml',
       junitXml,
     );
   }

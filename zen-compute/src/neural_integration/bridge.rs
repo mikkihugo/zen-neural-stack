@@ -112,11 +112,11 @@ impl WebGpuBackend {
   fn init_webgpu(&mut self) -> NeuralResult<()> {
     use pollster::FutureExt;
 
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
       backends: wgpu::Backends::all(),
-      dx12_shader_compiler: Default::default(),
       flags: wgpu::InstanceFlags::default(),
-      gles_minor_version: wgpu::Gles3MinorVersion::default(),
+      backend_options: Default::default(),
+      memory_budget_thresholds: Default::default(),
     });
 
     let adapter = instance
@@ -130,10 +130,10 @@ impl WebGpuBackend {
         force_fallback_adapter: false,
       })
       .block_on()
-      .ok_or_else(|| {
-        NeuralIntegrationError::GpuInitError(
-          "No suitable GPU adapter found".to_string(),
-        )
+      .map_err(|e| {
+        NeuralIntegrationError::GpuInitError(format!(
+          "No suitable GPU adapter found: {e}"
+        ))
       })?;
 
     self.adapter_info = Some(adapter.get_info());
@@ -144,8 +144,9 @@ impl WebGpuBackend {
           required_features: wgpu::Features::empty(),
           required_limits: wgpu::Limits::default(),
           label: Some("Neural Bridge Device"),
+          memory_hints: Default::default(),
+          trace: Default::default(),
         },
-        None,
       )
       .block_on()
       .map_err(|e| {
@@ -350,7 +351,9 @@ impl GpuBackendTrait for WebGpuBackend {
         label: Some(&format!("{} pipeline", kernel.name)),
         layout: Some(&compute_pipeline_layout),
         module: &shader_module,
-        entry_point: &kernel.entry_point,
+        entry_point: Some(&kernel.entry_point),
+        cache: None,
+        compilation_options: Default::default(),
       });
 
     // Get input buffers

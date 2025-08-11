@@ -400,7 +400,7 @@ class MCPTestRunner {
             {
               action: 'chaos-inject',
               type: 'network-delay',
-              target: 'ruv-swarm-mcp-server',
+              target: 'zen-swarm-mcp-server',
               duration: 10000,
             },
             { action: 'wait', duration: 15000 },
@@ -416,7 +416,7 @@ class MCPTestRunner {
           steps: [
             {
               action: 'docker-exec',
-              container: 'ruv-swarm-mcp-server',
+              container: 'zen-swarm-mcp-server',
               command: 'kill 1',
             },
             { action: 'wait', duration: 10000 },
@@ -437,7 +437,7 @@ class MCPTestRunner {
             },
             {
               action: 'verify-logs',
-              container: 'ruv-swarm-mcp-server',
+              container: 'zen-swarm-mcp-server',
               filter: 'error',
               expected: [{ notContains: 'OOM' }, { notContains: 'panic' }],
             },
@@ -539,7 +539,7 @@ class MCPTestRunner {
 
       // Get other service info
       services.prometheus = await this.runCommand(
-        'docker exec ruv-swarm-prometheus prometheus --version',
+        'docker exec zen-swarm-prometheus prometheus --version',
       )
         .then((r) => r.stdout.trim())
         .catch(() => 'unknown');

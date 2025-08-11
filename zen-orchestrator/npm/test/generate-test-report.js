@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Generate comprehensive test report for ruv-swarm
+ * Generate comprehensive test report for zen-swarm
  */
 
 import fs from 'fs';
@@ -17,7 +17,7 @@ class TestReportGenerator {
   constructor() {
     this.reportData = {
       generated: new Date().toISOString(),
-      project: 'ruv-swarm',
+      project: 'zen-swarm',
       version: require('../package.json').version,
       coverage: null,
       testSuites: {},
@@ -172,7 +172,7 @@ class TestReportGenerator {
   generateMarkdownReport() {
     const reportPath = path.join(__dirname, '..', 'test-report.md');
 
-    let markdown = `# Test Report for ruv-swarm
+    let markdown = `# Test Report for zen-swarm
 
 Generated: ${this.reportData.generated}  
 Version: ${this.reportData.version}
@@ -261,7 +261,7 @@ Version: ${this.reportData.version}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ruv-swarm Test Report</title>
+    <title>zen-swarm Test Report</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -324,7 +324,7 @@ Version: ${this.reportData.version}
 </head>
 <body>
     <div class="header">
-        <h1>ruv-swarm Test Report</h1>
+        <h1>zen-swarm Test Report</h1>
         <p>Generated: ${this.reportData.generated}</p>
         <p>Version: ${this.reportData.version}</p>
     </div>

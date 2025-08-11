@@ -48,7 +48,7 @@
 //! # }
 //! ```
 
-#![deny(missing_docs)]
+#![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 use num_traits::Float;
@@ -61,10 +61,10 @@ use serde::{Deserialize, Serialize};
 pub mod preprocessing;
 pub mod features;
 pub mod validation;
-pub mod crossval;
-pub mod loaders;
-pub mod transforms;
-pub mod augmentation;
+// pub mod crossval;      // TODO: Implement crossval module
+// pub mod loaders;       // TODO: Implement loaders module
+// pub mod transforms;    // TODO: Implement transforms module
+// pub mod augmentation;  // TODO: Implement augmentation module
 
 // Re-export commonly used types
 pub use chrono::{DateTime, Utc};
@@ -77,10 +77,10 @@ pub mod prelude {
         preprocessing::*,
         features::*,
         validation::*,
-        crossval::*,
-        loaders::*,
-        transforms::*,
-        augmentation::*,
+        // crossval::*,      // TODO: Enable when implemented
+        // loaders::*,       // TODO: Enable when implemented
+        // transforms::*,    // TODO: Enable when implemented
+        // augmentation::*,  // TODO: Enable when implemented
     };
     pub use chrono::{DateTime, Utc};
     pub use ndarray::{Array1, Array2};

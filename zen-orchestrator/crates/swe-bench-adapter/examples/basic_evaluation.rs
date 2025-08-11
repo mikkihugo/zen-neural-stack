@@ -197,7 +197,7 @@ async fn example_full_evaluation() -> Result<()> {
     let adapter = SWEBenchAdapter::new(config).await?;
 
     // Create a mock agent
-    use ruv_swarm_core::{agent::Agent, AgentId};
+    use zen_swarm_core::{agent::Agent, AgentId};
 
     // Note: In a real scenario, you would use an actual agent implementation
     // that implements the Agent trait

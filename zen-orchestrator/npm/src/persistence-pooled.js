@@ -22,7 +22,7 @@ class SwarmPersistencePooled {
       new URL('.', import.meta.url).pathname,
       '..',
       'data',
-      'ruv-swarm.db',
+      'zen-swarm.db',
     ),
     options = {},
   ) {

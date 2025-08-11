@@ -93,7 +93,7 @@ This is important project information that should be preserved.
 1. Install dependencies
 2. Configure environment`;
 
-      const ruvSwarmContent = `# Claude Code Configuration for ruv-swarm
+      const ruvSwarmContent = `# Claude Code Configuration for zen-swarm
 
 ## IMPORTANT: Separation of Responsibilities
 
@@ -101,16 +101,16 @@ This is important project information that should be preserved.
 - ALL file operations (Read, Write, Edit, MultiEdit)
 - ALL code generation and development tasks
 
-### ruv-swarm MCP Tools Handle:
+### zen-swarm MCP Tools Handle:
 - Coordination only - Orchestrating Claude Code's actions
 - Memory management - Persistent state across sessions
 
-Remember: **ruv-swarm coordinates, Claude Code creates!**`;
+Remember: **zen-swarm coordinates, Claude Code creates!**`;
 
       // Simple merge logic test
       const lines = existingContent.split('\n');
 
-      // Add ruv-swarm section at end
+      // Add zen-swarm section at end
       if (lines[lines.length - 1].trim() !== '') {
         lines.push(''); // Add blank line before new section
       }
@@ -122,9 +122,9 @@ Remember: **ruv-swarm coordinates, Claude Code creates!**`;
       assert(mergedContent.includes('My Project Configuration'));
       assert(mergedContent.includes('important project information'));
       assert(mergedContent.includes('Setup Instructions'));
-      assert(mergedContent.includes('Claude Code Configuration for ruv-swarm'));
+      assert(mergedContent.includes('Claude Code Configuration for zen-swarm'));
       assert(
-        mergedContent.includes('ruv-swarm coordinates, Claude Code creates'),
+        mergedContent.includes('zen-swarm coordinates, Claude Code creates'),
       );
     });
 
@@ -142,7 +142,7 @@ Remember: **ruv-swarm coordinates, Claude Code creates!**`;
       // Find section end logic
       function findSectionEnd(lines, startIndex) {
         for (let i = startIndex + 1; i < lines.length; i++) {
-          if (lines[i].startsWith('# ') && !lines[i].includes('ruv-swarm')) {
+          if (lines[i].startsWith('# ') && !lines[i].includes('zen-swarm')) {
             return i;
           }
         }

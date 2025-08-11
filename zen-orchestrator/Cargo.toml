@@ -15,66 +15,71 @@ categories = ["algorithms", "science", "wasm", "web-programming"]
 
 [dependencies]
 # Async runtime (WASM-compatible subset)
-tokio = { version = "1.40", features = ["sync", "macros", "time", "rt", "rt-multi-thread"], default-features = false }
-async-trait = "0.1"
+tokio = { version = "1.47.1", features = ["sync", "macros", "time", "rt", "rt-multi-thread"], default-features = false }
+async-trait = "0.1.88"
 
 # Error handling
-thiserror = "1.0"
-anyhow = "1.0"
+thiserror = "2.0.12"
+anyhow = "1.0.98"
 
 # Serialization
-serde = { version = "1.0", features = ["derive"], default-features = false }
-serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+serde = { version = "1.0.219", features = ["derive"], default-features = false }
+serde_json = { version = "1.0.142", default-features = false, features = ["alloc"] }
 
 # Random number generation  
-getrandom = { version = "0.2", default-features = false }
+getrandom = { version = "0.2.15", default-features = false }
 rand = { workspace = true, features = ["small_rng"] }
 
 # Logging
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter", "fmt"] }
 
 # Collections and utilities
-dashmap = "6.0"
-futures = { version = "0.3", default-features = false, features = ["executor"] }
-pin-project = "1.1"
-parking_lot = "0.12"
+dashmap = "5.5"
+futures = { version = "0.3.31", default-features = false, features = ["executor"] }
+pin-project = "1.1.7"
+parking_lot = "0.12.4"
 
 # No-std support
-no-std-compat = { version = "0.4", features = ["alloc"] }
-heapless = "0.8"
+no-std-compat = { version = "0.4.1", features = ["alloc"] }
+heapless = "0.8.0"
 
 # CLI dependencies
-clap = { version = "4.5", features = ["derive"] }
-atty = "0.2"
+clap = { version = "4.5.35", features = ["derive"] }
+atty = "0.2.14"
 
 # WASM dependencies
-wasm-bindgen = "0.2"
-js-sys = "0.3"
-web-sys = { version = "0.3", features = ["console", "Window"] }
+wasm-bindgen = "0.2.100"
+js-sys = "0.3.77"
+web-sys = { version = "0.3.77", features = ["console", "Window"] }
 # wee_alloc removed due to security vulnerability GHSA-rc23-xxgq-x27g
 
 # MCP dependencies
-axum = "0.7"
-tower = "0.4"
-tokio-tungstenite = "0.23"
-schemars = "0.8"
-uuid = { version = "1.0", features = ["v4", "serde"] }
+axum = "0.7.9"
+tower = "0.4.13"
+tokio-tungstenite = "0.27.0"
+schemars = "0.8.21"
+uuid = { version = "1.11.0", features = ["v4", "serde"] }
 
 # Transport dependencies
-tungstenite = "0.23"
-shared_memory = "0.12"
+tungstenite = "0.27.0"
+shared_memory = "0.12.4"
 
-# Persistence dependencies
-rusqlite = { version = "0.29", features = ["bundled"] }
-r2d2 = "0.8"
-r2d2_sqlite = "0.22"
+# Persistence dependencies - migrated to libSQL for better maintenance
+libsql = { version = "0.9.20", features = ["core", "serde"] }
+r2d2 = "0.8.10"
 
 [dev-dependencies]
 # Development dependencies
-criterion = "0.5"
-proptest = "1.0"
+criterion = "0.5.1"
+proptest = "1.7.0"
 
 # Profile configurations moved to workspace root
+
+# Note: Migrated from rusqlite to libSQL for:
+# - Better maintenance and active development
+# - 100% SQLite compatibility with enhanced features
+# - Same API surface with improved performance
+# - Eliminates SQLite linking conflicts
 
 

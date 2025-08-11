@@ -1,9 +1,9 @@
 #!/bin/bash
-# Script to run comprehensive integration tests for ruv-swarm
+# Script to run comprehensive integration tests for zen-swarm
 
 set -e
 
-echo "=== Running ruv-swarm Integration Tests ==="
+echo "=== Running zen-swarm Integration Tests ==="
 echo
 
 # Colors for output

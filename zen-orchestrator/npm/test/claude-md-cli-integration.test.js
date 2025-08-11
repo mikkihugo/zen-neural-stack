@@ -22,7 +22,7 @@ describe('CLAUDE.md CLI Protection Integration', () => {
     await fs.mkdir(testDir, { recursive: true });
 
     // Path to the CLI script
-    binPath = path.join(__dirname, '..', 'bin', 'ruv-swarm-clean.js');
+    binPath = path.join(__dirname, '..', 'bin', 'zen-swarm-clean.js');
   });
 
   afterEach(async () => {
@@ -101,7 +101,7 @@ describe('CLAUDE.md CLI Protection Integration', () => {
       expect(exists).toBe(true);
 
       const content = await fs.readFile(claudePath, 'utf8');
-      expect(content).toContain('Claude Code Configuration for ruv-swarm');
+      expect(content).toContain('Claude Code Configuration for zen-swarm');
     });
 
     test('should fail when CLAUDE.md exists without force or merge', async () => {
@@ -145,7 +145,7 @@ describe('CLAUDE.md CLI Protection Integration', () => {
 
       // Check original file was overwritten
       const newContent = await fs.readFile(claudePath, 'utf8');
-      expect(newContent).toContain('Claude Code Configuration for ruv-swarm');
+      expect(newContent).toContain('Claude Code Configuration for zen-swarm');
       expect(newContent).not.toContain(
         'original content that should be replaced',
       );
@@ -188,7 +188,7 @@ This is important project information that should be preserved.
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.stdout).toContain('Merging ruv-swarm configuration');
+      expect(result.stdout).toContain('Merging zen-swarm configuration');
       expect(result.stdout).toContain(
         'Configuration merged with existing files',
       );
@@ -199,7 +199,7 @@ This is important project information that should be preserved.
       expect(mergedContent).toContain('important project information');
       expect(mergedContent).toContain('Setup Instructions');
       expect(mergedContent).toContain(
-        'Claude Code Configuration for ruv-swarm',
+        'Claude Code Configuration for zen-swarm',
       );
 
       // Check backup was created
@@ -232,11 +232,11 @@ This is important project information that should be preserved.
       const result = await runCLI(['help']);
 
       expect(result.success).toBe(true);
-      expect(result.stdout).toContain('ruv-swarm init mesh 5 --claude');
-      expect(result.stdout).toContain('ruv-swarm init mesh 5 --claude --force');
-      expect(result.stdout).toContain('ruv-swarm init mesh 5 --claude --merge');
+      expect(result.stdout).toContain('zen-swarm init mesh 5 --claude');
+      expect(result.stdout).toContain('zen-swarm init mesh 5 --claude --force');
+      expect(result.stdout).toContain('zen-swarm init mesh 5 --claude --merge');
       expect(result.stdout).toContain(
-        'ruv-swarm init mesh 5 --claude --no-interactive',
+        'zen-swarm init mesh 5 --claude --no-interactive',
       );
     });
   });
@@ -351,13 +351,13 @@ This project uses lion for multi-agent coordination.`;
       expect(mergedContent).toContain('Central Orchestrator: lion');
       expect(mergedContent).toContain('Multi-Hat Hierarchy');
 
-      // Should add ruv-swarm content
+      // Should add zen-swarm content
       expect(mergedContent).toContain(
-        'Claude Code Configuration for ruv-swarm',
+        'Claude Code Configuration for zen-swarm',
       );
       expect(mergedContent).toContain('BATCH EVERYTHING');
       expect(mergedContent).toContain(
-        'ruv-swarm coordinates, Claude Code creates',
+        'zen-swarm coordinates, Claude Code creates',
       );
     });
 
@@ -416,9 +416,9 @@ Some old configuration that might conflict.`;
       expect(mergedContent).toContain('Development Workflow');
       expect(mergedContent).toContain('Never deploy to production on Fridays!');
 
-      // Should add ruv-swarm without disrupting structure
+      // Should add zen-swarm without disrupting structure
       expect(mergedContent).toContain(
-        'Claude Code Configuration for ruv-swarm',
+        'Claude Code Configuration for zen-swarm',
       );
 
       // Check that content is properly separated

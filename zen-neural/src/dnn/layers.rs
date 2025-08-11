@@ -48,7 +48,8 @@
 
 use ndarray::{Array1, Array2, Axis};
 use num_traits::{Float, Zero, One};
-use rand::distributions::{Distribution, Normal, Uniform};
+use rand::distributions::{Distribution, Uniform};
+use rand_distr::Normal;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use std::fmt;

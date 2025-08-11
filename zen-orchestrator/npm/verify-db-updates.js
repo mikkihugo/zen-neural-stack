@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 
 console.log('🔍 Verifying MCP Tools Database Updates\n');
 
-const dbPath = join(__dirname, 'data', 'ruv-swarm.db');
+const dbPath = join(__dirname, 'data', 'zen-swarm.db');
 const db = new Database(dbPath);
 
 // Get counts
@@ -64,7 +64,7 @@ db.close();
 
 console.log('\n✅ Database verification complete!');
 console.log('\n📌 Summary:');
-console.log('   - CLI commands (npx ruv-swarm) DO update the database');
+console.log('   - CLI commands (npx zen-swarm) DO update the database');
 console.log('   - Each swarm init creates a new swarm record');
 console.log('   - Each agent spawn creates a new agent record');
 console.log('   - Memory operations would store in agent_memory table');

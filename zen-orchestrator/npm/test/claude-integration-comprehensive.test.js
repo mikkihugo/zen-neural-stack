@@ -271,17 +271,17 @@ describe('Claude Integration - Complete Coverage', () => {
             }
 
             async generateMainDoc() {
-              const content = `# Claude Code Configuration for ${this.options.packageName || 'ruv-swarm'}
+              const content = `# Claude Code Configuration for ${this.options.packageName || 'zen-swarm'}
 
 ## Quick Setup
 \`\`\`bash
-claude mcp add ruv-swarm npx ruv-swarm mcp start
+claude mcp add zen-swarm npx zen-swarm mcp start
 \`\`\`
 
 ## Available Tools
-- \`mcp__ruv-swarm__swarm_init\` - Initialize swarm
-- \`mcp__ruv-swarm__agent_spawn\` - Spawn agents
-- \`mcp__ruv-swarm__task_orchestrate\` - Orchestrate tasks
+- \`mcp__zen-swarm__swarm_init\` - Initialize swarm
+- \`mcp__zen-swarm__agent_spawn\` - Spawn agents
+- \`mcp__zen-swarm__task_orchestrate\` - Orchestrate tasks
 
 ## Best Practices
 1. Use parallel execution for multiple operations
@@ -327,13 +327,13 @@ claude mcp add ruv-swarm npx ruv-swarm mcp start
                   name: 'swarm_init',
                   description: 'Initialize a new swarm with specified topology',
                   parameters: ['topology', 'maxAgents', 'strategy'],
-                  examples: ['mcp__ruv-swarm__swarm_init {"topology": "mesh"}'],
+                  examples: ['mcp__zen-swarm__swarm_init {"topology": "mesh"}'],
                 },
                 {
                   name: 'agent_spawn',
                   description: 'Spawn a new agent in the swarm',
                   parameters: ['type', 'capabilities'],
-                  examples: ['mcp__ruv-swarm__agent_spawn {"type": "coder"}'],
+                  examples: ['mcp__zen-swarm__agent_spawn {"type": "coder"}'],
                 },
               ];
 
@@ -463,7 +463,7 @@ ${cmd.examples.join('\n')}
             constructor(options = {}) {
               this.options = {
                 workingDir: options.workingDir || process.cwd(),
-                packageName: options.packageName || 'ruv-swarm',
+                packageName: options.packageName || 'zen-swarm',
                 ...options,
               };
             }
@@ -553,15 +553,15 @@ npx ${this.options.packageName} @args
 case "$1" in
   "init")
     echo "Initializing Claude swarm integration..."
-    claude mcp add ruv-swarm npx ruv-swarm mcp start
+    claude mcp add zen-swarm npx zen-swarm mcp start
     ;;
   "test")
     echo "Testing swarm connection..."
-    npx ruv-swarm test-connection
+    npx zen-swarm test-connection
     ;;
   "status")
     echo "Checking swarm status..."
-    npx ruv-swarm status
+    npx zen-swarm status
     ;;
   *)
     echo "Usage: $0 {init|test|status}"
@@ -577,13 +577,13 @@ REM Claude Swarm Helper Script
 
 if "%1"=="init" (
   echo Initializing Claude swarm integration...
-  claude mcp add ruv-swarm npx ruv-swarm mcp start
+  claude mcp add zen-swarm npx zen-swarm mcp start
 ) else if "%1"=="test" (
   echo Testing swarm connection...
-  npx ruv-swarm test-connection
+  npx zen-swarm test-connection
 ) else if "%1"=="status" (
   echo Checking swarm status...
-  npx ruv-swarm status
+  npx zen-swarm status
 ) else (
   echo Usage: %0 {init^|test^|status}
   exit /b 1
@@ -694,9 +694,9 @@ if "%1"=="init" (
           AdvancedCommands: class {
             static validateMcpCommand(command) {
               const validCommands = [
-                'mcp__ruv-swarm__swarm_init',
-                'mcp__ruv-swarm__agent_spawn',
-                'mcp__ruv-swarm__task_orchestrate',
+                'mcp__zen-swarm__swarm_init',
+                'mcp__zen-swarm__agent_spawn',
+                'mcp__zen-swarm__task_orchestrate',
               ];
 
               if (!validCommands.includes(command)) {
@@ -706,8 +706,8 @@ if "%1"=="init" (
               return {
                 valid: true,
                 command,
-                prefix: 'mcp__ruv-swarm__',
-                action: command.replace('mcp__ruv-swarm__', ''),
+                prefix: 'mcp__zen-swarm__',
+                action: command.replace('mcp__zen-swarm__', ''),
               };
             }
           },
@@ -715,11 +715,11 @@ if "%1"=="init" (
       });
 
       const result = AdvancedCommands.validateMcpCommand(
-        'mcp__ruv-swarm__swarm_init',
+        'mcp__zen-swarm__swarm_init',
       );
 
       expect(result.valid).toBe(true);
-      expect(result.command).toBe('mcp__ruv-swarm__swarm_init');
+      expect(result.command).toBe('mcp__zen-swarm__swarm_init');
       expect(result.action).toBe('swarm_init');
     });
 
@@ -730,7 +730,7 @@ if "%1"=="init" (
         return {
           AdvancedCommands: class {
             static validateMcpCommand(command) {
-              const validCommands = ['mcp__ruv-swarm__swarm_init'];
+              const validCommands = ['mcp__zen-swarm__swarm_init'];
 
               if (!validCommands.includes(command)) {
                 throw new Error(`Invalid MCP command: ${command}`);
@@ -756,13 +756,13 @@ if "%1"=="init" (
             static generateCommandTemplate(action, parameters = {}) {
               const templates = {
                 swarm_init: {
-                  command: 'mcp__ruv-swarm__swarm_init',
+                  command: 'mcp__zen-swarm__swarm_init',
                   parameters: {
                     topology: parameters.topology || 'mesh',
                     maxAgents: parameters.maxAgents || 5,
                     strategy: parameters.strategy || 'balanced',
                   },
-                  example: `mcp__ruv-swarm__swarm_init ${JSON.stringify({
+                  example: `mcp__zen-swarm__swarm_init ${JSON.stringify({
                     topology: parameters.topology || 'mesh',
                     maxAgents: parameters.maxAgents || 5,
                   })}`,
@@ -784,7 +784,7 @@ if "%1"=="init" (
         maxAgents: 8,
       });
 
-      expect(template.command).toBe('mcp__ruv-swarm__swarm_init');
+      expect(template.command).toBe('mcp__zen-swarm__swarm_init');
       expect(template.parameters.topology).toBe('hierarchical');
       expect(template.parameters.maxAgents).toBe(8);
       expect(template.example).toContain('hierarchical');
@@ -877,7 +877,7 @@ NODE_ENV=production
         return {
           ClaudeIntegrationCore: class {
             async initialize() {
-              execSync('claude mcp add ruv-swarm npx ruv-swarm mcp start');
+              execSync('claude mcp add zen-swarm npx zen-swarm mcp start');
               return { success: true };
             }
           },

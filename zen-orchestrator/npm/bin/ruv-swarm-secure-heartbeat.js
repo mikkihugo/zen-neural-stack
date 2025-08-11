@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Production-ready ruv-swarm MCP server with security and stability
+ * Production-ready zen-swarm MCP server with security and stability
  * Combines security fixes from Issue #107 with crash protection
  */
 
@@ -155,7 +155,7 @@ function logValidationError(error, command) {
     if (error.parameter) {
         console.log(`   Parameter: ${error.parameter}`);
     }
-    console.log(`\n💡 For help with valid parameters, run: ruv-swarm help`);
+    console.log(`\n💡 For help with valid parameters, run: zen-swarm help`);
 }
 
 function stabilityLog(message) {
@@ -171,7 +171,7 @@ let globalLogger = null;
 async function initializeLogger() {
     if (!globalLogger) {
         globalLogger = new Logger({
-            name: 'ruv-swarm-mcp',
+            name: 'zen-swarm-mcp',
             level: process.env.LOG_LEVEL || (process.argv.includes('--debug') ? 'DEBUG' : 'INFO'),
             enableStderr: true, // Always use stderr in MCP mode
             enableFile: process.env.LOG_TO_FILE === 'true',
@@ -261,7 +261,7 @@ async function handleInit(args) {
         const topology = validateTopology(rawTopology);
         const maxAgents = validateMaxAgents(rawMaxAgents);
         
-        console.log('🚀 Initializing ruv-swarm...');
+        console.log('🚀 Initializing zen-swarm...');
         
         const result = await mcpTools.swarm_init({
             topology,
@@ -290,17 +290,17 @@ async function handleInit(args) {
                     noBackup: noBackup,
                     interactive: !noInteractive,
                     workingDir: process.cwd(),
-                    packageName: 'ruv-swarm'
+                    packageName: 'zen-swarm'
                 });
             } catch (error) {
                 console.log('⚠️  Claude integration setup had issues:', error.message);
-                console.log('💡 Manual setup: claude mcp add ruv-swarm npx ruv-swarm mcp start');
+                console.log('💡 Manual setup: claude mcp add zen-swarm npx zen-swarm mcp start');
             }
         }
         
         console.log('\n✅ Initialization complete!');
         console.log('\n🔗 Next steps:');
-        console.log('   1. Test with MCP tools: mcp__ruv-swarm__agent_spawn');
+        console.log('   1. Test with MCP tools: mcp__zen-swarm__agent_spawn');
         console.log('   2. Use wrapper scripts for remote execution');
         console.log('   3. Check .claude/commands/ for detailed guides');
         
@@ -360,7 +360,7 @@ async function handleOrchestrate(args) {
         const rawTask = args.join(' ');
         if (!rawTask) {
             console.log('❌ No task provided');
-            console.log('Usage: ruv-swarm orchestrate "task description"');
+            console.log('Usage: zen-swarm orchestrate "task description"');
             return;
         }
         
@@ -392,7 +392,7 @@ async function handleClaudeInvoke(args) {
     
     if (!prompt.trim()) {
         console.log('❌ No prompt provided');
-        console.log('Usage: ruv-swarm claude-invoke "your swarm prompt"');
+        console.log('Usage: zen-swarm claude-invoke "your swarm prompt"');
         console.log('Note: Use --dangerously-skip-permissions explicitly if needed');
         return;
     }
@@ -408,7 +408,7 @@ async function handleClaudeInvoke(args) {
         throw error;
     }
     
-    console.log('🚀 Invoking Claude Code with ruv-swarm integration...');
+    console.log('🚀 Invoking Claude Code with zen-swarm integration...');
     console.log('Prompt: ' + prompt.trim());
     
     try {
@@ -517,7 +517,7 @@ async function startMcpServer(args) {
     try {
         if (protocol === 'stdio') {
             // In stdio mode, only JSON-RPC messages should go to stdout
-            logger.info('ruv-swarm MCP server starting in stdio mode', {
+            logger.info('zen-swarm MCP server starting in stdio mode', {
                 protocol,
                 sessionId,
                 nodeVersion: process.version,
@@ -674,7 +674,7 @@ async function startMcpServer(args) {
                 method: 'server.initialized',
                 params: {
                     serverInfo: {
-                        name: 'ruv-swarm',
+                        name: 'zen-swarm',
                         version: version,
                         capabilities: {
                             tools: true,
@@ -778,7 +778,7 @@ async function getMcpStatus() {
     console.log('🔍 MCP Server Status:');
     console.log('   Protocol: stdio (for Claude Code integration)');
     console.log('   Status: Ready to start');
-    console.log('   Usage: npx ruv-swarm mcp start [--stability]');
+    console.log('   Usage: npx zen-swarm mcp start [--stability]');
     console.log('   Runtime: Infinite (no timeouts)');
     console.log('   Stability: Auto-restart on crashes (use --stability flag)');
 }
@@ -795,25 +795,25 @@ async function stopMcpServer() {
 async function listMcpTools() {
     console.log('🛠️  Available MCP Tools:');
     console.log('\n📊 Core Swarm Tools:');
-    console.log('   mcp__ruv-swarm__swarm_init - Initialize a new swarm');
-    console.log('   mcp__ruv-swarm__agent_spawn - Spawn new agents');
-    console.log('   mcp__ruv-swarm__task_orchestrate - Orchestrate tasks');
-    console.log('   mcp__ruv-swarm__swarm_status - Get swarm status');
+    console.log('   mcp__zen-swarm__swarm_init - Initialize a new swarm');
+    console.log('   mcp__zen-swarm__agent_spawn - Spawn new agents');
+    console.log('   mcp__zen-swarm__task_orchestrate - Orchestrate tasks');
+    console.log('   mcp__zen-swarm__swarm_status - Get swarm status');
     console.log('   ... and 11 more core tools');
     console.log('\n🤖 DAA (Decentralized Autonomous Agents) Tools:');
-    console.log('   mcp__ruv-swarm__daa_init - Initialize DAA service');
-    console.log('   mcp__ruv-swarm__daa_agent_create - Create autonomous agents');
-    console.log('   mcp__ruv-swarm__daa_workflow_create - Create DAA workflows');
-    console.log('   mcp__ruv-swarm__daa_learning_status - Get learning progress');
+    console.log('   mcp__zen-swarm__daa_init - Initialize DAA service');
+    console.log('   mcp__zen-swarm__daa_agent_create - Create autonomous agents');
+    console.log('   mcp__zen-swarm__daa_workflow_create - Create DAA workflows');
+    console.log('   mcp__zen-swarm__daa_learning_status - Get learning progress');
     console.log('   ... and 6 more DAA tools');
-    console.log('\nFor full documentation, run: ruv-swarm init --claude');
+    console.log('\nFor full documentation, run: zen-swarm init --claude');
 }
 
 function showMcpHelp() {
     console.log(`
 🔌 MCP (Model Context Protocol) Commands
 
-Usage: ruv-swarm mcp <subcommand> [options]
+Usage: zen-swarm mcp <subcommand> [options]
 
 Subcommands:
   start [--protocol=stdio] [--stability]  Start MCP server
@@ -831,19 +831,19 @@ Environment Variables:
   MCP_TEST_MODE                          Enable test mode (true/false)
 
 Examples:
-  ruv-swarm mcp start                    # Start stdio MCP server (infinite runtime)
-  ruv-swarm mcp start --stability        # Start with crash protection
-  LOG_LEVEL=DEBUG ruv-swarm mcp start    # Enable debug logging
-  ruv-swarm mcp tools                    # List available tools
+  zen-swarm mcp start                    # Start stdio MCP server (infinite runtime)
+  zen-swarm mcp start --stability        # Start with crash protection
+  LOG_LEVEL=DEBUG zen-swarm mcp start    # Enable debug logging
+  zen-swarm mcp tools                    # List available tools
   
 For Claude Code integration:
-  claude mcp add ruv-swarm npx ruv-swarm mcp start --stability
+  claude mcp add zen-swarm npx zen-swarm mcp start --stability
 `);
 }
 
 async function configureMcp(args) {
     console.log('🔧 MCP configuration is managed through Claude Code');
-    console.log('Run: ruv-swarm init --claude');
+    console.log('Run: zen-swarm init --claude');
 }
 
 async function getResourceContent(uri) {
@@ -852,27 +852,27 @@ async function getResourceContent(uri) {
             contents: [{
                 uri,
                 mimeType: 'text/markdown',
-                text: `# Getting Started with ruv-swarm
+                text: `# Getting Started with zen-swarm
 
 ## Introduction
-ruv-swarm is a powerful WASM-powered neural swarm orchestration system that enhances Claude Code's capabilities through intelligent agent coordination.
+zen-swarm is a powerful WASM-powered neural swarm orchestration system that enhances Claude Code's capabilities through intelligent agent coordination.
 
 ## Quick Start
 
 1. **Initialize a swarm:**
    \`\`\`bash
-   mcp__ruv-swarm__swarm_init { topology: "mesh", maxAgents: 5 }
+   mcp__zen-swarm__swarm_init { topology: "mesh", maxAgents: 5 }
    \`\`\`
 
 2. **Spawn agents:**
    \`\`\`bash
-   mcp__ruv-swarm__agent_spawn { type: "researcher", name: "Doc Analyzer" }
-   mcp__ruv-swarm__agent_spawn { type: "coder", name: "Implementation Expert" }
+   mcp__zen-swarm__agent_spawn { type: "researcher", name: "Doc Analyzer" }
+   mcp__zen-swarm__agent_spawn { type: "coder", name: "Implementation Expert" }
    \`\`\`
 
 3. **Orchestrate tasks:**
    \`\`\`bash
-   mcp__ruv-swarm__task_orchestrate { task: "Build a REST API", strategy: "adaptive" }
+   mcp__zen-swarm__task_orchestrate { task: "Build a REST API", strategy: "adaptive" }
    \`\`\`
 
 ## Key Concepts
@@ -907,10 +907,10 @@ The production version includes built-in crash protection:
 ## Usage
 \`\`\`bash
 # Enable stability mode
-ruv-swarm mcp start --stability
+zen-swarm mcp start --stability
 
 # For Claude Code integration
-claude mcp add ruv-swarm npx ruv-swarm mcp start --stability
+claude mcp add zen-swarm npx zen-swarm mcp start --stability
 \`\`\`
 
 ## Features
@@ -961,7 +961,7 @@ async function handleMcpRequest(request, mcpTools, logger = null) {
                         }
                     },
                     serverInfo: {
-                        name: 'ruv-swarm',
+                        name: 'zen-swarm',
                         version: version
                     }
                 };
@@ -1228,7 +1228,7 @@ async function handleMcpRequest(request, mcpTools, logger = null) {
                         {
                             uri: 'swarm://docs/getting-started',
                             name: 'Getting Started Guide',
-                            description: 'Introduction to ruv-swarm and basic usage',
+                            description: 'Introduction to zen-swarm and basic usage',
                             mimeType: 'text/markdown'
                         },
                         {
@@ -1269,7 +1269,7 @@ async function handleHook(args) {
     const { main: hooksCLIMain } = await import('../src/hooks/cli.js');
     
     // Pass through to hooks CLI with 'hook' already consumed
-    process.argv = ['node', 'ruv-swarm', 'hook', ...args];
+    process.argv = ['node', 'zen-swarm', 'hook', ...args];
     
     return hooksCLIMain();
 }
@@ -1297,10 +1297,10 @@ async function handleNeural(args) {
   neural export [options]          Export neural weights
 
 Examples:
-  ruv-swarm neural status
-  ruv-swarm neural train --model attention --iterations 100
-  ruv-swarm neural patterns --model attention
-  ruv-swarm neural export --model all --output ./weights.json`);
+  zen-swarm neural status
+  zen-swarm neural train --model attention --iterations 100
+  zen-swarm neural patterns --model attention
+  zen-swarm neural export --model all --output ./weights.json`);
                 break;
         }
     } catch (error) {
@@ -1326,9 +1326,9 @@ async function handleBenchmark(args) {
   benchmark compare [files]        Compare benchmark results
 
 Examples:
-  ruv-swarm benchmark run --iterations 10
-  ruv-swarm benchmark run --test swarm-coordination
-  ruv-swarm benchmark compare results-1.json results-2.json`);
+  zen-swarm benchmark run --iterations 10
+  zen-swarm benchmark run --test swarm-coordination
+  zen-swarm benchmark compare results-1.json results-2.json`);
                 break;
         }
     } catch (error) {
@@ -1357,9 +1357,9 @@ async function handlePerformance(args) {
   performance suggest             Get optimization suggestions
 
 Examples:
-  ruv-swarm performance analyze --task-id recent
-  ruv-swarm performance optimize --target speed
-  ruv-swarm performance suggest`);
+  zen-swarm performance analyze --task-id recent
+  zen-swarm performance optimize --target speed
+  zen-swarm performance suggest`);
                 break;
         }
     } catch (error) {
@@ -1376,9 +1376,9 @@ async function handleDiagnose(args) {
 async function showHelp() {
     const version = await getVersion();
     console.log(`
-🐝 ruv-swarm v${version} - Production-ready WASM-powered neural swarm orchestration
+🐝 zen-swarm v${version} - Production-ready WASM-powered neural swarm orchestration
 
-Usage: ruv-swarm <command> [options]
+Usage: zen-swarm <command> [options]
 
 Commands:
   init [topology] [maxAgents]     Initialize swarm (--claude for integration)
@@ -1404,13 +1404,13 @@ Commands:
   help                            Show this help message
 
 Examples:
-  ruv-swarm init mesh 5 --claude                    # Create CLAUDE.md (fails if exists)
-  ruv-swarm init mesh 5 --claude --force            # Overwrite CLAUDE.md (creates backup)
-  ruv-swarm spawn researcher "AI Research Specialist"
-  ruv-swarm orchestrate "Build a REST API with authentication"
-  ruv-swarm mcp start --stability                   # Start with crash protection
-  ruv-swarm hook pre-edit --file app.js --ensure-coordination
-  ruv-swarm claude-invoke "Create a development swarm for my project"
+  zen-swarm init mesh 5 --claude                    # Create CLAUDE.md (fails if exists)
+  zen-swarm init mesh 5 --claude --force            # Overwrite CLAUDE.md (creates backup)
+  zen-swarm spawn researcher "AI Research Specialist"
+  zen-swarm orchestrate "Build a REST API with authentication"
+  zen-swarm mcp start --stability                   # Start with crash protection
+  zen-swarm hook pre-edit --file app.js --ensure-coordination
+  zen-swarm claude-invoke "Create a development swarm for my project"
 
 🔒 Security Features:
   • Input validation and sanitization
@@ -1490,7 +1490,7 @@ async function main() {
                 break;
             case 'version':
                 const version = await getVersion();
-                console.log('ruv-swarm v' + version);
+                console.log('zen-swarm v' + version);
                 console.log('Production-ready WASM-powered neural swarm orchestration');
                 console.log('Security & Stability Enhanced Edition');
                 console.log('\n🔒 Security Features:');

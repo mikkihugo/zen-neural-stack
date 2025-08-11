@@ -51,14 +51,14 @@ Based on analysis, it selects:
 
 **Simple Task:**
 \`\`\`
-Tool: mcp__ruv-swarm__task_orchestrate
+Tool: mcp__zen-swarm__task_orchestrate
 Parameters: {"task": "Fix typo in README.md"}
 Result: Automatically uses star topology with single agent
 \`\`\`
 
 **Complex Task:**
 \`\`\`
-Tool: mcp__ruv-swarm__task_orchestrate
+Tool: mcp__zen-swarm__task_orchestrate
 Parameters: {"task": "Refactor authentication system with JWT, add tests, update documentation"}
 Result: Automatically uses hierarchical topology with architect, coder, and tester agents
 \`\`\`
@@ -73,7 +73,7 @@ Result: Automatically uses hierarchical topology with architect, coder, and test
 The pre-task hook automatically handles topology selection:
 \`\`\`json
 {
-  "command": "npx ruv-swarm hook pre-task --auto-spawn-agents --optimize-topology"
+  "command": "npx zen-swarm hook pre-task --auto-spawn-agents --optimize-topology"
 }
 \`\`\``,
       },
@@ -89,7 +89,7 @@ Execute independent subtasks in parallel for maximum efficiency.
 
 ### 1. Task Decomposition
 \`\`\`
-Tool: mcp__ruv-swarm__task_orchestrate
+Tool: mcp__zen-swarm__task_orchestrate
 Parameters: {
   "task": "Build complete REST API with auth, CRUD operations, and tests",
   "strategy": "parallel",
@@ -119,7 +119,7 @@ For the REST API task:
 
 ## Monitoring
 \`\`\`
-Tool: mcp__ruv-swarm__swarm_monitor
+Tool: mcp__zen-swarm__swarm_monitor
 Parameters: {"interval": 1, "duration": 10}
 \`\`\`
 
@@ -163,7 +163,7 @@ The post-task hook automatically analyzes:
 ### 3. Improvement Suggestions
 
 \`\`\`
-Tool: mcp__ruv-swarm__task_results
+Tool: mcp__zen-swarm__task_results
 Parameters: {"taskId": "task-123", "format": "detailed"}
 
 Result includes:
@@ -213,7 +213,7 @@ Reduce token consumption while maintaining quality through intelligent coordinat
 
 \`\`\`bash
 # Check token savings after session
-npx ruv-swarm hook session-end --export-metrics
+npx zen-swarm hook session-end --export-metrics
 
 # Result shows:
 {
@@ -257,7 +257,7 @@ Every successful operation trains the neural networks:
 
 ### 2. Manual Training
 \`\`\`
-Tool: mcp__ruv-swarm__neural_train
+Tool: mcp__zen-swarm__neural_train
 Parameters: {"iterations": 20}
 \`\`\`
 
@@ -273,7 +273,7 @@ Parameters: {"iterations": 20}
 
 ### 4. Improvement Tracking
 \`\`\`
-Tool: mcp__ruv-swarm__neural_status
+Tool: mcp__zen-swarm__neural_status
 Result: {
   "patterns": {
     "convergent": 0.92,
@@ -310,7 +310,7 @@ Agents automatically specialize based on file extensions:
 
 ### 2. By Task Type
 \`\`\`
-Tool: mcp__ruv-swarm__agent_spawn
+Tool: mcp__zen-swarm__agent_spawn
 Parameters: {
   "type": "coder",
   "capabilities": ["react", "typescript", "testing"]
@@ -327,7 +327,7 @@ The system trains through:
 ### 4. Specialization Benefits
 \`\`\`
 # Check agent specializations
-Tool: mcp__ruv-swarm__agent_list
+Tool: mcp__zen-swarm__agent_list
 Parameters: {"filter": "active"}
 
 Result shows expertise levels:
@@ -387,7 +387,7 @@ Already enabled in settings.json:
 {
   "hooks": [{
     "matcher": "^Task$",
-    "command": "npx ruv-swarm hook pre-task --auto-spawn-agents"
+    "command": "npx zen-swarm hook pre-task --auto-spawn-agents"
   }]
 }
 \`\`\`
@@ -452,7 +452,7 @@ Each recovery improves future prevention:
 {
   "PostToolUse": [{
     "matcher": "^Bash$",
-    "command": "npx ruv-swarm hook post-bash --exit-code '\${tool.result.exitCode}' --auto-recover"
+    "command": "npx zen-swarm hook post-bash --exit-code '\${tool.result.exitCode}' --auto-recover"
   }]
 }
 \`\`\`
@@ -487,7 +487,7 @@ At session end, automatically saves:
 claude "Continue where we left off"
 
 # Or manually restore specific session
-npx ruv-swarm hook session-restore --session-id "sess-123"
+npx zen-swarm hook session-restore --session-id "sess-123"
 \`\`\`
 
 ### 3. Memory Types
@@ -513,10 +513,10 @@ npx ruv-swarm hook session-restore --session-id "sess-123"
 ### 4. Privacy & Control
 \`\`\`bash
 # View stored memory
-ls .ruv-swarm/
+ls .zen-swarm/
 
 # Clear specific memory
-rm .ruv-swarm/session-*.json
+rm .zen-swarm/session-*.json
 
 # Disable memory
 export RUV_SWARM_MEMORY_PERSIST=false

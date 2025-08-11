@@ -8,7 +8,7 @@ export default [
   {
     input: 'src/index.js',
     output: {
-      file: 'dist/ruv-swarm.browser.js',
+      file: 'dist/zen-swarm.browser.js',
       format: 'es',
       sourcemap: true
     },
@@ -31,7 +31,7 @@ export default [
   {
     input: 'src/index.js',
     output: {
-      file: 'dist/ruv-swarm.node.js',
+      file: 'dist/zen-swarm.node.js',
       format: 'cjs',
       sourcemap: true
     },
@@ -51,7 +51,7 @@ export default [
   {
     input: 'src/index.js',
     output: {
-      file: 'dist/ruv-swarm.umd.js',
+      file: 'dist/zen-swarm.umd.js',
       format: 'umd',
       name: 'RuvSwarm',
       sourcemap: true

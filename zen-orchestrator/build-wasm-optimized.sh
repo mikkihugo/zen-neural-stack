@@ -1,5 +1,5 @@
 #!/bin/bash
-# Optimized WASM build script for ruv-swarm using wasm-pack
+# Optimized WASM build script for zen-swarm using wasm-pack
 # Achieves < 500ms load, < 100ms spawn, < 50MB for 10 agents
 
 set -e
@@ -7,10 +7,10 @@ set -e
 echo "🚀 Building optimized WASM binary with wasm-pack..."
 
 # Clean previous builds
-rm -rf crates/ruv-swarm-wasm/pkg
+rm -rf crates/zen-swarm-wasm/pkg
 
 # Build with wasm-pack for better bindings generation
-cd crates/ruv-swarm-wasm
+cd crates/zen-swarm-wasm
 RUSTFLAGS="-C opt-level=z -C embed-bitcode=yes -C codegen-units=1" \
   wasm-pack build --target web --release --no-default-features --features default
 
@@ -24,7 +24,7 @@ cat > pkg/test.html << 'EOF'
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ruv-swarm WASM Performance Test</title>
+    <title>zen-swarm WASM Performance Test</title>
     <style>
         body { font-family: monospace; padding: 20px; }
         .pass { color: green; }
@@ -32,7 +32,7 @@ cat > pkg/test.html << 'EOF'
     </style>
 </head>
 <body>
-    <h1>ruv-swarm WASM Performance Test</h1>
+    <h1>zen-swarm WASM Performance Test</h1>
     <div id="results"></div>
     
     <script type="module">
@@ -95,5 +95,5 @@ cd ../..
 
 echo "✅ Build complete!"
 echo "📊 WASM size: $((WASM_SIZE / 1024))KB"
-echo "🧪 Test: cd crates/ruv-swarm-wasm/pkg && python3 -m http.server 8000"
+echo "🧪 Test: cd crates/zen-swarm-wasm/pkg && python3 -m http.server 8000"
 echo "   Then open http://localhost:8000/test.html"

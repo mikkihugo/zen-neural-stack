@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build script for ruv-swarm WASM module
+ * Build script for zen-swarm WASM module
  */
 
 import fs from 'fs/promises';
@@ -12,10 +12,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function build() {
-  console.log('Building ruv-swarm WASM module...\n');
+  console.log('Building zen-swarm WASM module...\n');
 
   const npmDir = path.join(__dirname, '..');
-  const crateDir = path.join(npmDir, '..', 'crates', 'ruv-swarm-wasm');
+  const crateDir = path.join(npmDir, '..', 'crates', 'zen-swarm-wasm');
   const wasmDir = path.join(npmDir, 'wasm');
   const wasmSIMDDir = path.join(npmDir, 'wasm-simd');
 

@@ -12,7 +12,8 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 #[cfg(feature = "plugin-system")]
-use libloading::{Library, Symbol};
+use libloading::Library;
+use std::sync::Arc;
 
 /// Plugin descriptor containing metadata and model information
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

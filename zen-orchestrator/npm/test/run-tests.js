@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Comprehensive test runner for ruv-swarm
+ * Comprehensive test runner for zen-swarm
  */
 
 import { spawn } from 'child_process';
@@ -159,7 +159,7 @@ async function main() {
   const runPerformance = args.includes('--performance'); // Only run on demand
   const runExisting = runAll || args.includes('--existing');
 
-  logSection('ruv-swarm Test Suite');
+  logSection('zen-swarm Test Suite');
   log('Starting comprehensive test run...', 'cyan');
 
   const results = {};

@@ -1,5 +1,5 @@
 /**
- * Performance Analysis CLI for ruv-swarm
+ * Performance Analysis CLI for zen-swarm
  * Provides performance analysis, optimization, and suggestions
  */
 
@@ -392,7 +392,7 @@ class PerformanceCLI {
           priority: 'HIGH',
           issue: 'High memory utilization',
           suggestion: 'Reduce agent count or enable memory optimization',
-          command: 'ruv-swarm performance optimize --target memory',
+          command: 'zen-swarm performance optimize --target memory',
         });
       } else if (memUtilization < 30) {
         suggestions.push({
@@ -400,7 +400,7 @@ class PerformanceCLI {
           priority: 'MEDIUM',
           issue: 'Low memory utilization',
           suggestion: 'Increase parallelism for better resource usage',
-          command: 'ruv-swarm performance optimize --target speed',
+          command: 'zen-swarm performance optimize --target speed',
         });
       }
 
@@ -410,7 +410,7 @@ class PerformanceCLI {
         priority: 'MEDIUM',
         issue: 'Cognitive patterns could be improved',
         suggestion: 'Train neural networks with recent patterns',
-        command: 'ruv-swarm neural train --model attention --iterations 50',
+        command: 'zen-swarm neural train --model attention --iterations 50',
       });
 
       suggestions.push({
@@ -418,7 +418,7 @@ class PerformanceCLI {
         priority: 'LOW',
         issue: 'Performance baseline not established',
         suggestion: 'Run comprehensive benchmarks for baseline',
-        command: 'ruv-swarm benchmark run --test comprehensive --iterations 20',
+        command: 'zen-swarm benchmark run --test comprehensive --iterations 20',
       });
 
       suggestions.push({
@@ -426,7 +426,7 @@ class PerformanceCLI {
         priority: 'MEDIUM',
         issue: 'Agent coordination could be optimized',
         suggestion: 'Analyze and optimize swarm topology',
-        command: 'ruv-swarm performance analyze --detailed',
+        command: 'zen-swarm performance analyze --detailed',
       });
 
       // Display suggestions
@@ -457,7 +457,7 @@ class PerformanceCLI {
 
       if (totalShown === 0) {
         console.log('✅ No optimization suggestions at this time');
-        console.log('💡 Your ruv-swarm instance appears to be well optimized!');
+        console.log('💡 Your zen-swarm instance appears to be well optimized!');
       } else {
         console.log(`📊 ${totalShown} optimization opportunities identified`);
         console.log('💡 Start with HIGH priority items for maximum impact');
@@ -465,16 +465,16 @@ class PerformanceCLI {
 
       console.log('\n🔧 Quick optimization commands:');
       console.log(
-        '   ruv-swarm performance optimize --target speed    # Optimize for speed',
+        '   zen-swarm performance optimize --target speed    # Optimize for speed',
       );
       console.log(
-        '   ruv-swarm performance optimize --target memory   # Optimize for memory',
+        '   zen-swarm performance optimize --target memory   # Optimize for memory',
       );
       console.log(
-        '   ruv-swarm performance optimize --target tokens   # Optimize for efficiency',
+        '   zen-swarm performance optimize --target tokens   # Optimize for efficiency',
       );
       console.log(
-        '   ruv-swarm benchmark run --iterations 10          # Run performance tests',
+        '   zen-swarm benchmark run --iterations 10          # Run performance tests',
       );
     } catch (error) {
       console.error('❌ Failed to generate suggestions:', error.message);

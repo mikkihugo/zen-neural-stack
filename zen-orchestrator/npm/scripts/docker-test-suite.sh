@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Comprehensive Docker Test Suite for ruv-swarm v1.0.6
+# Comprehensive Docker Test Suite for zen-swarm v1.0.6
 # Tests all functionality across different Node.js versions
 
 set -e
 
 echo "================================================"
-echo "ruv-swarm v1.0.6 Docker Test Suite"
+echo "zen-swarm v1.0.6 Docker Test Suite"
 echo "================================================"
 echo "Node Version: $(node --version)"
 echo "NPM Version: $(npm --version)"

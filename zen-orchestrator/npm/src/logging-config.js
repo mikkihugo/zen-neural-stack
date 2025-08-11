@@ -1,5 +1,5 @@
 /**
- * Logging Configuration for ruv-swarm
+ * Logging Configuration for zen-swarm
  * Provides centralized logging configuration and utilities
  */
 

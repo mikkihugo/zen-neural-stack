@@ -29,7 +29,7 @@ chrono = { version = "0.4", features = ["std"] }
 
 # Statistical and mathematical operations
 statrs = "0.16"
-ndarray = { version = "0.15", features = ["rayon"] }
+ndarray = { version = "0.15", features = ["rayon", "serde"] }
 ndarray-stats = "0.5"
 
 # Serialization support
@@ -48,11 +48,11 @@ rand_distr = "0.4"
 
 # Data format support
 csv = "1.2"
-arrow = { version = "52.0", features = ["csv", "json"] }
-polars = { version = "0.33", features = ["lazy", "temporal", "csv", "json", "parquet"] }
+# arrow = { version = "52.0", features = ["csv", "json"] }  # Temporarily removed: conflicts with polars arrow
+polars = { version = "0.45.1", features = ["lazy", "temporal", "csv", "json", "parquet"] }
 
-# Interpolation and numerical methods
-interpolate = "0.2"
+# Interpolation and numerical methods  
+# interpolate = "0.2"  # Removed: requires nightly features not available on stable
 splines = "4.2"
 
 # FFT for Fourier features

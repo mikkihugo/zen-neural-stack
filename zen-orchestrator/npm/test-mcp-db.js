@@ -12,7 +12,7 @@ async function testMCPDatabaseUpdates() {
   console.log('🧪 Testing MCP Database Updates\n');
 
   // Get initial DB state
-  const dbPath = path.join(__dirname, 'data', 'ruv-swarm.db');
+  const dbPath = path.join(__dirname, 'data', 'zen-swarm.db');
   const db = new sqlite3.Database(dbPath);
 
   const getCount = (table) =>
@@ -38,7 +38,7 @@ async function testMCPDatabaseUpdates() {
   console.log('\n🚀 Starting MCP server...');
   const serverProcess = spawn(
     'node',
-    ['bin/ruv-swarm-clean.js', 'mcp', 'start'],
+    ['bin/zen-swarm-clean.js', 'mcp', 'start'],
     {
       stdio: ['pipe', 'pipe', 'pipe'],
     },
@@ -47,7 +47,7 @@ async function testMCPDatabaseUpdates() {
   // Create MCP client
   const transport = new StdioClientTransport({
     command: 'node',
-    args: ['bin/ruv-swarm-clean.js', 'mcp', 'start'],
+    args: ['bin/zen-swarm-clean.js', 'mcp', 'start'],
   });
 
   const client = new Client(
@@ -151,7 +151,7 @@ async function testMCPDatabaseUpdates() {
 async function directDatabaseTest() {
   console.log('\n\n🔧 Direct Database Operation Test\n');
 
-  const dbPath = path.join(__dirname, 'data', 'ruv-swarm.db');
+  const dbPath = path.join(__dirname, 'data', 'zen-swarm.db');
   const { DatabaseManager } = require('./src/database');
   const dbManager = new DatabaseManager(dbPath);
 

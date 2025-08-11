@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Comprehensive Test Orchestrator for ruv-swarm
+ * Comprehensive Test Orchestrator for zen-swarm
  * Master test suite that orchestrates all testing components
  */
 
@@ -596,7 +596,7 @@ class ComprehensiveTestOrchestrator {
 
     // Save comprehensive report
     const reportPath =
-      '/workspaces/ruv-FANN/ruv-swarm/npm/test/comprehensive-test-report.json';
+      '/workspaces/ruv-FANN/zen-swarm/npm/test/comprehensive-test-report.json';
     await fs.writeFile(
       reportPath,
       JSON.stringify(this.orchestrationResults, null, 2),
@@ -714,7 +714,7 @@ class ComprehensiveTestOrchestrator {
   }
 
   async generateExecutiveSummary() {
-    const summary = `# ruv-swarm Test Orchestration Executive Summary
+    const summary = `# zen-swarm Test Orchestration Executive Summary
 
 ## Overview
 - **Test Date**: ${new Date(this.orchestrationResults.timestamp).toLocaleDateString()}
@@ -748,7 +748,7 @@ ${
 `;
 
     await fs.writeFile(
-      '/workspaces/ruv-FANN/ruv-swarm/npm/test/executive-summary.md',
+      '/workspaces/ruv-FANN/zen-swarm/npm/test/executive-summary.md',
       summary,
     );
   }

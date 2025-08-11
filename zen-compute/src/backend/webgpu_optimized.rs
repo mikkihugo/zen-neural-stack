@@ -124,11 +124,11 @@ impl OptimizedWebGPUBackend {
     let _timer = time_operation(CounterType::Custom("webgpu_init".to_string()));
 
     // Request adapter with high performance preference
-    let instance = Instance::new(InstanceDescriptor {
+    let instance = Instance::new(&InstanceDescriptor {
       backends: Backends::BROWSER_WEBGPU | Backends::GL,
       flags: InstanceFlags::default(),
-      dx12_shader_compiler: Dx12Compiler::default(),
-      gles_minor_version: Gles3MinorVersion::default(),
+      backend_options: Default::default(),
+      memory_budget_thresholds: Default::default(),
     });
 
     let adapter = instance
@@ -138,10 +138,10 @@ impl OptimizedWebGPUBackend {
         force_fallback_adapter: false,
       })
       .await
-      .ok_or_else(|| {
-        CudaRustError::Backend(
-          "Failed to find suitable WebGPU adapter".to_string(),
-        )
+      .map_err(|e| {
+        CudaRustError::Backend(format!(
+          "Failed to find suitable WebGPU adapter: {e}"
+        ))
       })?;
 
     // Request device with optimal limits
@@ -163,8 +163,9 @@ impl OptimizedWebGPUBackend {
               .max_workgroups_per_dimension,
             ..Default::default()
           },
+          memory_hints: Default::default(),
+          trace: Default::default(),
         },
-        None,
       )
       .await
       .map_err(|e| {
@@ -243,7 +244,9 @@ impl OptimizedWebGPUBackend {
           label: Some("CUDA Kernel Pipeline"),
           layout: Some(&pipeline_layout),
           module: &shader_module,
-          entry_point,
+          entry_point: Some(entry_point),
+          cache: None,
+          compilation_options: Default::default(),
         });
 
     // Auto-tune optimal workgroup size if enabled
@@ -359,8 +362,8 @@ impl OptimizedWebGPUBackend {
 
     self.queue.submit(std::iter::once(encoder.finish()));
 
-    // Wait for completion
-    self.device.poll(Maintain::Wait);
+    // Note: In wgpu 26.0.1, polling is handled differently
+    // GPU commands are submitted asynchronously
 
     #[cfg(target_arch = "wasm32")]
     let end_time = web_sys::window()

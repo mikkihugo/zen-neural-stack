@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * MCP Server Validation Test for ruv-swarm v1.0.6
+ * MCP Server Validation Test for zen-swarm v1.0.6
  * Tests Model Context Protocol server functionality
  */
 
@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 console.log('================================================');
-console.log('ruv-swarm v1.0.6 MCP Server Validation');
+console.log('zen-swarm v1.0.6 MCP Server Validation');
 console.log('================================================');
 console.log(`Date: ${new Date().toISOString()}`);
 console.log(`Node Version: ${process.version}`);
@@ -63,7 +63,7 @@ async function startMCPServer() {
   console.log('=====================');
 
   return new Promise((resolve, reject) => {
-    mcpProcess = spawn('node', ['bin/ruv-swarm-clean.js', 'mcp', 'start'], {
+    mcpProcess = spawn('node', ['bin/zen-swarm-clean.js', 'mcp', 'start'], {
       env: { ...process.env, MCP_TEST_MODE: 'true' },
     });
 
@@ -191,7 +191,7 @@ async function testMethod(method, params) {
     const request = {
       jsonrpc: '2.0',
       id: Date.now(),
-      method: `ruv-swarm/${method}`,
+      method: `zen-swarm/${method}`,
       params,
     };
 

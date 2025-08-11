@@ -1,19 +1,19 @@
 /**
- * Environment variable template for ruv-swarm projects
+ * Environment variable template for zen-swarm projects
  */
 
-const envTemplate = `# ruv-swarm Configuration
+const envTemplate = `# zen-swarm Configuration
 NODE_ENV=development
 
 # Git Integration
 RUV_SWARM_AUTO_COMMIT=true
 RUV_SWARM_AUTO_PUSH=false
 RUV_SWARM_COMMIT_PREFIX=feat
-RUV_SWARM_GIT_AUTHOR=ruv-swarm
+RUV_SWARM_GIT_AUTHOR=zen-swarm
 
 # Agent Reports
 RUV_SWARM_GENERATE_REPORTS=true
-RUV_SWARM_REPORT_DIR=.ruv-swarm/agent-reports
+RUV_SWARM_REPORT_DIR=.zen-swarm/agent-reports
 
 # Memory & Learning
 RUV_SWARM_MEMORY_PERSIST=true

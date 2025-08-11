@@ -164,7 +164,7 @@ class ClaudeFlowEnhanced {
   }
 
   /**
-   * Initialize Claude Code Flow with ruv-swarm integration
+   * Initialize Claude Code Flow with zen-swarm integration
    */
   async initialize(options = {}) {
     console.log('🚀 Initializing Claude Code Flow Enhanced...');
@@ -177,7 +177,7 @@ class ClaudeFlowEnhanced {
     } = options;
 
     try {
-      // Initialize ruv-swarm with SIMD optimization
+      // Initialize zen-swarm with SIMD optimization
       this.ruvSwarm = await RuvSwarm.initialize({
         loadingStrategy: 'progressive',
         useSIMD: enableSIMD,

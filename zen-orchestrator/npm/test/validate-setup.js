@@ -104,7 +104,7 @@ const mcpServerPath = path.join(
   '..',
   '..',
   'crates',
-  'ruv-swarm-mcp',
+  'zen-swarm-mcp',
   'Cargo.toml',
 );
 check(

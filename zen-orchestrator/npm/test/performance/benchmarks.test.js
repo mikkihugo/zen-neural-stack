@@ -1,5 +1,5 @@
 /**
- * Performance benchmarks for ruv-swarm
+ * Performance benchmarks for zen-swarm
  */
 
 import { RuvSwarm } from '../../src/index-enhanced';

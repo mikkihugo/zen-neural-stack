@@ -3,7 +3,8 @@
  * Tests the integration of ruv-FANN neural network capabilities
  */
 
-import { NeuralAgent,
+import {
+  NeuralAgent,
   NeuralAgentFactory,
   NeuralNetwork,
   COGNITIVE_PATTERNS,
@@ -21,7 +22,7 @@ class MockAgent {
 
   async execute(task) {
     // Simulate task execution
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     this.tasksCompleted++;
 
     return {
@@ -84,17 +85,27 @@ describe('Neural Agent Tests', () => {
 
   test('Neural Agent Creation', () => {
     const baseAgent = new MockAgent({ id: 'test-1', type: 'researcher' });
-    const neuralAgent = NeuralAgentFactory.createNeuralAgent(baseAgent, 'researcher');
+    const neuralAgent = NeuralAgentFactory.createNeuralAgent(
+      baseAgent,
+      'researcher',
+    );
 
     expect(neuralAgent).toBeInstanceOf(NeuralAgent);
     expect(neuralAgent.agentType).toBe('researcher');
-    expect(neuralAgent.cognitiveProfile.primary).toBe(COGNITIVE_PATTERNS.DIVERGENT);
-    expect(neuralAgent.cognitiveProfile.secondary).toBe(COGNITIVE_PATTERNS.SYSTEMS);
+    expect(neuralAgent.cognitiveProfile.primary).toBe(
+      COGNITIVE_PATTERNS.DIVERGENT,
+    );
+    expect(neuralAgent.cognitiveProfile.secondary).toBe(
+      COGNITIVE_PATTERNS.SYSTEMS,
+    );
   });
 
-  test('Task Analysis', async() => {
+  test('Task Analysis', async () => {
     const baseAgent = new MockAgent({ id: 'test-2', type: 'coder' });
-    const neuralAgent = NeuralAgentFactory.createNeuralAgent(baseAgent, 'coder');
+    const neuralAgent = NeuralAgentFactory.createNeuralAgent(
+      baseAgent,
+      'coder',
+    );
 
     const task = {
       id: 'task-1',
@@ -113,9 +124,12 @@ describe('Neural Agent Tests', () => {
     expect(analysis.confidence).toBeLessThanOrEqual(1);
   });
 
-  test('Task Execution with Learning', async() => {
+  test('Task Execution with Learning', async () => {
     const baseAgent = new MockAgent({ id: 'test-3', type: 'analyst' });
-    const neuralAgent = NeuralAgentFactory.createNeuralAgent(baseAgent, 'analyst');
+    const neuralAgent = NeuralAgentFactory.createNeuralAgent(
+      baseAgent,
+      'analyst',
+    );
 
     const initialPerformance = { ...neuralAgent.performanceMetrics };
 
@@ -133,15 +147,29 @@ describe('Neural Agent Tests', () => {
     expect(neuralAgent.taskHistory.length).toBe(1);
 
     // Performance metrics should have been updated
-    expect(neuralAgent.performanceMetrics.accuracy).not.toBe(initialPerformance.accuracy);
+    expect(neuralAgent.performanceMetrics.accuracy).not.toBe(
+      initialPerformance.accuracy,
+    );
   });
 
-  test('Cognitive Patterns Application', async() => {
-    const agents = ['researcher', 'coder', 'analyst', 'optimizer', 'coordinator'];
+  test('Cognitive Patterns Application', async () => {
+    const agents = [
+      'researcher',
+      'coder',
+      'analyst',
+      'optimizer',
+      'coordinator',
+    ];
 
     for (const agentType of agents) {
-      const baseAgent = new MockAgent({ id: `test-${agentType}`, type: agentType });
-      const neuralAgent = NeuralAgentFactory.createNeuralAgent(baseAgent, agentType);
+      const baseAgent = new MockAgent({
+        id: `test-${agentType}`,
+        type: agentType,
+      });
+      const neuralAgent = NeuralAgentFactory.createNeuralAgent(
+        baseAgent,
+        agentType,
+      );
 
       const profile = AGENT_COGNITIVE_PROFILES[agentType];
       expect(neuralAgent.cognitiveProfile).toEqual(profile);
@@ -165,8 +193,14 @@ describe('Neural Agent Tests', () => {
   });
 
   test('Neural State Persistence', () => {
-    const baseAgent = new MockAgent({ id: 'test-persist', type: 'coordinator' });
-    const neuralAgent = NeuralAgentFactory.createNeuralAgent(baseAgent, 'coordinator');
+    const baseAgent = new MockAgent({
+      id: 'test-persist',
+      type: 'coordinator',
+    });
+    const neuralAgent = NeuralAgentFactory.createNeuralAgent(
+      baseAgent,
+      'coordinator',
+    );
 
     // Modify state
     neuralAgent.cognitiveState.fatigue = 0.7;
@@ -181,8 +215,14 @@ describe('Neural Agent Tests', () => {
     expect(savedState.neuralNetwork).toBeDefined();
 
     // Create new agent and load state
-    const newBaseAgent = new MockAgent({ id: 'test-persist-2', type: 'coordinator' });
-    const newNeuralAgent = NeuralAgentFactory.createNeuralAgent(newBaseAgent, 'coordinator');
+    const newBaseAgent = new MockAgent({
+      id: 'test-persist-2',
+      type: 'coordinator',
+    });
+    const newNeuralAgent = NeuralAgentFactory.createNeuralAgent(
+      newBaseAgent,
+      'coordinator',
+    );
 
     newNeuralAgent.loadNeuralState(savedState);
 
@@ -190,9 +230,12 @@ describe('Neural Agent Tests', () => {
     expect(newNeuralAgent.performanceMetrics.accuracy).toBe(0.85);
   });
 
-  test('Agent Rest and Recovery', async() => {
+  test('Agent Rest and Recovery', async () => {
     const baseAgent = new MockAgent({ id: 'test-rest', type: 'researcher' });
-    const neuralAgent = NeuralAgentFactory.createNeuralAgent(baseAgent, 'researcher');
+    const neuralAgent = NeuralAgentFactory.createNeuralAgent(
+      baseAgent,
+      'researcher',
+    );
 
     // Set high fatigue
     neuralAgent.cognitiveState.fatigue = 0.8;
@@ -204,9 +247,12 @@ describe('Neural Agent Tests', () => {
     expect(neuralAgent.cognitiveState.attention).toBeGreaterThan(0.4);
   });
 
-  test('Learning History Management', async() => {
+  test('Learning History Management', async () => {
     const baseAgent = new MockAgent({ id: 'test-history', type: 'coder' });
-    const neuralAgent = NeuralAgentFactory.createNeuralAgent(baseAgent, 'coder');
+    const neuralAgent = NeuralAgentFactory.createNeuralAgent(
+      baseAgent,
+      'coder',
+    );
 
     // Execute multiple tasks
     for (let i = 0; i < 5; i++) {
@@ -238,7 +284,7 @@ describe('Neural Agent Tests', () => {
 // Run tests if this file is executed directly
 // Direct execution block
 {
-  const runTests = async() => {
+  const runTests = async () => {
     console.log('Running Neural Agent Tests...\n');
 
     const tests = [

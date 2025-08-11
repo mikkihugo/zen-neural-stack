@@ -118,8 +118,16 @@ class VAEModel extends NeuralModel {
     }
 
     // Compute mean and log variance
-    const mu = this.linearTransform(h, this.encoder.muLayer.weight, this.encoder.muLayer.bias);
-    const logVar = this.linearTransform(h, this.encoder.logVarLayer.weight, this.encoder.logVarLayer.bias);
+    const mu = this.linearTransform(
+      h,
+      this.encoder.muLayer.weight,
+      this.encoder.muLayer.bias,
+    );
+    const logVar = this.linearTransform(
+      h,
+      this.encoder.logVarLayer.weight,
+      this.encoder.logVarLayer.bias,
+    );
 
     // Reparameterization trick
     const z = this.reparameterize(mu, logVar, training);
@@ -156,7 +164,8 @@ class VAEModel extends NeuralModel {
 
   sampleGaussian() {
     // Box-Muller transform for Gaussian sampling
-    let u = 0, v = 0;
+    let u = 0,
+      v = 0;
     while (u === 0) {
       u = Math.random();
     } // Converting [0,1) to (0,1)
@@ -212,29 +221,29 @@ class VAEModel extends NeuralModel {
 
   applyActivation(input) {
     switch (this.config.activation) {
-    case 'relu':
-      return this.relu(input);
-    case 'leaky_relu':
-      return this.leakyRelu(input);
-    case 'tanh':
-      return this.tanh(input);
-    case 'elu':
-      return this.elu(input);
-    default:
-      return this.relu(input);
+      case 'relu':
+        return this.relu(input);
+      case 'leaky_relu':
+        return this.leakyRelu(input);
+      case 'tanh':
+        return this.tanh(input);
+      case 'elu':
+        return this.elu(input);
+      default:
+        return this.relu(input);
     }
   }
 
   applyOutputActivation(input) {
     switch (this.config.outputActivation) {
-    case 'sigmoid':
-      return this.sigmoid(input);
-    case 'tanh':
-      return this.tanh(input);
-    case 'linear':
-      return input;
-    default:
-      return this.sigmoid(input);
+      case 'sigmoid':
+        return this.sigmoid(input);
+      case 'tanh':
+        return this.tanh(input);
+      case 'linear':
+        return input;
+      default:
+        return this.sigmoid(input);
     }
   }
 
@@ -265,8 +274,12 @@ class VAEModel extends NeuralModel {
       // Binary cross-entropy
       const epsilon = 1e-6;
       for (let i = 0; i < reconstruction.length; i++) {
-        const pred = Math.max(epsilon, Math.min(1 - epsilon, reconstruction[i]));
-        reconLoss -= target[i] * Math.log(pred) + (1 - target[i]) * Math.log(1 - pred);
+        const pred = Math.max(
+          epsilon,
+          Math.min(1 - epsilon, reconstruction[i]),
+        );
+        reconLoss -=
+          target[i] * Math.log(pred) + (1 - target[i]) * Math.log(1 - pred);
       }
     } else {
       // MSE
@@ -324,14 +337,18 @@ class VAEModel extends NeuralModel {
 
       // Process batches
       for (let i = 0; i < shuffled.length; i += batchSize) {
-        const batch = shuffled.slice(i, Math.min(i + batchSize, shuffled.length));
+        const batch = shuffled.slice(
+          i,
+          Math.min(i + batchSize, shuffled.length),
+        );
 
         // Forward pass
         const output = await this.forward(batch.inputs, true);
 
         // Calculate loss
         const losses = this.calculateLoss(output, batch.inputs); // Reconstruction target is input
-        const totalLoss = losses.reconstruction + klWeight * this.config.betaKL * losses.kl;
+        const totalLoss =
+          losses.reconstruction + klWeight * this.config.betaKL * losses.kl;
 
         epochReconLoss += losses.reconstruction;
         epochKLLoss += losses.kl;
@@ -352,7 +369,8 @@ class VAEModel extends NeuralModel {
         epoch: epoch + 1,
         trainReconLoss: avgReconLoss,
         trainKLLoss: avgKLLoss,
-        trainTotalLoss: avgReconLoss + klWeight * this.config.betaKL * avgKLLoss,
+        trainTotalLoss:
+          avgReconLoss + klWeight * this.config.betaKL * avgKLLoss,
         valReconLoss: valLosses.reconstruction,
         valKLLoss: valLosses.kl,
         valTotalLoss: valLosses.total,
@@ -361,8 +379,8 @@ class VAEModel extends NeuralModel {
 
       console.log(
         `Epoch ${epoch + 1}/${epochs} - ` +
-        `Recon Loss: ${avgReconLoss.toFixed(4)}, KL Loss: ${avgKLLoss.toFixed(4)} - ` +
-        `Val Recon: ${valLosses.reconstruction.toFixed(4)}, Val KL: ${valLosses.kl.toFixed(4)}`,
+          `Recon Loss: ${avgReconLoss.toFixed(4)}, KL Loss: ${avgKLLoss.toFixed(4)} - ` +
+          `Val Recon: ${valLosses.reconstruction.toFixed(4)}, Val KL: ${valLosses.kl.toFixed(4)}`,
       );
     }
 
@@ -474,8 +492,11 @@ class VAEModel extends NeuralModel {
     for (const layer of this.encoder.layers) {
       count += layer.weight.length + layer.bias.length;
     }
-    count += this.encoder.muLayer.weight.length + this.encoder.muLayer.bias.length;
-    count += this.encoder.logVarLayer.weight.length + this.encoder.logVarLayer.bias.length;
+    count +=
+      this.encoder.muLayer.weight.length + this.encoder.muLayer.bias.length;
+    count +=
+      this.encoder.logVarLayer.weight.length +
+      this.encoder.logVarLayer.bias.length;
 
     // Decoder parameters
     for (const layer of this.decoder.layers) {

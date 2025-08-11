@@ -2,7 +2,8 @@
  * Unit tests for Neural Agent module
  */
 
-import { NeuralAgent,
+import {
+  NeuralAgent,
   NeuralAgentFactory,
   NeuralNetwork,
   COGNITIVE_PATTERNS,
@@ -66,7 +67,10 @@ describe('NeuralNetwork Tests', () => {
 
   describe('Activation Functions', () => {
     it('should compute sigmoid activation', () => {
-      const nn = new NeuralNetwork({ ...config, activationFunction: 'sigmoid' });
+      const nn = new NeuralNetwork({
+        ...config,
+        activationFunction: 'sigmoid',
+      });
       const result = nn._activation(0);
       assert.strictEqual(result, 0.5);
 
@@ -109,7 +113,7 @@ describe('NeuralNetwork Tests', () => {
       const input = [1, 0, 0, 1];
       const result = network.forward(input);
       assert.strictEqual(result.output.length, 2);
-      result.output.forEach(val => {
+      result.output.forEach((val) => {
         assert(val >= 0 && val <= 1); // Sigmoid outputs
       });
     });
@@ -207,7 +211,7 @@ describe('NeuralAgent Tests', () => {
   });
 
   describe('Task Analysis', () => {
-    it('should analyze task', async() => {
+    it('should analyze task', async () => {
       const task = {
         description: 'Analyze the data and create a report',
         priority: 'high',
@@ -224,7 +228,7 @@ describe('NeuralAgent Tests', () => {
       assert('confidence' in analysis);
     });
 
-    it('should apply cognitive pattern to analysis', async() => {
+    it('should apply cognitive pattern to analysis', async () => {
       const task = { description: 'Create innovative solution' };
       const analysis = await neuralAgent.analyzeTask(task);
 
@@ -234,7 +238,7 @@ describe('NeuralAgent Tests', () => {
   });
 
   describe('Task Execution', () => {
-    it('should execute task with neural enhancement', async() => {
+    it('should execute task with neural enhancement', async () => {
       const task = {
         id: 'task-123',
         description: 'Research new algorithms',
@@ -264,7 +268,7 @@ describe('NeuralAgent Tests', () => {
       neuralAgent.executeTask(task);
     });
 
-    it('should update cognitive state after execution', async() => {
+    it('should update cognitive state after execution', async () => {
       const task = {
         description: 'Complex research task',
         priority: 'high',
@@ -277,7 +281,7 @@ describe('NeuralAgent Tests', () => {
       assert(neuralAgent.cognitiveState.fatigue > initialFatigue);
     });
 
-    it('should track learning history', async() => {
+    it('should track learning history', async () => {
       const task = {
         id: 'task-123',
         description: 'Learn from this task',
@@ -300,7 +304,7 @@ describe('NeuralAgent Tests', () => {
       const vector = neuralAgent._taskToVector(task);
       assert(Array.isArray(vector));
       assert.strictEqual(vector.length, neuralAgent.neuralNetwork.layers[0]);
-      vector.forEach(val => {
+      vector.forEach((val) => {
         assert(typeof val === 'number');
       });
     });
@@ -316,10 +320,17 @@ describe('NeuralAgent Tests', () => {
   describe('Performance Calculation', () => {
     it('should calculate performance metrics', () => {
       const task = { id: 'task-123' };
-      const result = { success: true, metrics: { linesOfCode: 50, testsPass: 0.9 } };
+      const result = {
+        success: true,
+        metrics: { linesOfCode: 50, testsPass: 0.9 },
+      };
       const executionTime = 30000; // 30 seconds
 
-      const performance = neuralAgent._calculatePerformance(task, result, executionTime);
+      const performance = neuralAgent._calculatePerformance(
+        task,
+        result,
+        executionTime,
+      );
       assert(performance);
       assert(performance.speed > 0 && performance.speed <= 1);
       assert.strictEqual(performance.accuracy, 0.9);
@@ -331,7 +342,11 @@ describe('NeuralAgent Tests', () => {
       const result = { success: false };
       const executionTime = 5000;
 
-      const performance = neuralAgent._calculatePerformance(task, result, executionTime);
+      const performance = neuralAgent._calculatePerformance(
+        task,
+        result,
+        executionTime,
+      );
       assert.strictEqual(performance.accuracy, 0.2);
     });
   });
@@ -356,7 +371,10 @@ describe('NeuralAgent Tests', () => {
     });
 
     it('should find similar tasks', () => {
-      const newTask = { description: 'Research deep learning', priority: 'high' };
+      const newTask = {
+        description: 'Research deep learning',
+        priority: 'high',
+      };
       const similar = neuralAgent._findSimilarTasks(newTask);
 
       assert(similar.length > 0);
@@ -416,7 +434,7 @@ describe('NeuralAgent Tests', () => {
   });
 
   describe('Rest Functionality', () => {
-    it('should reduce fatigue when resting', async() => {
+    it('should reduce fatigue when resting', async () => {
       // Increase fatigue first
       neuralAgent.cognitiveState.fatigue = 0.8;
       neuralAgent.cognitiveState.attention = 0.4;
@@ -456,15 +474,33 @@ describe('NeuralAgent Tests', () => {
     it('should load neural state', () => {
       const savedState = {
         neuralNetwork: neuralAgent.neuralNetwork.save(),
-        cognitiveState: { attention: 0.8, fatigue: 0.2, confidence: 0.7, exploration: 0.3 },
-        performanceMetrics: { accuracy: 0.9, speed: 0.8, creativity: 0.7, efficiency: 0.85 },
-        learningHistory: [{ timestamp: Date.now(), task: 'old-task', performance: 0.75 }],
+        cognitiveState: {
+          attention: 0.8,
+          fatigue: 0.2,
+          confidence: 0.7,
+          exploration: 0.3,
+        },
+        performanceMetrics: {
+          accuracy: 0.9,
+          speed: 0.8,
+          creativity: 0.7,
+          efficiency: 0.85,
+        },
+        learningHistory: [
+          { timestamp: Date.now(), task: 'old-task', performance: 0.75 },
+        ],
         taskHistory: [],
       };
 
       neuralAgent.loadNeuralState(savedState);
-      assert.deepStrictEqual(neuralAgent.cognitiveState, savedState.cognitiveState);
-      assert.deepStrictEqual(neuralAgent.performanceMetrics, savedState.performanceMetrics);
+      assert.deepStrictEqual(
+        neuralAgent.cognitiveState,
+        savedState.cognitiveState,
+      );
+      assert.deepStrictEqual(
+        neuralAgent.performanceMetrics,
+        savedState.performanceMetrics,
+      );
       assert.strictEqual(neuralAgent.learningHistory.length, 1);
     });
   });
@@ -515,7 +551,10 @@ describe('NeuralAgent Tests', () => {
 describe('NeuralAgentFactory Tests', () => {
   it('should create neural agent for valid agent type', () => {
     const mockAgent = new MockAgent();
-    const neuralAgent = NeuralAgentFactory.createNeuralAgent(mockAgent, 'researcher');
+    const neuralAgent = NeuralAgentFactory.createNeuralAgent(
+      mockAgent,
+      'researcher',
+    );
     assert(neuralAgent instanceof NeuralAgent);
     assert.strictEqual(neuralAgent.agentType, 'researcher');
   });
@@ -557,7 +596,7 @@ describe('Cognitive Profiles Tests', () => {
 
   it('should have valid cognitive patterns', () => {
     const validPatterns = Object.values(COGNITIVE_PATTERNS);
-    Object.values(AGENT_COGNITIVE_PROFILES).forEach(profile => {
+    Object.values(AGENT_COGNITIVE_PROFILES).forEach((profile) => {
       assert(validPatterns.includes(profile.primary));
       assert(validPatterns.includes(profile.secondary));
     });

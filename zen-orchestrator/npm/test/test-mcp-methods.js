@@ -30,7 +30,11 @@ async function runTests() {
       strategy: 'balanced',
     });
     console.log(`   Swarm ID: ${swarmResult.id}`);
-    console.log(`   Features: ${Object.keys(swarmResult.features).filter(f => swarmResult.features[f]).join(', ')}`);
+    console.log(
+      `   Features: ${Object.keys(swarmResult.features)
+        .filter((f) => swarmResult.features[f])
+        .join(', ')}`,
+    );
     testsPassed++;
     console.log('   ✅ PASSED\n');
 
@@ -45,7 +49,9 @@ async function runTests() {
         swarmId: swarmResult.id,
       });
       agents.push(agent.agent);
-      console.log(`   Agent ${i + 1}: ${agent.agent.name} (${agent.agent.type})`);
+      console.log(
+        `   Agent ${i + 1}: ${agent.agent.name} (${agent.agent.type})`,
+      );
     }
     testsPassed++;
     console.log('   ✅ PASSED\n');
@@ -59,7 +65,9 @@ async function runTests() {
         metricType: 'all',
       });
       console.log(`   Total agents: ${metrics.total_agents}`);
-      console.log(`   Average performance: ${(metrics.summary.avg_performance * 100).toFixed(1)}%`);
+      console.log(
+        `   Average performance: ${(metrics.summary.avg_performance * 100).toFixed(1)}%`,
+      );
       console.log(`   Active agents: ${metrics.summary.active_agents}`);
 
       // Test specific agent metrics
@@ -67,7 +75,9 @@ async function runTests() {
         agentId: agents[0].id,
         metricType: 'performance',
       });
-      console.log(`   Agent ${agents[0].name} performance: ${(agentMetrics.agents[0].performance.accuracy_score * 100).toFixed(1)}%`);
+      console.log(
+        `   Agent ${agents[0].name} performance: ${(agentMetrics.agents[0].performance.accuracy_score * 100).toFixed(1)}%`,
+      );
 
       testsPassed++;
       console.log('   ✅ PASSED\n');
@@ -86,9 +96,15 @@ async function runTests() {
         includeMetrics: true,
       });
       console.log(`   Monitoring session: ${monitoring.monitoring_session_id}`);
-      console.log(`   Health score: ${(monitoring.swarms[0].health_score * 100).toFixed(1)}%`);
-      console.log(`   CPU usage: ${monitoring.swarms[0].resource_utilization.cpu_usage_percent.toFixed(1)}%`);
-      console.log(`   Memory usage: ${monitoring.swarms[0].resource_utilization.memory_usage_mb.toFixed(1)}MB`);
+      console.log(
+        `   Health score: ${(monitoring.swarms[0].health_score * 100).toFixed(1)}%`,
+      );
+      console.log(
+        `   CPU usage: ${monitoring.swarms[0].resource_utilization.cpu_usage_percent.toFixed(1)}%`,
+      );
+      console.log(
+        `   Memory usage: ${monitoring.swarms[0].resource_utilization.memory_usage_mb.toFixed(1)}MB`,
+      );
 
       testsPassed++;
       console.log('   ✅ PASSED\n');
@@ -107,7 +123,9 @@ async function runTests() {
         modelType: 'feedforward',
       });
       console.log(`   Training complete: ${neuralResult.training_complete}`);
-      console.log(`   Final accuracy: ${(neuralResult.final_accuracy * 100).toFixed(1)}%`);
+      console.log(
+        `   Final accuracy: ${(neuralResult.final_accuracy * 100).toFixed(1)}%`,
+      );
       console.log(`   Final loss: ${neuralResult.final_loss.toFixed(4)}`);
       console.log(`   Training time: ${neuralResult.training_time_ms}ms`);
       console.log(`   Neural network ID: ${neuralResult.neural_network_id}`);
@@ -135,7 +153,10 @@ async function runTests() {
       // Simulate task completion by updating database
       mcpTools.persistence.updateTask(taskResult.taskId, {
         status: 'completed',
-        result: JSON.stringify({ output: 'Task completed successfully', data: [1, 2, 3, 4, 5] }),
+        result: JSON.stringify({
+          output: 'Task completed successfully',
+          data: [1, 2, 3, 4, 5],
+        }),
         execution_time_ms: 1500,
         completed_at: new Date().toISOString(),
       });
@@ -155,8 +176,12 @@ async function runTests() {
         format: 'detailed',
         includeAgentResults: true,
       });
-      console.log(`   Detailed results available: ${Boolean(detailedResults.final_result)}`);
-      console.log(`   Agents involved: ${detailedResults.execution_summary.agents_involved}`);
+      console.log(
+        `   Detailed results available: ${Boolean(detailedResults.final_result)}`,
+      );
+      console.log(
+        `   Agents involved: ${detailedResults.execution_summary.agents_involved}`,
+      );
 
       testsPassed++;
       console.log('   ✅ PASSED\n');
@@ -172,7 +197,9 @@ async function runTests() {
         taskId: 'invalid-task-id-12345',
         format: 'summary',
       });
-      console.log('   ❌ FAILED: Should have thrown error for invalid task ID\n');
+      console.log(
+        '   ❌ FAILED: Should have thrown error for invalid task ID\n',
+      );
     } catch (error) {
       if (error.message.includes('Task not found')) {
         console.log(`   Expected error caught: ${error.message}`);
@@ -191,7 +218,9 @@ async function runTests() {
         // Missing agentId
         iterations: 10,
       });
-      console.log('   ❌ FAILED: Should have thrown error for missing agentId\n');
+      console.log(
+        '   ❌ FAILED: Should have thrown error for missing agentId\n',
+      );
     } catch (error) {
       if (error.message.includes('agentId is required')) {
         console.log(`   Expected error caught: ${error.message}`);
@@ -207,14 +236,17 @@ async function runTests() {
     console.log(`   Total tests: ${testsTotal}`);
     console.log(`   Passed: ${testsPassed}`);
     console.log(`   Failed: ${testsTotal - testsPassed}`);
-    console.log(`   Success rate: ${((testsPassed / testsTotal) * 100).toFixed(1)}%`);
+    console.log(
+      `   Success rate: ${((testsPassed / testsTotal) * 100).toFixed(1)}%`,
+    );
 
     if (testsPassed === testsTotal) {
       console.log('\n🎉 All tests passed! MCP methods are working correctly.');
     } else {
-      console.log(`\n⚠️  ${testsTotal - testsPassed} test(s) failed. Please review the implementation.`);
+      console.log(
+        `\n⚠️  ${testsTotal - testsPassed} test(s) failed. Please review the implementation.`,
+      );
     }
-
   } catch (error) {
     console.error('💥 Fatal error during testing:', error.message);
     console.error('Stack trace:', error.stack);
@@ -224,7 +256,7 @@ async function runTests() {
 
 // Run tests if this script is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runTests().catch(error => {
+  runTests().catch((error) => {
     console.error('💥 Test execution failed:', error.message);
     process.exit(1);
   });

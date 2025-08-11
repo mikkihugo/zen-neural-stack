@@ -3,7 +3,14 @@
  * Achieves 80%+ coverage for all claude-integration/* files
  */
 
-import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import {
+  describe,
+  test,
+  expect,
+  beforeEach,
+  afterEach,
+  jest,
+} from '@jest/globals';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -20,7 +27,7 @@ describe('Claude Integration - Complete Coverage', () => {
   let testTempDir;
   let originalEnv;
 
-  beforeEach(async() => {
+  beforeEach(async () => {
     originalEnv = { ...process.env };
     testTempDir = path.join(__dirname, `test-temp-${Date.now()}`);
 
@@ -40,11 +47,13 @@ describe('Claude Integration - Complete Coverage', () => {
   });
 
   describe('Core Module - Comprehensive Coverage', () => {
-    test('should handle Claude CLI availability check', async() => {
+    test('should handle Claude CLI availability check', async () => {
       // Test when Claude CLI is available
       execSync.mockReturnValueOnce('Claude CLI version 1.0.0');
 
-      const { ClaudeIntegrationCore } = await import('../src/claude-integration/core.js').catch(() => {
+      const { ClaudeIntegrationCore } = await import(
+        '../src/claude-integration/core.js'
+      ).catch(() => {
         return {
           ClaudeIntegrationCore: class {
             async isClaudeAvailable() {
@@ -64,12 +73,14 @@ describe('Claude Integration - Complete Coverage', () => {
       expect(available).toBe(true);
     });
 
-    test('should handle Claude CLI not available', async() => {
+    test('should handle Claude CLI not available', async () => {
       execSync.mockImplementation(() => {
         throw new Error('Command not found');
       });
 
-      const { ClaudeIntegrationCore } = await import('../src/claude-integration/core.js').catch(() => {
+      const { ClaudeIntegrationCore } = await import(
+        '../src/claude-integration/core.js'
+      ).catch(() => {
         return {
           ClaudeIntegrationCore: class {
             async isClaudeAvailable() {
@@ -89,15 +100,20 @@ describe('Claude Integration - Complete Coverage', () => {
       expect(available).toBe(false);
     });
 
-    test('should check existing integration files', async() => {
+    test('should check existing integration files', async () => {
       fs.access.mockResolvedValueOnce(undefined);
       fs.stat.mockResolvedValueOnce({ isDirectory: () => true });
 
-      const { ClaudeIntegrationCore } = await import('../src/claude-integration/core.js').catch(() => {
+      const { ClaudeIntegrationCore } = await import(
+        '../src/claude-integration/core.js'
+      ).catch(() => {
         return {
           ClaudeIntegrationCore: class {
             constructor(options = {}) {
-              this.options = { workingDir: options.workingDir || process.cwd(), ...options };
+              this.options = {
+                workingDir: options.workingDir || process.cwd(),
+                ...options,
+              };
             }
 
             async checkExistingFiles() {
@@ -125,8 +141,10 @@ describe('Claude Integration - Complete Coverage', () => {
       expect(typeof results).toBe('object');
     });
 
-    test('should initialize Claude integration', async() => {
-      const { ClaudeIntegrationCore } = await import('../src/claude-integration/core.js').catch(() => {
+    test('should initialize Claude integration', async () => {
+      const { ClaudeIntegrationCore } = await import(
+        '../src/claude-integration/core.js'
+      ).catch(() => {
         return {
           ClaudeIntegrationCore: class {
             constructor(options = {}) {
@@ -165,8 +183,10 @@ describe('Claude Integration - Complete Coverage', () => {
       expect(result.mcpConfigured).toBe(true);
     });
 
-    test('should handle initialization failures', async() => {
-      const { ClaudeIntegrationCore } = await import('../src/claude-integration/core.js').catch(() => {
+    test('should handle initialization failures', async () => {
+      const { ClaudeIntegrationCore } = await import(
+        '../src/claude-integration/core.js'
+      ).catch(() => {
         return {
           ClaudeIntegrationCore: class {
             async initialize() {
@@ -180,10 +200,14 @@ describe('Claude Integration - Complete Coverage', () => {
       await expect(core.initialize()).rejects.toThrow('Claude CLI not found');
     });
 
-    test('should invoke Claude with prompts', async() => {
-      execSync.mockReturnValue('{"response": "Claude response", "usage": {"tokens": 150}}');
+    test('should invoke Claude with prompts', async () => {
+      execSync.mockReturnValue(
+        '{"response": "Claude response", "usage": {"tokens": 150}}',
+      );
 
-      const { ClaudeIntegrationCore } = await import('../src/claude-integration/core.js').catch(() => {
+      const { ClaudeIntegrationCore } = await import(
+        '../src/claude-integration/core.js'
+      ).catch(() => {
         return {
           ClaudeIntegrationCore: class {
             async invokeClaudeWithPrompt(prompt) {
@@ -202,12 +226,14 @@ describe('Claude Integration - Complete Coverage', () => {
       expect(result.usage.tokens).toBe(150);
     });
 
-    test('should handle API errors gracefully', async() => {
+    test('should handle API errors gracefully', async () => {
       execSync.mockImplementation(() => {
         throw new Error('API rate limit exceeded');
       });
 
-      const { ClaudeIntegrationCore } = await import('../src/claude-integration/core.js').catch(() => {
+      const { ClaudeIntegrationCore } = await import(
+        '../src/claude-integration/core.js'
+      ).catch(() => {
         return {
           ClaudeIntegrationCore: class {
             async invokeClaudeWithPrompt(prompt) {
@@ -224,19 +250,24 @@ describe('Claude Integration - Complete Coverage', () => {
       });
 
       const core = new ClaudeIntegrationCore();
-      await expect(
-        core.invokeClaudeWithPrompt('Test prompt'),
-      ).rejects.toThrow('Claude API error');
+      await expect(core.invokeClaudeWithPrompt('Test prompt')).rejects.toThrow(
+        'Claude API error',
+      );
     });
   });
 
   describe('Documentation Generator - Comprehensive Coverage', () => {
-    test('should generate main claude.md file', async() => {
-      const { ClaudeDocsGenerator } = await import('../src/claude-integration/docs.js').catch(() => {
+    test('should generate main claude.md file', async () => {
+      const { ClaudeDocsGenerator } = await import(
+        '../src/claude-integration/docs.js'
+      ).catch(() => {
         return {
           ClaudeDocsGenerator: class {
             constructor(options = {}) {
-              this.options = { workingDir: options.workingDir || process.cwd(), ...options };
+              this.options = {
+                workingDir: options.workingDir || process.cwd(),
+                ...options,
+              };
             }
 
             async generateMainDoc() {
@@ -280,8 +311,10 @@ claude mcp add ruv-swarm npx ruv-swarm mcp start
       );
     });
 
-    test('should generate command documentation', async() => {
-      const { ClaudeDocsGenerator } = await import('../src/claude-integration/docs.js').catch(() => {
+    test('should generate command documentation', async () => {
+      const { ClaudeDocsGenerator } = await import(
+        '../src/claude-integration/docs.js'
+      ).catch(() => {
         return {
           ClaudeDocsGenerator: class {
             constructor(options = {}) {
@@ -304,7 +337,11 @@ claude mcp add ruv-swarm npx ruv-swarm mcp start
                 },
               ];
 
-              const docsDir = path.join(this.options.workingDir, '.claude', 'commands');
+              const docsDir = path.join(
+                this.options.workingDir,
+                '.claude',
+                'commands',
+              );
               await fs.mkdir(docsDir, { recursive: true });
 
               const files = [];
@@ -314,7 +351,7 @@ claude mcp add ruv-swarm npx ruv-swarm mcp start
 ${cmd.description}
 
 ## Parameters
-${cmd.parameters.map(p => `- \`${p}\``).join('\n')}
+${cmd.parameters.map((p) => `- \`${p}\``).join('\n')}
 
 ## Examples
 \`\`\`javascript
@@ -343,8 +380,10 @@ ${cmd.examples.join('\n')}
       );
     });
 
-    test('should generate all documentation', async() => {
-      const { ClaudeDocsGenerator } = await import('../src/claude-integration/docs.js').catch(() => {
+    test('should generate all documentation', async () => {
+      const { ClaudeDocsGenerator } = await import(
+        '../src/claude-integration/docs.js'
+      ).catch(() => {
         return {
           ClaudeDocsGenerator: class {
             constructor(options = {}) {
@@ -357,8 +396,14 @@ ${cmd.examples.join('\n')}
 
             async generateCommandDocs() {
               return [
-                path.join(this.options.workingDir, '.claude/commands/swarm_init.md'),
-                path.join(this.options.workingDir, '.claude/commands/agent_spawn.md'),
+                path.join(
+                  this.options.workingDir,
+                  '.claude/commands/swarm_init.md',
+                ),
+                path.join(
+                  this.options.workingDir,
+                  '.claude/commands/agent_spawn.md',
+                ),
               ];
             }
 
@@ -388,10 +433,12 @@ ${cmd.examples.join('\n')}
       expect(result.timestamp).toBeDefined();
     });
 
-    test('should handle documentation generation errors', async() => {
+    test('should handle documentation generation errors', async () => {
       fs.writeFile.mockRejectedValue(new Error('Permission denied'));
 
-      const { ClaudeDocsGenerator } = await import('../src/claude-integration/docs.js').catch(() => {
+      const { ClaudeDocsGenerator } = await import(
+        '../src/claude-integration/docs.js'
+      ).catch(() => {
         return {
           ClaudeDocsGenerator: class {
             async generateMainDoc() {
@@ -407,8 +454,10 @@ ${cmd.examples.join('\n')}
   });
 
   describe('Remote Wrapper Generator - Comprehensive Coverage', () => {
-    test('should create cross-platform shell scripts', async() => {
-      const { RemoteWrapperGenerator } = await import('../src/claude-integration/remote.js').catch(() => {
+    test('should create cross-platform shell scripts', async () => {
+      const { RemoteWrapperGenerator } = await import(
+        '../src/claude-integration/remote.js'
+      ).catch(() => {
         return {
           RemoteWrapperGenerator: class {
             constructor(options = {}) {
@@ -448,9 +497,16 @@ npx ${this.options.packageName} @args
 
               const createdFiles = [];
               for (const [platform, script] of Object.entries(scripts)) {
-                const filePath = path.join(this.options.workingDir, script.name);
+                const filePath = path.join(
+                  this.options.workingDir,
+                  script.name,
+                );
                 await fs.writeFile(filePath, script.content);
-                createdFiles.push({ platform, path: filePath, name: script.name });
+                createdFiles.push({
+                  platform,
+                  path: filePath,
+                  name: script.name,
+                });
               }
 
               return createdFiles;
@@ -467,9 +523,9 @@ npx ${this.options.packageName} @args
       const scripts = await remote.createCrossPlatformWrappers();
 
       expect(scripts).toHaveLength(3);
-      expect(scripts.find(s => s.platform === 'unix')).toBeDefined();
-      expect(scripts.find(s => s.platform === 'windows')).toBeDefined();
-      expect(scripts.find(s => s.platform === 'powershell')).toBeDefined();
+      expect(scripts.find((s) => s.platform === 'unix')).toBeDefined();
+      expect(scripts.find((s) => s.platform === 'windows')).toBeDefined();
+      expect(scripts.find((s) => s.platform === 'powershell')).toBeDefined();
 
       expect(fs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining('test-swarm.sh'),
@@ -477,8 +533,10 @@ npx ${this.options.packageName} @args
       );
     });
 
-    test('should create helper scripts', async() => {
-      const { RemoteWrapperGenerator } = await import('../src/claude-integration/remote.js').catch(() => {
+    test('should create helper scripts', async () => {
+      const { RemoteWrapperGenerator } = await import(
+        '../src/claude-integration/remote.js'
+      ).catch(() => {
         return {
           RemoteWrapperGenerator: class {
             constructor(options = {}) {
@@ -536,7 +594,10 @@ if "%1"=="init" (
 
               const createdFiles = [];
               for (const helper of helpers) {
-                const filePath = path.join(this.options.workingDir, helper.name);
+                const filePath = path.join(
+                  this.options.workingDir,
+                  helper.name,
+                );
                 await fs.writeFile(filePath, helper.content);
                 createdFiles.push(filePath);
               }
@@ -551,12 +612,14 @@ if "%1"=="init" (
       const helpers = await remote.createHelperScripts();
 
       expect(helpers).toHaveLength(2);
-      expect(helpers.find(h => h.includes('.sh'))).toBeDefined();
-      expect(helpers.find(h => h.includes('.bat'))).toBeDefined();
+      expect(helpers.find((h) => h.includes('.sh'))).toBeDefined();
+      expect(helpers.find((h) => h.includes('.bat'))).toBeDefined();
     });
 
-    test('should create all remote components', async() => {
-      const { RemoteWrapperGenerator } = await import('../src/claude-integration/remote.js').catch(() => {
+    test('should create all remote components', async () => {
+      const { RemoteWrapperGenerator } = await import(
+        '../src/claude-integration/remote.js'
+      ).catch(() => {
         return {
           RemoteWrapperGenerator: class {
             constructor(options = {}) {
@@ -600,10 +663,12 @@ if "%1"=="init" (
       expect(result.timestamp).toBeDefined();
     });
 
-    test('should handle file creation errors', async() => {
+    test('should handle file creation errors', async () => {
       fs.writeFile.mockRejectedValue(new Error('Disk full'));
 
-      const { RemoteWrapperGenerator } = await import('../src/claude-integration/remote.js').catch(() => {
+      const { RemoteWrapperGenerator } = await import(
+        '../src/claude-integration/remote.js'
+      ).catch(() => {
         return {
           RemoteWrapperGenerator: class {
             async createCrossPlatformWrappers() {
@@ -614,13 +679,17 @@ if "%1"=="init" (
       });
 
       const remote = new RemoteWrapperGenerator();
-      await expect(remote.createCrossPlatformWrappers()).rejects.toThrow('Disk full');
+      await expect(remote.createCrossPlatformWrappers()).rejects.toThrow(
+        'Disk full',
+      );
     });
   });
 
   describe('Advanced Commands Module - Comprehensive Coverage', () => {
-    test('should provide MCP command validation', async() => {
-      const { AdvancedCommands } = await import('../src/claude-integration/advanced-commands.js').catch(() => {
+    test('should provide MCP command validation', async () => {
+      const { AdvancedCommands } = await import(
+        '../src/claude-integration/advanced-commands.js'
+      ).catch(() => {
         return {
           AdvancedCommands: class {
             static validateMcpCommand(command) {
@@ -645,15 +714,19 @@ if "%1"=="init" (
         };
       });
 
-      const result = AdvancedCommands.validateMcpCommand('mcp__ruv-swarm__swarm_init');
+      const result = AdvancedCommands.validateMcpCommand(
+        'mcp__ruv-swarm__swarm_init',
+      );
 
       expect(result.valid).toBe(true);
       expect(result.command).toBe('mcp__ruv-swarm__swarm_init');
       expect(result.action).toBe('swarm_init');
     });
 
-    test('should handle invalid MCP commands', async() => {
-      const { AdvancedCommands } = await import('../src/claude-integration/advanced-commands.js').catch(() => {
+    test('should handle invalid MCP commands', async () => {
+      const { AdvancedCommands } = await import(
+        '../src/claude-integration/advanced-commands.js'
+      ).catch(() => {
         return {
           AdvancedCommands: class {
             static validateMcpCommand(command) {
@@ -674,8 +747,10 @@ if "%1"=="init" (
       }).toThrow('Invalid MCP command');
     });
 
-    test('should generate command templates', async() => {
-      const { AdvancedCommands } = await import('../src/claude-integration/advanced-commands.js').catch(() => {
+    test('should generate command templates', async () => {
+      const { AdvancedCommands } = await import(
+        '../src/claude-integration/advanced-commands.js'
+      ).catch(() => {
         return {
           AdvancedCommands: class {
             static generateCommandTemplate(action, parameters = {}) {
@@ -717,8 +792,10 @@ if "%1"=="init" (
   });
 
   describe('Environment Template Module - Coverage', () => {
-    test('should provide environment template', async() => {
-      const { ENV_TEMPLATE } = await import('../src/claude-integration/env-template.js').catch(() => {
+    test('should provide environment template', async () => {
+      const { ENV_TEMPLATE } = await import(
+        '../src/claude-integration/env-template.js'
+      ).catch(() => {
         return {
           ENV_TEMPLATE: `# Claude Integration Environment Variables
 CLAUDE_API_KEY=your_api_key_here
@@ -735,17 +812,22 @@ NODE_ENV=production
       expect(ENV_TEMPLATE).toContain('RUVSW_SWARM_ID');
     });
 
-    test('should validate environment variables', async() => {
-      const { validateEnvironment } = await import('../src/claude-integration/env-template.js').catch(() => {
+    test('should validate environment variables', async () => {
+      const { validateEnvironment } = await import(
+        '../src/claude-integration/env-template.js'
+      ).catch(() => {
         return {
           validateEnvironment: () => {
             const required = ['CLAUDE_API_KEY'];
-            const missing = required.filter(key => !process.env[key]);
+            const missing = required.filter((key) => !process.env[key]);
 
             return {
               valid: missing.length === 0,
               missing,
-              warnings: process.env.NODE_ENV !== 'production' ? ['NODE_ENV not set to production'] : [],
+              warnings:
+                process.env.NODE_ENV !== 'production'
+                  ? ['NODE_ENV not set to production']
+                  : [],
             };
           },
         };
@@ -760,17 +842,21 @@ NODE_ENV=production
   });
 
   describe('Integration Error Scenarios', () => {
-    test('should handle file system permission errors', async() => {
+    test('should handle file system permission errors', async () => {
       fs.mkdir.mockRejectedValue(new Error('EACCES: permission denied'));
 
-      const { ClaudeDocsGenerator } = await import('../src/claude-integration/docs.js').catch(() => {
+      const { ClaudeDocsGenerator } = await import(
+        '../src/claude-integration/docs.js'
+      ).catch(() => {
         return {
           ClaudeDocsGenerator: class {
             constructor(options) {
               this.options = options;
             }
             async generateAll() {
-              await fs.mkdir(path.join(this.options.workingDir, '.claude'), { recursive: true });
+              await fs.mkdir(path.join(this.options.workingDir, '.claude'), {
+                recursive: true,
+              });
             }
           },
         };
@@ -780,12 +866,14 @@ NODE_ENV=production
       await expect(docs.generateAll()).rejects.toThrow('permission denied');
     });
 
-    test('should handle Claude CLI command failures', async() => {
+    test('should handle Claude CLI command failures', async () => {
       execSync.mockImplementation(() => {
         throw new Error('claude: command not found');
       });
 
-      const { ClaudeIntegrationCore } = await import('../src/claude-integration/core.js').catch(() => {
+      const { ClaudeIntegrationCore } = await import(
+        '../src/claude-integration/core.js'
+      ).catch(() => {
         return {
           ClaudeIntegrationCore: class {
             async initialize() {
@@ -800,12 +888,14 @@ NODE_ENV=production
       await expect(core.initialize()).rejects.toThrow('command not found');
     });
 
-    test('should handle network connectivity issues', async() => {
+    test('should handle network connectivity issues', async () => {
       execSync.mockImplementation(() => {
         throw new Error('Network is unreachable');
       });
 
-      const { ClaudeIntegrationCore } = await import('../src/claude-integration/core.js').catch(() => {
+      const { ClaudeIntegrationCore } = await import(
+        '../src/claude-integration/core.js'
+      ).catch(() => {
         return {
           ClaudeIntegrationCore: class {
             async invokeClaudeWithPrompt(prompt) {
@@ -818,15 +908,17 @@ NODE_ENV=production
       });
 
       const core = new ClaudeIntegrationCore();
-      await expect(
-        core.invokeClaudeWithPrompt('test'),
-      ).rejects.toThrow('Network is unreachable');
+      await expect(core.invokeClaudeWithPrompt('test')).rejects.toThrow(
+        'Network is unreachable',
+      );
     });
   });
 
   describe('Performance and Optimization', () => {
-    test('should handle large documentation generation efficiently', async() => {
-      const { ClaudeDocsGenerator } = await import('../src/claude-integration/docs.js').catch(() => {
+    test('should handle large documentation generation efficiently', async () => {
+      const { ClaudeDocsGenerator } = await import(
+        '../src/claude-integration/docs.js'
+      ).catch(() => {
         return {
           ClaudeDocsGenerator: class {
             constructor(options) {
@@ -835,12 +927,18 @@ NODE_ENV=production
 
             async generateCommandDocs() {
               // Simulate generating many command docs
-              const commands = Array.from({ length: 100 }, (_, i) => `command_${i}`);
+              const commands = Array.from(
+                { length: 100 },
+                (_, i) => `command_${i}`,
+              );
               const files = [];
 
               for (const cmd of commands) {
                 const content = `# ${cmd}\n\nGenerated documentation for ${cmd}`;
-                const filePath = path.join(this.options.workingDir, `.claude/commands/${cmd}.md`);
+                const filePath = path.join(
+                  this.options.workingDir,
+                  `.claude/commands/${cmd}.md`,
+                );
                 await fs.writeFile(filePath, content);
                 files.push(filePath);
               }
@@ -861,15 +959,25 @@ NODE_ENV=production
       expect(duration).toBeLessThan(1000); // Should complete within 1 second
     });
 
-    test('should handle concurrent operations', async() => {
-      const { ClaudeIntegrationOrchestrator } = await import('../src/claude-integration/index.js');
+    test('should handle concurrent operations', async () => {
+      const { ClaudeIntegrationOrchestrator } = await import(
+        '../src/claude-integration/index.js'
+      );
 
-      const orchestrator = new ClaudeIntegrationOrchestrator({ workingDir: testTempDir });
+      const orchestrator = new ClaudeIntegrationOrchestrator({
+        workingDir: testTempDir,
+      });
 
       // Mock concurrent operations
-      orchestrator.docs.generateAll = jest.fn().mockResolvedValue({ success: true });
-      orchestrator.remote.createAll = jest.fn().mockResolvedValue({ success: true });
-      orchestrator.core.initialize = jest.fn().mockResolvedValue({ success: true });
+      orchestrator.docs.generateAll = jest
+        .fn()
+        .mockResolvedValue({ success: true });
+      orchestrator.remote.createAll = jest
+        .fn()
+        .mockResolvedValue({ success: true });
+      orchestrator.core.initialize = jest
+        .fn()
+        .mockResolvedValue({ success: true });
 
       const promises = [
         orchestrator.docs.generateAll(),
@@ -880,7 +988,7 @@ NODE_ENV=production
       const results = await Promise.all(promises);
 
       expect(results).toHaveLength(3);
-      expect(results.every(r => r.success)).toBe(true);
+      expect(results.every((r) => r.success)).toBe(true);
     });
   });
 });

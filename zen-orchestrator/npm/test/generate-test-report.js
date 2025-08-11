@@ -77,7 +77,9 @@ class TestReportGenerator {
         totalFiles += files.length;
         this.reportData.testSuites[dir] = {
           files: files.length,
-          fileList: files.map(f => path.relative(path.join(__dirname, '..'), f)),
+          fileList: files.map((f) =>
+            path.relative(path.join(__dirname, '..'), f),
+          ),
         };
       }
     }
@@ -93,7 +95,10 @@ class TestReportGenerator {
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         files.push(...this.getTestFiles(fullPath));
-      } else if (entry.name.endsWith('.test.js') || entry.name.endsWith('.spec.js')) {
+      } else if (
+        entry.name.endsWith('.test.js') ||
+        entry.name.endsWith('.spec.js')
+      ) {
         files.push(fullPath);
       }
     }
@@ -105,15 +110,23 @@ class TestReportGenerator {
     console.log('Running tests with coverage...');
 
     try {
-      const output = execSync('npm test -- --coverage --json --outputFile=test-results.json', {
-        cwd: path.join(__dirname, '..'),
-        encoding: 'utf8',
-        stdio: 'pipe',
-      });
+      const output = execSync(
+        'npm test -- --coverage --json --outputFile=test-results.json',
+        {
+          cwd: path.join(__dirname, '..'),
+          encoding: 'utf8',
+          stdio: 'pipe',
+        },
+      );
 
       // Parse test results
       if (fs.existsSync(path.join(__dirname, '..', 'test-results.json'))) {
-        const results = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'test-results.json'), 'utf8'));
+        const results = JSON.parse(
+          fs.readFileSync(
+            path.join(__dirname, '..', 'test-results.json'),
+            'utf8',
+          ),
+        );
         this.parseTestResults(results);
       }
     } catch (error) {
@@ -134,7 +147,12 @@ class TestReportGenerator {
   }
 
   parseCoverageReport() {
-    const coveragePath = path.join(__dirname, '..', 'coverage', 'coverage-summary.json');
+    const coveragePath = path.join(
+      __dirname,
+      '..',
+      'coverage',
+      'coverage-summary.json',
+    );
 
     if (fs.existsSync(coveragePath)) {
       const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
@@ -213,10 +231,12 @@ Version: ${this.reportData.version}
 `;
 
     if (this.reportData.summary.coverage.lines < 80) {
-      markdown += '- ⚠️ Line coverage is below 80%. Consider adding more unit tests.\n';
+      markdown +=
+        '- ⚠️ Line coverage is below 80%. Consider adding more unit tests.\n';
     }
     if (this.reportData.summary.coverage.branches < 80) {
-      markdown += '- ⚠️ Branch coverage is below 80%. Ensure all code paths are tested.\n';
+      markdown +=
+        '- ⚠️ Branch coverage is below 80%. Ensure all code paths are tested.\n';
     }
     if (this.reportData.summary.totalFailed > 0) {
       markdown += `- ❌ There are ${this.reportData.summary.totalFailed} failing tests that need to be fixed.\n`;
@@ -373,7 +393,11 @@ Version: ${this.reportData.version}
     if (this.reportData.summary.totalTests === 0) {
       return 0;
     }
-    return ((this.reportData.summary.totalPassed / this.reportData.summary.totalTests) * 100).toFixed(2);
+    return (
+      (this.reportData.summary.totalPassed /
+        this.reportData.summary.totalTests) *
+      100
+    ).toFixed(2);
   }
 
   getCoverageStatus(percentage) {
@@ -385,7 +409,7 @@ Version: ${this.reportData.version}
 // Direct execution block
 {
   const generator = new TestReportGenerator();
-  generator.generate().catch(error => {
+  generator.generate().catch((error) => {
     console.error('Error generating report:', error);
     process.exit(1);
   });

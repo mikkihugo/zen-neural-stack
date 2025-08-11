@@ -13,7 +13,7 @@ class RuvSwarmError extends Error {
     this.code = code;
     this.details = details;
     this.timestamp = new Date().toISOString();
-    this.stack = this.stack || (new Error()).stack;
+    this.stack = this.stack || new Error().stack;
   }
 
   toJSON() {
@@ -99,7 +99,10 @@ class SwarmError extends RuvSwarmError {
       suggestions.push('Verify the swarm ID is correct');
       suggestions.push('Check if the swarm was properly initialized');
       suggestions.push('Use swarm_status to list available swarms');
-    } else if (this.message.includes('capacity') || this.message.includes('full')) {
+    } else if (
+      this.message.includes('capacity') ||
+      this.message.includes('full')
+    ) {
       suggestions.push('Increase the swarm maxAgents parameter');
       suggestions.push('Remove idle agents before adding new ones');
       suggestions.push('Consider using multiple swarms for load distribution');
@@ -133,7 +136,10 @@ class AgentError extends RuvSwarmError {
       suggestions.push('Verify the agent ID is correct');
       suggestions.push('Check if the agent was properly spawned');
       suggestions.push('Use agent_list to see available agents');
-    } else if (this.message.includes('busy') || this.message.includes('unavailable')) {
+    } else if (
+      this.message.includes('busy') ||
+      this.message.includes('unavailable')
+    ) {
       suggestions.push('Wait for the agent to complete current tasks');
       suggestions.push('Spawn additional agents for parallel processing');
       suggestions.push('Check agent status before assignment');
@@ -205,7 +211,10 @@ class NeuralError extends RuvSwarmError {
   getSuggestions() {
     const suggestions = [];
 
-    if (this.message.includes('not available') || this.message.includes('not loaded')) {
+    if (
+      this.message.includes('not available') ||
+      this.message.includes('not loaded')
+    ) {
       suggestions.push('Ensure neural network features are enabled');
       suggestions.push('Check WASM neural module loading');
       suggestions.push('Verify system supports neural operations');
@@ -242,7 +251,10 @@ class WasmError extends RuvSwarmError {
   getSuggestions() {
     const suggestions = [];
 
-    if (this.message.includes('not loaded') || this.message.includes('not found')) {
+    if (
+      this.message.includes('not loaded') ||
+      this.message.includes('not found')
+    ) {
       suggestions.push('Check WASM module availability');
       suggestions.push('Verify module loading sequence');
       suggestions.push('Ensure WASM runtime is supported');
@@ -335,15 +347,24 @@ class PersistenceError extends RuvSwarmError {
   getSuggestions() {
     const suggestions = [];
 
-    if (this.message.includes('constraint') || this.message.includes('unique')) {
+    if (
+      this.message.includes('constraint') ||
+      this.message.includes('unique')
+    ) {
       suggestions.push('Check for duplicate entries');
       suggestions.push('Verify unique key constraints');
       suggestions.push('Use update instead of insert for existing records');
-    } else if (this.message.includes('not found') || this.message.includes('no such table')) {
+    } else if (
+      this.message.includes('not found') ||
+      this.message.includes('no such table')
+    ) {
       suggestions.push('Verify database schema is initialized');
       suggestions.push('Run database migrations');
       suggestions.push('Check table name spelling');
-    } else if (this.message.includes('locked') || this.message.includes('busy')) {
+    } else if (
+      this.message.includes('locked') ||
+      this.message.includes('busy')
+    ) {
       suggestions.push('Retry the operation after a delay');
       suggestions.push('Check for long-running transactions');
       suggestions.push('Optimize database queries');
@@ -423,30 +444,63 @@ class ErrorFactory {
    */
   static createError(type, message, details = {}) {
     switch (type) {
-    case 'validation':
-      return new ValidationError(message, details.field, details.value, details.expectedType);
-    case 'swarm':
-      return new SwarmError(message, details.swarmId, details.operation);
-    case 'agent':
-      return new AgentError(message, details.agentId, details.agentType, details.operation);
-    case 'task':
-      return new TaskError(message, details.taskId, details.taskType, details.operation);
-    case 'neural':
-      return new NeuralError(message, details.networkId, details.operation, details.modelType);
-    case 'wasm':
-      return new WasmError(message, details.module, details.operation);
-    case 'configuration':
-      return new ConfigurationError(message, details.configKey, details.configValue);
-    case 'network':
-      return new NetworkError(message, details.endpoint, details.statusCode);
-    case 'persistence':
-      return new PersistenceError(message, details.operation, details.table);
-    case 'resource':
-      return new ResourceError(message, details.resourceType, details.currentUsage, details.limit);
-    case 'concurrency':
-      return new ConcurrencyError(message, details.operation, details.conflictType);
-    default:
-      return new RuvSwarmError(message, 'GENERAL_ERROR', details);
+      case 'validation':
+        return new ValidationError(
+          message,
+          details.field,
+          details.value,
+          details.expectedType,
+        );
+      case 'swarm':
+        return new SwarmError(message, details.swarmId, details.operation);
+      case 'agent':
+        return new AgentError(
+          message,
+          details.agentId,
+          details.agentType,
+          details.operation,
+        );
+      case 'task':
+        return new TaskError(
+          message,
+          details.taskId,
+          details.taskType,
+          details.operation,
+        );
+      case 'neural':
+        return new NeuralError(
+          message,
+          details.networkId,
+          details.operation,
+          details.modelType,
+        );
+      case 'wasm':
+        return new WasmError(message, details.module, details.operation);
+      case 'configuration':
+        return new ConfigurationError(
+          message,
+          details.configKey,
+          details.configValue,
+        );
+      case 'network':
+        return new NetworkError(message, details.endpoint, details.statusCode);
+      case 'persistence':
+        return new PersistenceError(message, details.operation, details.table);
+      case 'resource':
+        return new ResourceError(
+          message,
+          details.resourceType,
+          details.currentUsage,
+          details.limit,
+        );
+      case 'concurrency':
+        return new ConcurrencyError(
+          message,
+          details.operation,
+          details.conflictType,
+        );
+      default:
+        return new RuvSwarmError(message, 'GENERAL_ERROR', details);
     }
   }
 

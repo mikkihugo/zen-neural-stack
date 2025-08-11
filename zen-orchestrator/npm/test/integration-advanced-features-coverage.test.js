@@ -12,7 +12,14 @@
  * - WASM Memory Optimizer (wasm-memory-optimizer.js)
  */
 
-import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import {
+  describe,
+  test,
+  expect,
+  beforeEach,
+  afterEach,
+  jest,
+} from '@jest/globals';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -36,7 +43,7 @@ describe('Integration & Advanced Features Coverage', () => {
   let testTempDir;
   let originalEnv;
 
-  beforeEach(async() => {
+  beforeEach(async () => {
     // Setup test environment
     originalEnv = { ...process.env };
     testTempDir = path.join(__dirname, `test-temp-${Date.now()}`);
@@ -53,7 +60,7 @@ describe('Integration & Advanced Features Coverage', () => {
     execSync.mockReturnValue('mocked command output');
   });
 
-  afterEach(async() => {
+  afterEach(async () => {
     // Restore environment
     process.env = originalEnv;
 
@@ -101,7 +108,7 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(orchestrator.options.customOption).toBe('test');
       });
 
-      test('should setup integration successfully with auto setup disabled', async() => {
+      test('should setup integration successfully with auto setup disabled', async () => {
         const orchestrator = new ClaudeIntegrationOrchestrator({
           workingDir: testTempDir,
           autoSetup: false,
@@ -123,19 +130,27 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(result.modules.docs.success).toBe(true);
         expect(result.modules.remote.success).toBe(true);
         expect(result.modules.core.manualSetup).toBe(true);
-        expect(result.modules.core.instructions).toContain('Run: claude mcp add ruv-swarm npx ruv-swarm mcp start');
+        expect(result.modules.core.instructions).toContain(
+          'Run: claude mcp add ruv-swarm npx ruv-swarm mcp start',
+        );
       });
 
-      test('should setup integration with auto setup enabled', async() => {
+      test('should setup integration with auto setup enabled', async () => {
         const orchestrator = new ClaudeIntegrationOrchestrator({
           workingDir: testTempDir,
           autoSetup: true,
         });
 
         // Mock successful core initialization
-        orchestrator.docs.generateAll = jest.fn().mockResolvedValue({ success: true });
-        orchestrator.remote.createAll = jest.fn().mockResolvedValue({ success: true });
-        orchestrator.core.initialize = jest.fn().mockResolvedValue({ success: true });
+        orchestrator.docs.generateAll = jest
+          .fn()
+          .mockResolvedValue({ success: true });
+        orchestrator.remote.createAll = jest
+          .fn()
+          .mockResolvedValue({ success: true });
+        orchestrator.core.initialize = jest
+          .fn()
+          .mockResolvedValue({ success: true });
 
         const result = await orchestrator.setupIntegration();
 
@@ -144,15 +159,21 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(orchestrator.core.initialize).toHaveBeenCalled();
       });
 
-      test('should handle core setup failure gracefully', async() => {
+      test('should handle core setup failure gracefully', async () => {
         const orchestrator = new ClaudeIntegrationOrchestrator({
           workingDir: testTempDir,
           autoSetup: true,
         });
 
-        orchestrator.docs.generateAll = jest.fn().mockResolvedValue({ success: true });
-        orchestrator.remote.createAll = jest.fn().mockResolvedValue({ success: true });
-        orchestrator.core.initialize = jest.fn().mockRejectedValue(new Error('Core setup failed'));
+        orchestrator.docs.generateAll = jest
+          .fn()
+          .mockResolvedValue({ success: true });
+        orchestrator.remote.createAll = jest
+          .fn()
+          .mockResolvedValue({ success: true });
+        orchestrator.core.initialize = jest
+          .fn()
+          .mockRejectedValue(new Error('Core setup failed'));
 
         const result = await orchestrator.setupIntegration();
 
@@ -162,25 +183,31 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(result.modules.core.manualSetup).toBe(true);
       });
 
-      test('should invoke Claude with prompt', async() => {
+      test('should invoke Claude with prompt', async () => {
         const orchestrator = new ClaudeIntegrationOrchestrator();
         const mockResult = { response: 'test response' };
 
-        orchestrator.core.invokeClaudeWithPrompt = jest.fn().mockResolvedValue(mockResult);
+        orchestrator.core.invokeClaudeWithPrompt = jest
+          .fn()
+          .mockResolvedValue(mockResult);
 
         const result = await orchestrator.invokeClaudeWithPrompt('test prompt');
 
         expect(result).toEqual(mockResult);
-        expect(orchestrator.core.invokeClaudeWithPrompt).toHaveBeenCalledWith('test prompt');
+        expect(orchestrator.core.invokeClaudeWithPrompt).toHaveBeenCalledWith(
+          'test prompt',
+        );
       });
 
-      test('should check status', async() => {
+      test('should check status', async () => {
         const orchestrator = new ClaudeIntegrationOrchestrator({
           workingDir: testTempDir,
         });
 
         orchestrator.core.isClaudeAvailable = jest.fn().mockResolvedValue(true);
-        orchestrator.core.checkExistingFiles = jest.fn().mockResolvedValue(false);
+        orchestrator.core.checkExistingFiles = jest
+          .fn()
+          .mockResolvedValue(false);
 
         const status = await orchestrator.checkStatus();
 
@@ -190,7 +217,7 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(status.timestamp).toBeDefined();
       });
 
-      test('should cleanup integration files', async() => {
+      test('should cleanup integration files', async () => {
         const orchestrator = new ClaudeIntegrationOrchestrator({
           workingDir: testTempDir,
           packageName: 'test-package',
@@ -203,17 +230,19 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(fs.rm).toHaveBeenCalled();
       });
 
-      test('should handle cleanup errors', async() => {
+      test('should handle cleanup errors', async () => {
         const orchestrator = new ClaudeIntegrationOrchestrator();
 
         fs.rm.mockRejectedValue(new Error('Permission denied'));
 
-        await expect(orchestrator.cleanup()).rejects.toThrow('Permission denied');
+        await expect(orchestrator.cleanup()).rejects.toThrow(
+          'Permission denied',
+        );
       });
     });
 
     describe('Convenience Functions', () => {
-      test('setupClaudeIntegration should work', async() => {
+      test('setupClaudeIntegration should work', async () => {
         // Mock the orchestrator methods
         const mockSetupResult = { success: true, modules: {} };
 
@@ -234,7 +263,7 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(mockOrchestrator.setupIntegration).toHaveBeenCalled();
       });
 
-      test('invokeClaudeWithSwarm should work', async() => {
+      test('invokeClaudeWithSwarm should work', async () => {
         const mockResult = { response: 'test' };
         const mockOrchestrator = {
           invokeClaudeWithPrompt: jest.fn().mockResolvedValue(mockResult),
@@ -242,12 +271,17 @@ describe('Integration & Advanced Features Coverage', () => {
 
         jest.doMock('../src/claude-integration/index.js', () => ({
           ClaudeIntegrationOrchestrator: jest.fn(() => mockOrchestrator),
-          invokeClaudeWithSwarm: require('../src/claude-integration/index.js').invokeClaudeWithSwarm,
+          invokeClaudeWithSwarm: require('../src/claude-integration/index.js')
+            .invokeClaudeWithSwarm,
         }));
 
-        const result = await invokeClaudeWithSwarm('test prompt', { option: 'test' });
+        const result = await invokeClaudeWithSwarm('test prompt', {
+          option: 'test',
+        });
 
-        expect(mockOrchestrator.invokeClaudeWithPrompt).toHaveBeenCalledWith('test prompt');
+        expect(mockOrchestrator.invokeClaudeWithPrompt).toHaveBeenCalledWith(
+          'test prompt',
+        );
       });
     });
   });
@@ -255,7 +289,7 @@ describe('Integration & Advanced Features Coverage', () => {
   describe('Claude Integration - Core Module', () => {
     let ClaudeIntegrationCore;
 
-    beforeEach(async() => {
+    beforeEach(async () => {
       // Dynamic import of the core module
       try {
         const module = await import('../src/claude-integration/core.js');
@@ -289,21 +323,21 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(core.options).toEqual(options);
     });
 
-    test('should check Claude availability', async() => {
+    test('should check Claude availability', async () => {
       const core = new ClaudeIntegrationCore();
       const available = await core.isClaudeAvailable();
 
       expect(typeof available).toBe('boolean');
     });
 
-    test('should check existing files', async() => {
+    test('should check existing files', async () => {
       const core = new ClaudeIntegrationCore();
       const filesExist = await core.checkExistingFiles();
 
       expect(typeof filesExist).toBe('boolean');
     });
 
-    test('should invoke Claude with prompt', async() => {
+    test('should invoke Claude with prompt', async () => {
       const core = new ClaudeIntegrationCore();
       const result = await core.invokeClaudeWithPrompt('test prompt');
 
@@ -314,7 +348,7 @@ describe('Integration & Advanced Features Coverage', () => {
   describe('Claude Integration - Documentation Generator', () => {
     let ClaudeDocsGenerator;
 
-    beforeEach(async() => {
+    beforeEach(async () => {
       try {
         const module = await import('../src/claude-integration/docs.js');
         ClaudeDocsGenerator = module.ClaudeDocsGenerator;
@@ -336,7 +370,7 @@ describe('Integration & Advanced Features Coverage', () => {
       }
     });
 
-    test('should generate all documentation', async() => {
+    test('should generate all documentation', async () => {
       const docs = new ClaudeDocsGenerator({ workingDir: testTempDir });
       const result = await docs.generateAll();
 
@@ -344,14 +378,14 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(result.files).toBeDefined();
     });
 
-    test('should generate main documentation', async() => {
+    test('should generate main documentation', async () => {
       const docs = new ClaudeDocsGenerator();
       const result = await docs.generateMainDoc();
 
       expect(result).toBeDefined();
     });
 
-    test('should generate command documentation', async() => {
+    test('should generate command documentation', async () => {
       const docs = new ClaudeDocsGenerator();
       const result = await docs.generateCommandDocs();
 
@@ -362,7 +396,7 @@ describe('Integration & Advanced Features Coverage', () => {
   describe('Claude Integration - Remote Wrapper Generator', () => {
     let RemoteWrapperGenerator;
 
-    beforeEach(async() => {
+    beforeEach(async () => {
       try {
         const module = await import('../src/claude-integration/remote.js');
         RemoteWrapperGenerator = module.RemoteWrapperGenerator;
@@ -384,7 +418,7 @@ describe('Integration & Advanced Features Coverage', () => {
       }
     });
 
-    test('should create all remote wrappers', async() => {
+    test('should create all remote wrappers', async () => {
       const remote = new RemoteWrapperGenerator({ workingDir: testTempDir });
       const result = await remote.createAll();
 
@@ -392,14 +426,14 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(result.wrappers).toBeDefined();
     });
 
-    test('should create cross-platform wrappers', async() => {
+    test('should create cross-platform wrappers', async () => {
       const remote = new RemoteWrapperGenerator();
       const result = await remote.createCrossPlatformWrappers();
 
       expect(result).toBeDefined();
     });
 
-    test('should create helper scripts', async() => {
+    test('should create helper scripts', async () => {
       const remote = new RemoteWrapperGenerator();
       const result = await remote.createHelperScripts();
 
@@ -410,7 +444,7 @@ describe('Integration & Advanced Features Coverage', () => {
   describe('Hooks System - Comprehensive Coverage', () => {
     let RuvSwarmHooks;
 
-    beforeEach(async() => {
+    beforeEach(async () => {
       try {
         const module = await import('../src/hooks/index.js');
         RuvSwarmHooks = module.default || module.RuvSwarmHooks;
@@ -423,7 +457,11 @@ describe('Integration & Advanced Features Coverage', () => {
               operations: [],
               agents: new Map(),
               learnings: [],
-              metrics: { tokensSaved: 0, tasksCompleted: 0, patternsImproved: 0 },
+              metrics: {
+                tokensSaved: 0,
+                tasksCompleted: 0,
+                patternsImproved: 0,
+              },
             };
           }
 
@@ -445,13 +483,28 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(hooks.sessionData.metrics).toBeDefined();
     });
 
-    test('should handle all hook types', async() => {
+    test('should handle all hook types', async () => {
       const hooks = new RuvSwarmHooks();
       const hookTypes = [
-        'pre-edit', 'pre-bash', 'pre-task', 'pre-search', 'pre-mcp',
-        'post-edit', 'post-bash', 'post-task', 'post-search', 'post-web-search', 'post-web-fetch',
-        'mcp-swarm-initialized', 'mcp-agent-spawned', 'mcp-task-orchestrated', 'mcp-neural-trained',
-        'notification', 'session-end', 'session-restore', 'agent-complete',
+        'pre-edit',
+        'pre-bash',
+        'pre-task',
+        'pre-search',
+        'pre-mcp',
+        'post-edit',
+        'post-bash',
+        'post-task',
+        'post-search',
+        'post-web-search',
+        'post-web-fetch',
+        'mcp-swarm-initialized',
+        'mcp-agent-spawned',
+        'mcp-task-orchestrated',
+        'mcp-neural-trained',
+        'notification',
+        'session-end',
+        'session-restore',
+        'agent-complete',
       ];
 
       for (const hookType of hookTypes) {
@@ -461,7 +514,7 @@ describe('Integration & Advanced Features Coverage', () => {
       }
     });
 
-    test('should handle unknown hook type', async() => {
+    test('should handle unknown hook type', async () => {
       const hooks = new RuvSwarmHooks();
 
       const result = await hooks.handleHook('unknown-hook', {});
@@ -470,12 +523,14 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(result.reason).toContain('Unknown hook type');
     });
 
-    test('should handle hook errors gracefully', async() => {
+    test('should handle hook errors gracefully', async () => {
       const hooks = new RuvSwarmHooks();
 
       // Override a hook method to throw an error
       if (hooks.preEditHook) {
-        hooks.preEditHook = jest.fn().mockRejectedValue(new Error('Test error'));
+        hooks.preEditHook = jest
+          .fn()
+          .mockRejectedValue(new Error('Test error'));
 
         const result = await hooks.handleHook('pre-edit', {});
 
@@ -487,19 +542,21 @@ describe('Integration & Advanced Features Coverage', () => {
 
     // Test specific hook implementations
     describe('Specific Hook Implementations', () => {
-      test('should handle pre-search hook', async() => {
+      test('should handle pre-search hook', async () => {
         const hooks = new RuvSwarmHooks();
 
         if (hooks.preSearchHook) {
           const result = await hooks.preSearchHook({ pattern: 'test-pattern' });
           expect(result).toBeDefined();
         } else {
-          const result = await hooks.handleHook('pre-search', { pattern: 'test-pattern' });
+          const result = await hooks.handleHook('pre-search', {
+            pattern: 'test-pattern',
+          });
           expect(result.continue).toBe(true);
         }
       });
 
-      test('should handle post-edit hook', async() => {
+      test('should handle post-edit hook', async () => {
         const hooks = new RuvSwarmHooks();
 
         if (hooks.postEditHook) {
@@ -517,7 +574,7 @@ describe('Integration & Advanced Features Coverage', () => {
         }
       });
 
-      test('should handle notification hook', async() => {
+      test('should handle notification hook', async () => {
         const hooks = new RuvSwarmHooks();
 
         if (hooks.notificationHook) {
@@ -534,14 +591,16 @@ describe('Integration & Advanced Features Coverage', () => {
         }
       });
 
-      test('should handle session-end hook', async() => {
+      test('should handle session-end hook', async () => {
         const hooks = new RuvSwarmHooks();
 
         if (hooks.sessionEndHook) {
           const result = await hooks.sessionEndHook({ generateSummary: true });
           expect(result).toBeDefined();
         } else {
-          const result = await hooks.handleHook('session-end', { generateSummary: true });
+          const result = await hooks.handleHook('session-end', {
+            generateSummary: true,
+          });
           expect(result.continue).toBe(true);
         }
       });
@@ -551,7 +610,7 @@ describe('Integration & Advanced Features Coverage', () => {
   describe('GitHub Coordinator - Comprehensive Coverage', () => {
     let ClaudeGitHubHooks, GHCoordinator;
 
-    beforeEach(async() => {
+    beforeEach(async () => {
       // Mock better-sqlite3
       const mockDb = {
         exec: jest.fn(),
@@ -564,8 +623,12 @@ describe('Integration & Advanced Features Coverage', () => {
       jest.doMock('better-sqlite3', () => jest.fn(() => mockDb));
 
       try {
-        const hookModule = await import('../src/github-coordinator/claude-hooks.js');
-        const coordModule = await import('../src/github-coordinator/gh-cli-coordinator.js');
+        const hookModule = await import(
+          '../src/github-coordinator/claude-hooks.js'
+        );
+        const coordModule = await import(
+          '../src/github-coordinator/gh-cli-coordinator.js'
+        );
         ClaudeGitHubHooks = hookModule.ClaudeGitHubHooks;
         GHCoordinator = coordModule.default || coordModule.GHCoordinator;
       } catch (error) {
@@ -646,7 +709,7 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(typeof swarmId).toBe('string');
       });
 
-      test('should handle pre-task with matching issue', async() => {
+      test('should handle pre-task with matching issue', async () => {
         const hooks = new ClaudeGitHubHooks();
 
         // Mock available tasks
@@ -666,11 +729,15 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(hooks.activeTask).toBe(123);
       });
 
-      test('should handle pre-task with no matching issue', async() => {
+      test('should handle pre-task with no matching issue', async () => {
         const hooks = new ClaudeGitHubHooks();
 
         hooks.coordinator.getAvailableTasks = jest.fn().mockResolvedValue([
-          { number: 456, title: 'Unrelated task', body: 'Different functionality' },
+          {
+            number: 456,
+            title: 'Unrelated task',
+            body: 'Different functionality',
+          },
         ]);
 
         const result = await hooks.preTask('specific implementation');
@@ -679,20 +746,24 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(hooks.activeTask).toBeNull();
       });
 
-      test('should handle pre-task errors', async() => {
+      test('should handle pre-task errors', async () => {
         const hooks = new ClaudeGitHubHooks();
 
-        hooks.coordinator.getAvailableTasks = jest.fn().mockRejectedValue(new Error('API error'));
+        hooks.coordinator.getAvailableTasks = jest
+          .fn()
+          .mockRejectedValue(new Error('API error'));
 
         const result = await hooks.preTask('test task');
 
         expect(result.error).toBe('API error');
       });
 
-      test('should handle post-edit with active task', async() => {
+      test('should handle post-edit with active task', async () => {
         const hooks = new ClaudeGitHubHooks();
         hooks.activeTask = 123;
-        hooks.coordinator.updateTaskProgress = jest.fn().mockResolvedValue(true);
+        hooks.coordinator.updateTaskProgress = jest
+          .fn()
+          .mockResolvedValue(true);
 
         await hooks.postEdit('/path/to/file.js', { summary: 'Added tests' });
 
@@ -703,7 +774,7 @@ describe('Integration & Advanced Features Coverage', () => {
         );
       });
 
-      test('should skip post-edit without active task', async() => {
+      test('should skip post-edit without active task', async () => {
         const hooks = new ClaudeGitHubHooks();
         hooks.coordinator.updateTaskProgress = jest.fn();
 
@@ -712,10 +783,12 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(hooks.coordinator.updateTaskProgress).not.toHaveBeenCalled();
       });
 
-      test('should handle post-task completion', async() => {
+      test('should handle post-task completion', async () => {
         const hooks = new ClaudeGitHubHooks();
         hooks.activeTask = 123;
-        hooks.coordinator.updateTaskProgress = jest.fn().mockResolvedValue(true);
+        hooks.coordinator.updateTaskProgress = jest
+          .fn()
+          .mockResolvedValue(true);
 
         await hooks.postTask('task-1', {
           completed: true,
@@ -726,18 +799,21 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(hooks.activeTask).toBeNull();
       });
 
-      test('should handle post-task release', async() => {
+      test('should handle post-task release', async () => {
         const hooks = new ClaudeGitHubHooks();
         hooks.activeTask = 123;
         hooks.coordinator.releaseTask = jest.fn().mockResolvedValue(true);
 
         await hooks.postTask('task-1', { completed: false });
 
-        expect(hooks.coordinator.releaseTask).toHaveBeenCalledWith(hooks.swarmId, 123);
+        expect(hooks.coordinator.releaseTask).toHaveBeenCalledWith(
+          hooks.swarmId,
+          123,
+        );
         expect(hooks.activeTask).toBeNull();
       });
 
-      test('should detect conflicts', async() => {
+      test('should detect conflicts', async () => {
         const hooks = new ClaudeGitHubHooks();
 
         hooks.coordinator.getCoordinationStatus = jest.fn().mockResolvedValue({
@@ -751,9 +827,13 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(result.message).toContain('Multiple swarms active');
       });
 
-      test('should get dashboard URLs', async() => {
+      test('should get dashboard URLs', async () => {
         const hooks = new ClaudeGitHubHooks();
-        hooks.coordinator.config = { owner: 'test-owner', repo: 'test-repo', labelPrefix: 'swarm-' };
+        hooks.coordinator.config = {
+          owner: 'test-owner',
+          repo: 'test-repo',
+          labelPrefix: 'swarm-',
+        };
 
         const urls = await hooks.getDashboardUrl();
 
@@ -764,7 +844,7 @@ describe('Integration & Advanced Features Coverage', () => {
     });
 
     describe('GHCoordinator', () => {
-      test('should initialize with default options', async() => {
+      test('should initialize with default options', async () => {
         process.env.GITHUB_OWNER = 'test-owner';
         process.env.GITHUB_REPO = 'test-repo';
 
@@ -775,7 +855,7 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(coordinator.config.labelPrefix).toBe('swarm-');
       });
 
-      test('should initialize with custom options', async() => {
+      test('should initialize with custom options', async () => {
         const options = {
           owner: 'custom-owner',
           repo: 'custom-repo',
@@ -791,14 +871,26 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(coordinator.config.dbPath).toBe('/custom/path/db.sqlite');
       });
 
-      test('should get available tasks', async() => {
+      test('should get available tasks', async () => {
         const coordinator = new GHCoordinator({ owner: 'test', repo: 'test' });
 
-        execSync.mockReturnValue(JSON.stringify([
-          { number: 1, title: 'Task 1', labels: [], assignees: [] },
-          { number: 2, title: 'Task 2', labels: [{ name: 'swarm-123' }], assignees: [] },
-          { number: 3, title: 'Task 3', labels: [], assignees: [{ login: 'user' }] },
-        ]));
+        execSync.mockReturnValue(
+          JSON.stringify([
+            { number: 1, title: 'Task 1', labels: [], assignees: [] },
+            {
+              number: 2,
+              title: 'Task 2',
+              labels: [{ name: 'swarm-123' }],
+              assignees: [],
+            },
+            {
+              number: 3,
+              title: 'Task 3',
+              labels: [],
+              assignees: [{ login: 'user' }],
+            },
+          ]),
+        );
 
         const tasks = await coordinator.getAvailableTasks();
 
@@ -806,7 +898,7 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(tasks[0].number).toBe(1);
       });
 
-      test('should claim task successfully', async() => {
+      test('should claim task successfully', async () => {
         const coordinator = new GHCoordinator({ owner: 'test', repo: 'test' });
 
         const success = await coordinator.claimTask('swarm-123', 456);
@@ -818,7 +910,7 @@ describe('Integration & Advanced Features Coverage', () => {
         );
       });
 
-      test('should handle claim task failure', async() => {
+      test('should handle claim task failure', async () => {
         const coordinator = new GHCoordinator({ owner: 'test', repo: 'test' });
 
         execSync.mockImplementation(() => {
@@ -830,7 +922,7 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(success).toBe(false);
       });
 
-      test('should release task', async() => {
+      test('should release task', async () => {
         const coordinator = new GHCoordinator({ owner: 'test', repo: 'test' });
 
         const success = await coordinator.releaseTask('swarm-123', 456);
@@ -842,10 +934,14 @@ describe('Integration & Advanced Features Coverage', () => {
         );
       });
 
-      test('should update task progress', async() => {
+      test('should update task progress', async () => {
         const coordinator = new GHCoordinator({ owner: 'test', repo: 'test' });
 
-        const success = await coordinator.updateTaskProgress('swarm-123', 456, 'Progress update');
+        const success = await coordinator.updateTaskProgress(
+          'swarm-123',
+          456,
+          'Progress update',
+        );
 
         expect(success).toBe(true);
         expect(execSync).toHaveBeenCalledWith(
@@ -854,14 +950,16 @@ describe('Integration & Advanced Features Coverage', () => {
         );
       });
 
-      test('should get coordination status', async() => {
+      test('should get coordination status', async () => {
         const coordinator = new GHCoordinator({ owner: 'test', repo: 'test' });
 
-        execSync.mockReturnValue(JSON.stringify([
-          { number: 1, title: 'Task 1', labels: [{ name: 'swarm-123' }] },
-          { number: 2, title: 'Task 2', labels: [{ name: 'swarm-456' }] },
-          { number: 3, title: 'Task 3', labels: [] },
-        ]));
+        execSync.mockReturnValue(
+          JSON.stringify([
+            { number: 1, title: 'Task 1', labels: [{ name: 'swarm-123' }] },
+            { number: 2, title: 'Task 2', labels: [{ name: 'swarm-456' }] },
+            { number: 3, title: 'Task 3', labels: [] },
+          ]),
+        );
 
         const status = await coordinator.getCoordinationStatus();
 
@@ -871,12 +969,12 @@ describe('Integration & Advanced Features Coverage', () => {
         expect(Object.keys(status.swarmStatus)).toHaveLength(2);
       });
 
-      test('should cleanup stale locks', async() => {
+      test('should cleanup stale locks', async () => {
         const coordinator = new GHCoordinator({ owner: 'test', repo: 'test' });
 
-        coordinator.db.prepare().all.mockReturnValue([
-          { issue_number: 123, swarm_id: 'swarm-old' },
-        ]);
+        coordinator.db
+          .prepare()
+          .all.mockReturnValue([{ issue_number: 123, swarm_id: 'swarm-old' }]);
         coordinator.releaseTask = jest.fn().mockResolvedValue(true);
 
         const cleanedCount = await coordinator.cleanupStaleLocks();
@@ -890,10 +988,11 @@ describe('Integration & Advanced Features Coverage', () => {
   describe('Cognitive Pattern Evolution - Comprehensive Coverage', () => {
     let CognitivePatternEvolution;
 
-    beforeEach(async() => {
+    beforeEach(async () => {
       try {
         const module = await import('../src/cognitive-pattern-evolution.js');
-        CognitivePatternEvolution = module.default || module.CognitivePatternEvolution;
+        CognitivePatternEvolution =
+          module.default || module.CognitivePatternEvolution;
       } catch (error) {
         // Create comprehensive mock
         CognitivePatternEvolution = class {
@@ -956,10 +1055,11 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(convergent.name).toBe('Convergent Thinking');
     });
 
-    test('should evolve patterns based on feedback', async() => {
+    test('should evolve patterns based on feedback', async () => {
       const evolution = new CognitivePatternEvolution();
 
-      const result = await evolution.evolvePattern('agent-1',
+      const result = await evolution.evolvePattern(
+        'agent-1',
         { taskType: 'analysis', complexity: 0.7 },
         { success: true, performance: 0.9 },
       );
@@ -969,7 +1069,7 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(result.confidence).toBeGreaterThan(0);
     });
 
-    test('should handle cross-agent learning', async() => {
+    test('should handle cross-agent learning', async () => {
       const evolution = new CognitivePatternEvolution();
 
       const result = await evolution.crossAgentLearning(
@@ -997,7 +1097,7 @@ describe('Integration & Advanced Features Coverage', () => {
     });
 
     // Test evolution metrics tracking
-    test('should track evolution metrics', async() => {
+    test('should track evolution metrics', async () => {
       const evolution = new CognitivePatternEvolution();
 
       // Simulate multiple evolution steps
@@ -1012,7 +1112,7 @@ describe('Integration & Advanced Features Coverage', () => {
   describe('Meta-Learning Framework - Comprehensive Coverage', () => {
     let MetaLearningFramework;
 
-    beforeEach(async() => {
+    beforeEach(async () => {
       try {
         const module = await import('../src/meta-learning-framework.js');
         MetaLearningFramework = module.default || module.MetaLearningFramework;
@@ -1078,7 +1178,7 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(maml.type).toBe('gradient_based');
     });
 
-    test('should adapt to new domains', async() => {
+    test('should adapt to new domains', async () => {
       const framework = new MetaLearningFramework();
 
       const result = await framework.adaptToDomain(
@@ -1093,7 +1193,7 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(result.transferredKnowledge).toBeInstanceOf(Array);
     });
 
-    test('should meta-learn from experiences', async() => {
+    test('should meta-learn from experiences', async () => {
       const framework = new MetaLearningFramework();
 
       const experiences = [
@@ -1101,7 +1201,10 @@ describe('Integration & Advanced Features Coverage', () => {
         { task: 'task2', performance: 0.9, strategy: 'prototypical' },
       ];
 
-      const result = await framework.metaLearnFromExperiences(experiences, 'maml');
+      const result = await framework.metaLearnFromExperiences(
+        experiences,
+        'maml',
+      );
 
       expect(result.success).toBe(true);
       expect(result.learnedStrategy).toBe('maml');
@@ -1121,7 +1224,7 @@ describe('Integration & Advanced Features Coverage', () => {
     });
 
     // Test experience tracking
-    test('should track agent experiences', async() => {
+    test('should track agent experiences', async () => {
       const framework = new MetaLearningFramework();
 
       const experience = {
@@ -1142,10 +1245,11 @@ describe('Integration & Advanced Features Coverage', () => {
   describe('Neural Coordination Protocol - Comprehensive Coverage', () => {
     let NeuralCoordinationProtocol;
 
-    beforeEach(async() => {
+    beforeEach(async () => {
       try {
         const module = await import('../src/neural-coordination-protocol.js');
-        NeuralCoordinationProtocol = module.default || module.NeuralCoordinationProtocol;
+        NeuralCoordinationProtocol =
+          module.default || module.NeuralCoordinationProtocol;
       } catch (error) {
         NeuralCoordinationProtocol = class {
           constructor() {
@@ -1230,7 +1334,7 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(voting.threshold).toBe(0.66);
     });
 
-    test('should coordinate agents', async() => {
+    test('should coordinate agents', async () => {
       const protocol = new NeuralCoordinationProtocol();
 
       const result = await protocol.coordinateAgents(
@@ -1245,7 +1349,7 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(result.strategy).toBe('hierarchical');
     });
 
-    test('should establish consensus', async() => {
+    test('should establish consensus', async () => {
       const protocol = new NeuralCoordinationProtocol();
 
       const proposals = [
@@ -1278,7 +1382,7 @@ describe('Integration & Advanced Features Coverage', () => {
     });
 
     // Test session management
-    test('should manage active sessions', async() => {
+    test('should manage active sessions', async () => {
       const protocol = new NeuralCoordinationProtocol();
 
       const sessionId = 'test-session-123';
@@ -1298,7 +1402,7 @@ describe('Integration & Advanced Features Coverage', () => {
   describe('WASM Memory Optimizer - Comprehensive Coverage', () => {
     let WasmMemoryPool;
 
-    beforeEach(async() => {
+    beforeEach(async () => {
       // Mock WebAssembly.Memory
       global.WebAssembly = {
         Memory: jest.fn().mockImplementation((config) => ({
@@ -1326,7 +1430,9 @@ describe('Integration & Advanced Features Coverage', () => {
           getPool(moduleId, requiredSize) {
             if (!this.pools.has(moduleId)) {
               const memory = new WebAssembly.Memory({
-                initial: Math.ceil((requiredSize || this.initialSize) / (64 * 1024)),
+                initial: Math.ceil(
+                  (requiredSize || this.initialSize) / (64 * 1024),
+                ),
                 maximum: Math.ceil(this.maxMemory / (64 * 1024)),
               });
               this.pools.set(moduleId, {
@@ -1494,10 +1600,14 @@ describe('Integration & Advanced Features Coverage', () => {
   });
 
   describe('Integration Test Scenarios', () => {
-    test('should integrate Claude hooks with GitHub coordinator', async() => {
+    test('should integrate Claude hooks with GitHub coordinator', async () => {
       const mockCoordinator = {
         getAvailableTasks: jest.fn().mockResolvedValue([
-          { number: 123, title: 'Integration test', body: 'Test integration' },
+          {
+            number: 123,
+            title: 'Integration test',
+            body: 'Test integration',
+          },
         ]),
         claimTask: jest.fn().mockResolvedValue(true),
         updateTaskProgress: jest.fn().mockResolvedValue(true),
@@ -1520,7 +1630,7 @@ describe('Integration & Advanced Features Coverage', () => {
       expect(updateResult).toBe(true);
     });
 
-    test('should coordinate pattern evolution with meta-learning', async() => {
+    test('should coordinate pattern evolution with meta-learning', async () => {
       // This tests the interaction between cognitive patterns and meta-learning
       const mockEvolution = {
         evolvePattern: jest.fn().mockResolvedValue({
@@ -1554,10 +1664,12 @@ describe('Integration & Advanced Features Coverage', () => {
 
       expect(evolutionResult.success).toBe(true);
       expect(adaptationResult.success).toBe(true);
-      expect(adaptationResult.transferredKnowledge).toContain('pattern-knowledge');
+      expect(adaptationResult.transferredKnowledge).toContain(
+        'pattern-knowledge',
+      );
     });
 
-    test('should coordinate neural agents with WASM memory optimization', async() => {
+    test('should coordinate neural agents with WASM memory optimization', async () => {
       const mockMemoryPool = {
         allocate: jest.fn().mockReturnValue({
           id: 1,
@@ -1594,28 +1706,32 @@ describe('Integration & Advanced Features Coverage', () => {
   });
 
   describe('Error Handling and Edge Cases', () => {
-    test('should handle file system errors in Claude integration', async() => {
+    test('should handle file system errors in Claude integration', async () => {
       const orchestrator = new ClaudeIntegrationOrchestrator();
 
       // Mock file system error
       fs.mkdir.mockRejectedValue(new Error('Permission denied'));
-      orchestrator.docs.generateAll = jest.fn().mockRejectedValue(new Error('FS error'));
+      orchestrator.docs.generateAll = jest
+        .fn()
+        .mockRejectedValue(new Error('FS error'));
 
       await expect(orchestrator.setupIntegration()).rejects.toThrow();
     });
 
-    test('should handle GitHub API errors', async() => {
+    test('should handle GitHub API errors', async () => {
       execSync.mockImplementation(() => {
         throw new Error('GitHub API rate limit exceeded');
       });
 
       const mockCoordinator = {
-        getAvailableTasks: async() => {
+        getAvailableTasks: async () => {
           throw new Error('GitHub API rate limit exceeded');
         },
       };
 
-      await expect(mockCoordinator.getAvailableTasks()).rejects.toThrow('GitHub API rate limit exceeded');
+      await expect(mockCoordinator.getAvailableTasks()).rejects.toThrow(
+        'GitHub API rate limit exceeded',
+      );
     });
 
     test('should handle memory allocation failures', () => {
@@ -1630,9 +1746,9 @@ describe('Integration & Advanced Features Coverage', () => {
       }).toThrow('Out of memory');
     });
 
-    test('should handle invalid patterns in cognitive evolution', async() => {
+    test('should handle invalid patterns in cognitive evolution', async () => {
       const mockEvolution = {
-        evolvePattern: async(agentId, context, feedback) => {
+        evolvePattern: async (agentId, context, feedback) => {
           if (!context || !feedback) {
             throw new Error('Invalid context or feedback');
           }
@@ -1645,9 +1761,9 @@ describe('Integration & Advanced Features Coverage', () => {
       ).rejects.toThrow('Invalid context or feedback');
     });
 
-    test('should handle coordination protocol failures', async() => {
+    test('should handle coordination protocol failures', async () => {
       const mockProtocol = {
-        coordinateAgents: async(agentIds, strategy) => {
+        coordinateAgents: async (agentIds, strategy) => {
           if (!agentIds || agentIds.length === 0) {
             throw new Error('No agents provided for coordination');
           }

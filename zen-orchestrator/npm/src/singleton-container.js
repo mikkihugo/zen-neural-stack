@@ -36,7 +36,9 @@ class SingletonContainer {
    */
   get(key) {
     if (this.isDestroying) {
-      throw new Error(`Cannot get instance '${key}' during container destruction`);
+      throw new Error(
+        `Cannot get instance '${key}' during container destruction`,
+      );
     }
 
     // Return existing instance if available
@@ -51,12 +53,12 @@ class SingletonContainer {
     }
 
     // Resolve dependencies
-    const dependencies = config.dependencies.map(dep => this.get(dep));
+    const dependencies = config.dependencies.map((dep) => this.get(dep));
 
     try {
       // Create instance using factory
       const instance = config.factory(...dependencies);
-      
+
       // Store singleton instance
       if (config.singleton) {
         this.instances.set(key, instance);
@@ -97,7 +99,7 @@ class SingletonContainer {
 
     // Destroy instances in reverse order of creation
     const instances = Array.from(this.instances.entries()).reverse();
-    
+
     for (const [key, instance] of instances) {
       try {
         if (instance && typeof instance.destroy === 'function') {
@@ -110,7 +112,7 @@ class SingletonContainer {
 
     this.instances.clear();
     this.factories.clear();
-    
+
     // Keep destroying flag to prevent new instance creation
     // Reset only when explicitly requested
   }
@@ -147,7 +149,7 @@ let globalContainer = null;
 export function getContainer() {
   if (!globalContainer) {
     globalContainer = new SingletonContainer();
-    
+
     // Register cleanup on process exit
     if (typeof process !== 'undefined') {
       process.on('exit', () => {
@@ -166,7 +168,7 @@ export function getContainer() {
       });
     }
   }
-  
+
   return globalContainer;
 }
 

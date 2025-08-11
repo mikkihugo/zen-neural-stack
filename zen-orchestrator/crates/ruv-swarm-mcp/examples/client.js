@@ -2,7 +2,7 @@
 
 /**
  * Example MCP client for RUV-Swarm
- * 
+ *
  * This demonstrates how to interact with the MCP server using WebSocket
  */
 
@@ -59,7 +59,7 @@ class MCPClient {
         jsonrpc: '2.0',
         method,
         params,
-        id
+        id,
       };
 
       this.pendingRequests.set(id, { resolve, reject });
@@ -79,7 +79,7 @@ class MCPClient {
   async callTool(name, args) {
     return this.sendRequest('tools/call', {
       name,
-      arguments: args
+      arguments: args,
     });
   }
 
@@ -116,8 +116,8 @@ async function main() {
         frameworks: ['academic', 'industry'],
         tools: ['search', 'analysis'],
         specializations: ['AI', 'distributed systems'],
-        max_concurrent_tasks: 5
-      }
+        max_concurrent_tasks: 5,
+      },
     });
     console.log('Agent spawned:', spawnResult);
 
@@ -126,14 +126,14 @@ async function main() {
     const taskResult = await client.callTool('ruv-swarm.task.create', {
       task_type: 'research',
       description: 'Research state-of-the-art in swarm intelligence',
-      priority: 'high'
+      priority: 'high',
     });
     console.log('Task created:', taskResult);
 
     // Query swarm state
     console.log('\nQuerying swarm state...');
     const stateResult = await client.callTool('ruv-swarm.query', {
-      include_metrics: true
+      include_metrics: true,
     });
     console.log('Swarm state:', stateResult);
 
@@ -144,7 +144,7 @@ async function main() {
       strategy: 'development',
       mode: 'hierarchical',
       max_agents: 5,
-      parallel: true
+      parallel: true,
     });
     console.log('Orchestration started:', orchestrateResult);
 
@@ -155,15 +155,15 @@ async function main() {
       value: {
         topic: 'swarm intelligence',
         findings: ['distributed decision making', 'emergent behavior'],
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
     console.log('Data stored:', memoryResult);
 
     // Retrieve data from memory
     console.log('\nRetrieving data from memory...');
     const getResult = await client.callTool('ruv-swarm.memory.get', {
-      key: 'research_findings'
+      key: 'research_findings',
     });
     console.log('Retrieved data:', getResult);
 
@@ -171,13 +171,12 @@ async function main() {
     console.log('\nStarting event monitoring...');
     const monitorResult = await client.callTool('ruv-swarm.monitor', {
       event_types: ['agent_spawned', 'task_completed'],
-      duration_secs: 5
+      duration_secs: 5,
     });
     console.log('Monitoring started:', monitorResult);
 
     // Wait a bit for monitoring
-    await new Promise(resolve => setTimeout(resolve, 6000));
-
+    await new Promise((resolve) => setTimeout(resolve, 6000));
   } catch (error) {
     console.error('Error:', error);
   } finally {

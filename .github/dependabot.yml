@@ -1,0 +1,58 @@
+version: 2
+updates:
+  # Rust dependencies
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "security"
+      - "dependencies"
+      - "rust"
+    reviewers:
+      - "mikkihugo"
+
+  # Zen-forecasting Rust crate
+  - package-ecosystem: "cargo"
+    directory: "/zen-forecasting"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "security"
+      - "dependencies"
+      - "zen-forecasting"
+
+  # Node.js dependencies
+  - package-ecosystem: "npm"
+    directory: "/zen-orchestrator/npm"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "security"
+      - "dependencies"
+      - "nodejs"
+    reviewers:
+      - "mikkihugo"
+
+  # Additional Node.js locations
+  - package-ecosystem: "npm"
+    directory: "/zen-compute"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "ci-cd"
+      - "github-actions"

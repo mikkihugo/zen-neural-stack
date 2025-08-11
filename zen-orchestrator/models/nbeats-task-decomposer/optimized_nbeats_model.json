@@ -30,10 +30,14 @@
           "theta_dim": 4,
           "basis_function": "polynomial",
           "interpretable_output": true,
-          "task_features": ["complexity_growth", "dependency_depth", "implementation_difficulty"]
+          "task_features": [
+            "complexity_growth",
+            "dependency_depth",
+            "implementation_difficulty"
+          ]
         },
         {
-          "block_id": "trend_2", 
+          "block_id": "trend_2",
           "type": "exponential_trend",
           "hidden_units": 192,
           "layers": 3,
@@ -42,7 +46,11 @@
           "theta_dim": 3,
           "basis_function": "exponential",
           "interpretable_output": true,
-          "task_features": ["learning_curve", "debugging_complexity", "integration_effort"]
+          "task_features": [
+            "learning_curve",
+            "debugging_complexity",
+            "integration_effort"
+          ]
         }
       ],
       "residual_connections": true,
@@ -63,7 +71,12 @@
           "harmonics": 8,
           "basis_function": "fourier",
           "interpretable_output": true,
-          "task_patterns": ["api_integration", "data_processing", "ui_components", "testing_cycles"]
+          "task_patterns": [
+            "api_integration",
+            "data_processing",
+            "ui_components",
+            "testing_cycles"
+          ]
         },
         {
           "block_id": "seasonal_2",
@@ -76,7 +89,11 @@
           "cycle_lengths": [4, 8, 16],
           "basis_function": "cyclical",
           "interpretable_output": true,
-          "task_patterns": ["refactoring_cycles", "feature_iterations", "code_review_patterns"]
+          "task_patterns": [
+            "refactoring_cycles",
+            "feature_iterations",
+            "code_review_patterns"
+          ]
         }
       ],
       "residual_connections": true,
@@ -96,7 +113,11 @@
           "theta_dim": 32,
           "basis_function": "generic_linear",
           "adaptivity_factor": 0.3,
-          "task_adaptations": ["novel_frameworks", "custom_algorithms", "domain_specific_logic"]
+          "task_adaptations": [
+            "novel_frameworks",
+            "custom_algorithms",
+            "domain_specific_logic"
+          ]
         },
         {
           "block_id": "generic_2",
@@ -108,7 +129,11 @@
           "theta_dim": 24,
           "basis_function": "residual_linear",
           "residual_weight": 0.4,
-          "task_residuals": ["edge_cases", "error_handling", "performance_optimizations"]
+          "task_residuals": [
+            "edge_cases",
+            "error_handling",
+            "performance_optimizations"
+          ]
         }
       ],
       "residual_connections": true,

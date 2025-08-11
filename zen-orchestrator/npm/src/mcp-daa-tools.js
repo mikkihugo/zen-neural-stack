@@ -53,7 +53,12 @@ export class DAA_MCPTools {
       return result;
     } catch (error) {
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_init', startTime, 'error', error.message);
+        this.mcpTools.recordToolMetrics(
+          'daa_init',
+          startTime,
+          'error',
+          error.message,
+        );
       }
       throw error;
     }
@@ -154,12 +159,21 @@ export class DAA_MCPTools {
       };
 
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_agent_create', startTime, 'success');
+        this.mcpTools.recordToolMetrics(
+          'daa_agent_create',
+          startTime,
+          'success',
+        );
       }
       return result;
     } catch (error) {
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_agent_create', startTime, 'error', error.message);
+        this.mcpTools.recordToolMetrics(
+          'daa_agent_create',
+          startTime,
+          'error',
+          error.message,
+        );
       }
       throw error;
     }
@@ -205,12 +219,21 @@ export class DAA_MCPTools {
       };
 
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_agent_adapt', startTime, 'success');
+        this.mcpTools.recordToolMetrics(
+          'daa_agent_adapt',
+          startTime,
+          'success',
+        );
       }
       return result;
     } catch (error) {
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_agent_adapt', startTime, 'error', error.message);
+        this.mcpTools.recordToolMetrics(
+          'daa_agent_adapt',
+          startTime,
+          'error',
+          error.message,
+        );
       }
       throw error;
     }
@@ -250,12 +273,21 @@ export class DAA_MCPTools {
       };
 
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_workflow_create', startTime, 'success');
+        this.mcpTools.recordToolMetrics(
+          'daa_workflow_create',
+          startTime,
+          'success',
+        );
       }
       return result;
     } catch (error) {
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_workflow_create', startTime, 'error', error.message);
+        this.mcpTools.recordToolMetrics(
+          'daa_workflow_create',
+          startTime,
+          'error',
+          error.message,
+        );
       }
       throw error;
     }
@@ -299,12 +331,21 @@ export class DAA_MCPTools {
       };
 
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_workflow_execute', startTime, 'success');
+        this.mcpTools.recordToolMetrics(
+          'daa_workflow_execute',
+          startTime,
+          'success',
+        );
       }
       return result;
     } catch (error) {
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_workflow_execute', startTime, 'error', error.message);
+        this.mcpTools.recordToolMetrics(
+          'daa_workflow_execute',
+          startTime,
+          'error',
+          error.message,
+        );
       }
       throw error;
     }
@@ -356,12 +397,21 @@ export class DAA_MCPTools {
       };
 
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_knowledge_share', startTime, 'success');
+        this.mcpTools.recordToolMetrics(
+          'daa_knowledge_share',
+          startTime,
+          'success',
+        );
       }
       return result;
     } catch (error) {
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_knowledge_share', startTime, 'error', error.message);
+        this.mcpTools.recordToolMetrics(
+          'daa_knowledge_share',
+          startTime,
+          'error',
+          error.message,
+        );
       }
       throw error;
     }
@@ -404,12 +454,21 @@ export class DAA_MCPTools {
       }
 
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_learning_status', startTime, 'success');
+        this.mcpTools.recordToolMetrics(
+          'daa_learning_status',
+          startTime,
+          'success',
+        );
       }
       return result;
     } catch (error) {
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_learning_status', startTime, 'error', error.message);
+        this.mcpTools.recordToolMetrics(
+          'daa_learning_status',
+          startTime,
+          'error',
+          error.message,
+        );
       }
       throw error;
     }
@@ -424,13 +483,7 @@ export class DAA_MCPTools {
     try {
       await this.ensureInitialized();
 
-      const {
-        agent_id,
-        agentId,
-        pattern,
-        action,
-        analyze = false,
-      } = params;
+      const { agent_id, agentId, pattern, action, analyze = false } = params;
 
       const id = agent_id || agentId;
       const shouldAnalyze = action === 'analyze' || analyze;
@@ -449,7 +502,11 @@ export class DAA_MCPTools {
         };
 
         if (this.mcpTools?.recordToolMetrics) {
-          this.mcpTools.recordToolMetrics('daa_cognitive_pattern', startTime, 'success');
+          this.mcpTools.recordToolMetrics(
+            'daa_cognitive_pattern',
+            startTime,
+            'success',
+          );
         }
         return result;
       }
@@ -458,7 +515,10 @@ export class DAA_MCPTools {
         throw new Error('Agent ID and pattern are required for pattern change');
       }
 
-      const changeResult = await daaService.setCognitivePattern(agentId, pattern);
+      const changeResult = await daaService.setCognitivePattern(
+        agentId,
+        pattern,
+      );
 
       const result = {
         agent_id: agentId,
@@ -470,13 +530,21 @@ export class DAA_MCPTools {
       };
 
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_cognitive_pattern', startTime, 'success');
+        this.mcpTools.recordToolMetrics(
+          'daa_cognitive_pattern',
+          startTime,
+          'success',
+        );
       }
       return result;
-
     } catch (error) {
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_cognitive_pattern', startTime, 'error', error.message);
+        this.mcpTools.recordToolMetrics(
+          'daa_cognitive_pattern',
+          startTime,
+          'error',
+          error.message,
+        );
       }
       throw error;
     }
@@ -518,12 +586,21 @@ export class DAA_MCPTools {
       };
 
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_meta_learning', startTime, 'success');
+        this.mcpTools.recordToolMetrics(
+          'daa_meta_learning',
+          startTime,
+          'success',
+        );
       }
       return result;
     } catch (error) {
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_meta_learning', startTime, 'error', error.message);
+        this.mcpTools.recordToolMetrics(
+          'daa_meta_learning',
+          startTime,
+          'error',
+          error.message,
+        );
       }
       throw error;
     }
@@ -575,12 +652,21 @@ export class DAA_MCPTools {
       };
 
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_performance_metrics', startTime, 'success');
+        this.mcpTools.recordToolMetrics(
+          'daa_performance_metrics',
+          startTime,
+          'success',
+        );
       }
       return result;
     } catch (error) {
       if (this.mcpTools?.recordToolMetrics) {
-        this.mcpTools.recordToolMetrics('daa_performance_metrics', startTime, 'error', error.message);
+        this.mcpTools.recordToolMetrics(
+          'daa_performance_metrics',
+          startTime,
+          'error',
+          error.message,
+        );
       }
       throw error;
     }
@@ -597,9 +683,19 @@ export class DAA_MCPTools {
         inputSchema: {
           type: 'object',
           properties: {
-            enableLearning: { type: 'boolean', description: 'Enable autonomous learning' },
-            enableCoordination: { type: 'boolean', description: 'Enable peer coordination' },
-            persistenceMode: { type: 'string', enum: ['auto', 'memory', 'disk'], description: 'Persistence mode' },
+            enableLearning: {
+              type: 'boolean',
+              description: 'Enable autonomous learning',
+            },
+            enableCoordination: {
+              type: 'boolean',
+              description: 'Enable peer coordination',
+            },
+            persistenceMode: {
+              type: 'string',
+              enum: ['auto', 'memory', 'disk'],
+              description: 'Persistence mode',
+            },
           },
         },
       },
@@ -610,10 +706,31 @@ export class DAA_MCPTools {
           type: 'object',
           properties: {
             id: { type: 'string', description: 'Unique agent identifier' },
-            capabilities: { type: 'array', items: { type: 'string' }, description: 'Agent capabilities' },
-            cognitivePattern: { type: 'string', enum: ['convergent', 'divergent', 'lateral', 'systems', 'critical', 'adaptive'], description: 'Cognitive thinking pattern' },
-            learningRate: { type: 'number', description: 'Learning rate (0-1)' },
-            enableMemory: { type: 'boolean', description: 'Enable persistent memory' },
+            capabilities: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Agent capabilities',
+            },
+            cognitivePattern: {
+              type: 'string',
+              enum: [
+                'convergent',
+                'divergent',
+                'lateral',
+                'systems',
+                'critical',
+                'adaptive',
+              ],
+              description: 'Cognitive thinking pattern',
+            },
+            learningRate: {
+              type: 'number',
+              description: 'Learning rate (0-1)',
+            },
+            enableMemory: {
+              type: 'boolean',
+              description: 'Enable persistent memory',
+            },
           },
           required: ['id'],
         },
@@ -625,10 +742,20 @@ export class DAA_MCPTools {
           type: 'object',
           properties: {
             agent_id: { type: 'string', description: 'Agent ID to adapt' },
-            agentId: { type: 'string', description: 'Agent ID to adapt (legacy)' },
+            agentId: {
+              type: 'string',
+              description: 'Agent ID to adapt (legacy)',
+            },
             feedback: { type: 'string', description: 'Feedback message' },
-            performanceScore: { type: 'number', description: 'Performance score (0-1)' },
-            suggestions: { type: 'array', items: { type: 'string' }, description: 'Improvement suggestions' },
+            performanceScore: {
+              type: 'number',
+              description: 'Performance score (0-1)',
+            },
+            suggestions: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Improvement suggestions',
+            },
           },
           required: ['agentId'],
         },
@@ -643,7 +770,11 @@ export class DAA_MCPTools {
             name: { type: 'string', description: 'Workflow name' },
             steps: { type: 'array', description: 'Workflow steps' },
             dependencies: { type: 'object', description: 'Step dependencies' },
-            strategy: { type: 'string', enum: ['parallel', 'sequential', 'adaptive'], description: 'Execution strategy' },
+            strategy: {
+              type: 'string',
+              enum: ['parallel', 'sequential', 'adaptive'],
+              description: 'Execution strategy',
+            },
           },
           required: ['id', 'name'],
         },
@@ -654,10 +785,23 @@ export class DAA_MCPTools {
         inputSchema: {
           type: 'object',
           properties: {
-            workflow_id: { type: 'string', description: 'Workflow ID to execute' },
-            workflowId: { type: 'string', description: 'Workflow ID to execute (legacy)' },
-            agentIds: { type: 'array', items: { type: 'string' }, description: 'Agent IDs to use' },
-            parallelExecution: { type: 'boolean', description: 'Enable parallel execution' },
+            workflow_id: {
+              type: 'string',
+              description: 'Workflow ID to execute',
+            },
+            workflowId: {
+              type: 'string',
+              description: 'Workflow ID to execute (legacy)',
+            },
+            agentIds: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Agent IDs to use',
+            },
+            parallelExecution: {
+              type: 'boolean',
+              description: 'Enable parallel execution',
+            },
           },
           required: ['workflowId'],
         },
@@ -669,11 +813,28 @@ export class DAA_MCPTools {
           type: 'object',
           properties: {
             source_agent: { type: 'string', description: 'Source agent ID' },
-            sourceAgentId: { type: 'string', description: 'Source agent ID (legacy)' },
-            target_agents: { type: 'array', items: { type: 'string' }, description: 'Target agent IDs' },
-            targetAgentIds: { type: 'array', items: { type: 'string' }, description: 'Target agent IDs (legacy)' },
-            knowledgeDomain: { type: 'string', description: 'Knowledge domain' },
-            knowledgeContent: { type: 'object', description: 'Knowledge to share' },
+            sourceAgentId: {
+              type: 'string',
+              description: 'Source agent ID (legacy)',
+            },
+            target_agents: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Target agent IDs',
+            },
+            targetAgentIds: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Target agent IDs (legacy)',
+            },
+            knowledgeDomain: {
+              type: 'string',
+              description: 'Knowledge domain',
+            },
+            knowledgeContent: {
+              type: 'object',
+              description: 'Knowledge to share',
+            },
           },
           required: ['sourceAgentId', 'targetAgentIds'],
         },
@@ -684,8 +845,14 @@ export class DAA_MCPTools {
         inputSchema: {
           type: 'object',
           properties: {
-            agentId: { type: 'string', description: 'Specific agent ID (optional)' },
-            detailed: { type: 'boolean', description: 'Include detailed metrics' },
+            agentId: {
+              type: 'string',
+              description: 'Specific agent ID (optional)',
+            },
+            detailed: {
+              type: 'boolean',
+              description: 'Include detailed metrics',
+            },
           },
         },
       },
@@ -697,9 +864,27 @@ export class DAA_MCPTools {
           properties: {
             agent_id: { type: 'string', description: 'Agent ID' },
             agentId: { type: 'string', description: 'Agent ID (legacy)' },
-            action: { type: 'string', enum: ['analyze', 'change'], description: 'Action to perform' },
-            pattern: { type: 'string', enum: ['convergent', 'divergent', 'lateral', 'systems', 'critical', 'adaptive'], description: 'New pattern to set' },
-            analyze: { type: 'boolean', description: 'Analyze patterns instead of changing' },
+            action: {
+              type: 'string',
+              enum: ['analyze', 'change'],
+              description: 'Action to perform',
+            },
+            pattern: {
+              type: 'string',
+              enum: [
+                'convergent',
+                'divergent',
+                'lateral',
+                'systems',
+                'critical',
+                'adaptive',
+              ],
+              description: 'New pattern to set',
+            },
+            analyze: {
+              type: 'boolean',
+              description: 'Analyze patterns instead of changing',
+            },
           },
         },
       },
@@ -709,10 +894,24 @@ export class DAA_MCPTools {
         inputSchema: {
           type: 'object',
           properties: {
-            sourceDomain: { type: 'string', description: 'Source knowledge domain' },
-            targetDomain: { type: 'string', description: 'Target knowledge domain' },
-            transferMode: { type: 'string', enum: ['adaptive', 'direct', 'gradual'], description: 'Transfer mode' },
-            agentIds: { type: 'array', items: { type: 'string' }, description: 'Specific agents to update' },
+            sourceDomain: {
+              type: 'string',
+              description: 'Source knowledge domain',
+            },
+            targetDomain: {
+              type: 'string',
+              description: 'Target knowledge domain',
+            },
+            transferMode: {
+              type: 'string',
+              enum: ['adaptive', 'direct', 'gradual'],
+              description: 'Transfer mode',
+            },
+            agentIds: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Specific agents to update',
+            },
           },
         },
       },
@@ -722,8 +921,15 @@ export class DAA_MCPTools {
         inputSchema: {
           type: 'object',
           properties: {
-            category: { type: 'string', enum: ['all', 'system', 'performance', 'efficiency', 'neural'], description: 'Metrics category' },
-            timeRange: { type: 'string', description: 'Time range (e.g., 1h, 24h, 7d)' },
+            category: {
+              type: 'string',
+              enum: ['all', 'system', 'performance', 'efficiency', 'neural'],
+              description: 'Metrics category',
+            },
+            timeRange: {
+              type: 'string',
+              description: 'Time range (e.g., 1h, 24h, 7d)',
+            },
           },
         },
       },

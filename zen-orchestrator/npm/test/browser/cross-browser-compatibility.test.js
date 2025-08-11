@@ -19,7 +19,7 @@ describe('Cross-Browser WASM Compatibility', () => {
   let serverUrl;
   const browsers = [];
 
-  beforeAll(async() => {
+  beforeAll(async () => {
     // Start local server to serve test files
     server = createServer((request, response) => {
       return handler(request, response, {
@@ -27,20 +27,25 @@ describe('Cross-Browser WASM Compatibility', () => {
         headers: [
           {
             source: '**/*.wasm',
-            headers: [{
-              key: 'Content-Type',
-              value: 'application/wasm',
-            }],
+            headers: [
+              {
+                key: 'Content-Type',
+                value: 'application/wasm',
+              },
+            ],
           },
           {
             source: '**/*',
-            headers: [{
-              key: 'Cross-Origin-Embedder-Policy',
-              value: 'require-corp',
-            }, {
-              key: 'Cross-Origin-Opener-Policy',
-              value: 'same-origin',
-            }],
+            headers: [
+              {
+                key: 'Cross-Origin-Embedder-Policy',
+                value: 'require-corp',
+              },
+              {
+                key: 'Cross-Origin-Opener-Policy',
+                value: 'same-origin',
+              },
+            ],
           },
         ],
       });
@@ -71,7 +76,7 @@ describe('Cross-Browser WASM Compatibility', () => {
     }
   });
 
-  afterAll(async() => {
+  afterAll(async () => {
     // Close all browsers
     for (const { browser } of browsers) {
       await browser.close();
@@ -85,15 +90,17 @@ describe('Cross-Browser WASM Compatibility', () => {
 
   describe('Basic WASM Support', () => {
     for (const { name, browser } of browsers) {
-      it(`should detect WASM support in ${name}`, async() => {
+      it(`should detect WASM support in ${name}`, async () => {
         const context = await browser.newContext();
         const page = await context.newPage();
 
         await page.goto(`${serverUrl}/test/browser/wasm-test.html`);
 
         const wasmSupported = await page.evaluate(() => {
-          return typeof WebAssembly !== 'undefined' &&
-                 typeof WebAssembly.instantiate === 'function';
+          return (
+            typeof WebAssembly !== 'undefined' &&
+            typeof WebAssembly.instantiate === 'function'
+          );
         });
 
         expect(wasmSupported).toBe(true);
@@ -101,13 +108,13 @@ describe('Cross-Browser WASM Compatibility', () => {
         await context.close();
       });
 
-      it(`should load WASM module in ${name}`, async() => {
+      it(`should load WASM module in ${name}`, async () => {
         const context = await browser.newContext();
         const page = await context.newPage();
 
         await page.goto(`${serverUrl}/test/browser/wasm-test.html`);
 
-        const moduleLoaded = await page.evaluate(async() => {
+        const moduleLoaded = await page.evaluate(async () => {
           try {
             const response = await fetch('/wasm/ruv_swarm_wasm_bg.wasm');
             const buffer = await response.arrayBuffer();
@@ -128,13 +135,13 @@ describe('Cross-Browser WASM Compatibility', () => {
 
   describe('SIMD Support', () => {
     for (const { name, browser } of browsers) {
-      it(`should detect SIMD support in ${name}`, async() => {
+      it(`should detect SIMD support in ${name}`, async () => {
         const context = await browser.newContext();
         const page = await context.newPage();
 
         await page.goto(`${serverUrl}/test/browser/wasm-test.html`);
 
-        const simdInfo = await page.evaluate(async() => {
+        const simdInfo = await page.evaluate(async () => {
           // Load RuvSwarm module
           const { RuvSwarm } = await import('/src/index-enhanced.js');
           const swarm = await RuvSwarm.initialize({ debug: true });
@@ -159,7 +166,7 @@ describe('Cross-Browser WASM Compatibility', () => {
 
   describe('Memory Management', () => {
     for (const { name, browser } of browsers) {
-      it(`should handle SharedArrayBuffer in ${name}`, async() => {
+      it(`should handle SharedArrayBuffer in ${name}`, async () => {
         const context = await browser.newContext();
         const page = await context.newPage();
 
@@ -169,7 +176,10 @@ describe('Cross-Browser WASM Compatibility', () => {
           try {
             // Check if SharedArrayBuffer is available
             if (typeof SharedArrayBuffer === 'undefined') {
-              return { available: false, reason: 'SharedArrayBuffer not defined' };
+              return {
+                available: false,
+                reason: 'SharedArrayBuffer not defined',
+              };
             }
 
             // Try to create one
@@ -207,13 +217,13 @@ describe('Cross-Browser WASM Compatibility', () => {
         await context.close();
       });
 
-      it(`should handle memory growth in ${name}`, async() => {
+      it(`should handle memory growth in ${name}`, async () => {
         const context = await browser.newContext();
         const page = await context.newPage();
 
         await page.goto(`${serverUrl}/test/browser/wasm-test.html`);
 
-        const memoryTest = await page.evaluate(async() => {
+        const memoryTest = await page.evaluate(async () => {
           const { RuvSwarm } = await import('/src/index-enhanced.js');
           const swarm = await RuvSwarm.initialize({ debug: false });
 
@@ -241,7 +251,9 @@ describe('Cross-Browser WASM Compatibility', () => {
         });
 
         expect(memoryTest.grew).toBe(true);
-        console.log(`${name} memory growth: ${memoryTest.initial} -> ${memoryTest.afterAlloc}`);
+        console.log(
+          `${name} memory growth: ${memoryTest.initial} -> ${memoryTest.afterAlloc}`,
+        );
 
         await context.close();
       });
@@ -250,13 +262,13 @@ describe('Cross-Browser WASM Compatibility', () => {
 
   describe('Neural Network Operations', () => {
     for (const { name, browser } of browsers) {
-      it(`should run neural network in ${name}`, async() => {
+      it(`should run neural network in ${name}`, async () => {
         const context = await browser.newContext();
         const page = await context.newPage();
 
         await page.goto(`${serverUrl}/test/browser/wasm-test.html`);
 
-        const nnTest = await page.evaluate(async() => {
+        const nnTest = await page.evaluate(async () => {
           const { RuvSwarm } = await import('/src/index-enhanced.js');
           const swarm = await RuvSwarm.initialize({
             enableNeuralNetworks: true,
@@ -289,7 +301,9 @@ describe('Cross-Browser WASM Compatibility', () => {
         expect(nnTest.success).toBe(true);
         expect(nnTest.outputLength).toBe(5);
         expect(nnTest.outputSum).toBeCloseTo(1.0, 1); // Softmax should sum to ~1
-        console.log(`${name} NN inference time: ${nnTest.inferenceTime.toFixed(2)}ms`);
+        console.log(
+          `${name} NN inference time: ${nnTest.inferenceTime.toFixed(2)}ms`,
+        );
 
         await context.close();
       });
@@ -298,13 +312,13 @@ describe('Cross-Browser WASM Compatibility', () => {
 
   describe('Swarm Operations', () => {
     for (const { name, browser } of browsers) {
-      it(`should create and manage swarm in ${name}`, async() => {
+      it(`should create and manage swarm in ${name}`, async () => {
         const context = await browser.newContext();
         const page = await context.newPage();
 
         await page.goto(`${serverUrl}/test/browser/wasm-test.html`);
 
-        const swarmTest = await page.evaluate(async() => {
+        const swarmTest = await page.evaluate(async () => {
           const { RuvSwarm } = await import('/src/index-enhanced.js');
           const ruvSwarm = await RuvSwarm.initialize({ debug: false });
 
@@ -353,13 +367,13 @@ describe('Cross-Browser WASM Compatibility', () => {
 
   describe('Performance Characteristics', () => {
     for (const { name, browser } of browsers) {
-      it(`should measure WASM performance in ${name}`, async() => {
+      it(`should measure WASM performance in ${name}`, async () => {
         const context = await browser.newContext();
         const page = await context.newPage();
 
         await page.goto(`${serverUrl}/test/browser/wasm-test.html`);
 
-        const perfTest = await page.evaluate(async() => {
+        const perfTest = await page.evaluate(async () => {
           const { RuvSwarm } = await import('/src/index-enhanced.js');
           const swarm = await RuvSwarm.initialize({
             useSIMD: true,
@@ -384,7 +398,11 @@ describe('Cross-Browser WASM Compatibility', () => {
 
           const matrixStart = performance.now();
           const matrixResult = await swarm.wasmLoader.matrixMultiply(
-            matA, matB, matrixSize, matrixSize, matrixSize,
+            matA,
+            matB,
+            matrixSize,
+            matrixSize,
+            matrixSize,
           );
           benchmarks.matrixOps = performance.now() - matrixStart;
 
@@ -411,9 +429,15 @@ describe('Cross-Browser WASM Compatibility', () => {
         });
 
         console.log(`${name} Performance Benchmarks:`);
-        console.log(`  Vector ops (100k elements): ${perfTest.vectorOps.toFixed(2)}ms`);
-        console.log(`  Matrix mult (100x100): ${perfTest.matrixOps.toFixed(2)}ms`);
-        console.log(`  NN inference (avg): ${perfTest.nnInference.toFixed(2)}ms`);
+        console.log(
+          `  Vector ops (100k elements): ${perfTest.vectorOps.toFixed(2)}ms`,
+        );
+        console.log(
+          `  Matrix mult (100x100): ${perfTest.matrixOps.toFixed(2)}ms`,
+        );
+        console.log(
+          `  NN inference (avg): ${perfTest.nnInference.toFixed(2)}ms`,
+        );
 
         // Performance should be reasonable across browsers
         expect(perfTest.vectorOps).toBeLessThan(50);
@@ -427,13 +451,13 @@ describe('Cross-Browser WASM Compatibility', () => {
 
   describe('Error Handling', () => {
     for (const { name, browser } of browsers) {
-      it(`should handle WASM errors gracefully in ${name}`, async() => {
+      it(`should handle WASM errors gracefully in ${name}`, async () => {
         const context = await browser.newContext();
         const page = await context.newPage();
 
         await page.goto(`${serverUrl}/test/browser/wasm-test.html`);
 
-        const errorTest = await page.evaluate(async() => {
+        const errorTest = await page.evaluate(async () => {
           const { RuvSwarm } = await import('/src/index-enhanced.js');
           const swarm = await RuvSwarm.initialize({ debug: false });
 
@@ -441,8 +465,9 @@ describe('Cross-Browser WASM Compatibility', () => {
 
           // Test 1: Invalid agent type
           try {
-            await swarm.createSwarm({ name: 'test' })
-              .then(s => s.spawn({ type: 'invalid-type' }));
+            await swarm
+              .createSwarm({ name: 'test' })
+              .then((s) => s.spawn({ type: 'invalid-type' }));
           } catch (error) {
             errors.push({
               test: 'invalid-agent-type',
@@ -480,7 +505,7 @@ describe('Cross-Browser WASM Compatibility', () => {
         });
 
         expect(errorTest).toHaveLength(3);
-        errorTest.forEach(error => {
+        errorTest.forEach((error) => {
           expect(error.caught).toBe(true);
           expect(error.message).toBeTruthy();
         });
@@ -492,13 +517,13 @@ describe('Cross-Browser WASM Compatibility', () => {
 
   describe('WebWorker Integration', () => {
     for (const { name, browser } of browsers) {
-      it(`should run WASM in WebWorker in ${name}`, async() => {
+      it(`should run WASM in WebWorker in ${name}`, async () => {
         const context = await browser.newContext();
         const page = await context.newPage();
 
         await page.goto(`${serverUrl}/test/browser/wasm-test.html`);
 
-        const workerTest = await page.evaluate(async() => {
+        const workerTest = await page.evaluate(async () => {
           // Create worker script
           const workerScript = `
             importScripts('/src/index.js');
@@ -516,7 +541,9 @@ describe('Cross-Browser WASM Compatibility', () => {
             };
           `;
 
-          const blob = new Blob([workerScript], { type: 'application/javascript' });
+          const blob = new Blob([workerScript], {
+            type: 'application/javascript',
+          });
           const worker = new Worker(URL.createObjectURL(blob));
 
           const result = await new Promise((resolve) => {
@@ -598,8 +625,5 @@ export async function createTestHTML() {
 </body>
 </html>`;
 
-  await writeFile(
-    path.join(__dirname, 'wasm-test.html'),
-    html,
-  );
+  await writeFile(path.join(__dirname, 'wasm-test.html'), html);
 }

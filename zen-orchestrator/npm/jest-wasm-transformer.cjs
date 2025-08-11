@@ -11,7 +11,7 @@ module.exports = {
     // For .wasm files, we'll create a mock that returns the file path
     // This allows tests to run without actually loading WASM
     const wasmPath = path.relative(process.cwd(), filename);
-    
+
     return {
       code: `
         // Mock WASM module for testing
@@ -123,7 +123,7 @@ module.exports = {
         
         module.exports = wasmModule;
         module.exports.default = wasmModule.default;
-      `
+      `,
     };
-  }
+  },
 };

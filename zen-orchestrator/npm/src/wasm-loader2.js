@@ -63,14 +63,14 @@ class WasmModuleLoader {
     this.loadingStrategy = strategy;
 
     switch (strategy) {
-    case 'eager':
-      return this.loadAllModules();
-    case 'progressive':
-      return this.loadCoreModules();
-    case 'on-demand':
-      return this.setupLazyLoading();
-    default:
-      throw new Error(`Unknown loading strategy: ${strategy}`);
+      case 'eager':
+        return this.loadAllModules();
+      case 'progressive':
+        return this.loadCoreModules();
+      case 'on-demand':
+        return this.setupLazyLoading();
+      default:
+        throw new Error(`Unknown loading strategy: ${strategy}`);
     }
   }
 
@@ -100,7 +100,9 @@ class WasmModuleLoader {
         }
       } else {
         // Only warn for other optional modules
-        console.warn(`⚠️ Optional module ${moduleName} is not available, functionality will be provided by core module`);
+        console.warn(
+          `⚠️ Optional module ${moduleName} is not available, functionality will be provided by core module`,
+        );
       }
 
       // Return a reference to the core module instead of a placeholder
@@ -109,7 +111,9 @@ class WasmModuleLoader {
         this.modules.set(moduleName, coreModule); // Alias to core module
         return coreModule;
       }
-      throw new Error(`Optional module ${moduleName} not available and core module not loaded`);
+      throw new Error(
+        `Optional module ${moduleName} not available and core module not loaded`,
+      );
     }
 
     // Load dependencies first
@@ -125,14 +129,18 @@ class WasmModuleLoader {
       this.modules.set(moduleName, module);
       this.loadingPromises.delete(moduleName);
 
-      console.log(`✅ Loaded WASM module: ${moduleName} (${this.formatBytes(moduleInfo.size)})`);
+      console.log(
+        `✅ Loaded WASM module: ${moduleName} (${this.formatBytes(moduleInfo.size)})`,
+      );
       return module;
     } catch (error) {
       this.loadingPromises.delete(moduleName);
 
       // If it's an optional module, provide fallback to core functionality
       if (moduleInfo.optional && this.modules.has('core')) {
-        console.warn(`⚠️ Optional module ${moduleName} failed to load, using core module functionality`);
+        console.warn(
+          `⚠️ Optional module ${moduleName} failed to load, using core module functionality`,
+        );
         const coreModule = this.modules.get('core');
         this.modules.set(moduleName, coreModule);
         return coreModule;
@@ -159,7 +167,9 @@ class WasmModuleLoader {
         // Browser environment
         const response = await fetch(wasmPath);
         if (!response.ok) {
-          throw new Error(`Failed to fetch WASM module: ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch WASM module: ${response.statusText}`,
+          );
         }
         wasmBuffer = await response.arrayBuffer();
       } else {
@@ -168,7 +178,9 @@ class WasmModuleLoader {
           wasmBuffer = await fs.readFile(wasmPath);
         } catch (error) {
           // Fallback: module might not exist yet, return a placeholder
-          console.warn(`Module ${moduleName} not found at ${wasmPath}, using placeholder`);
+          console.warn(
+            `Module ${moduleName} not found at ${wasmPath}, using placeholder`,
+          );
           return this.createPlaceholderModule(moduleName);
         }
       }
@@ -183,7 +195,10 @@ class WasmModuleLoader {
         memory: wasmModule.instance.exports.memory,
       };
     } catch (error) {
-      console.warn(`Failed to load ${moduleName}, using placeholder:`, error.message);
+      console.warn(
+        `Failed to load ${moduleName}, using placeholder:`,
+        error.message,
+      );
       return this.createPlaceholderModule(moduleName);
     }
   }
@@ -192,19 +207,27 @@ class WasmModuleLoader {
     // Load the core module using ES module bindings
     try {
       // Ensure we're using URL-based import for ES modules
-      const wasmJsUrl = new URL('../wasm/ruv_swarm_wasm.js', import.meta.url).href;
+      const wasmJsUrl = new URL('../wasm/ruv_swarm_wasm.js', import.meta.url)
+        .href;
 
       // Use dynamic import with URL protocol for ES modules
       const bindings = await import(wasmJsUrl);
 
       // Initialize WASM module with file buffer for Node.js
       if (bindings.default && typeof window === 'undefined') {
-        const wasmPath = path.join(this.baseDir, 'wasm', 'ruv_swarm_wasm_bg.wasm');
+        const wasmPath = path.join(
+          this.baseDir,
+          'wasm',
+          'ruv_swarm_wasm_bg.wasm',
+        );
         try {
           const wasmBuffer = await fs.readFile(wasmPath);
           await bindings.default(wasmBuffer);
         } catch (error) {
-          console.warn('Failed to load WASM file, using bindings defaults:', error);
+          console.warn(
+            'Failed to load WASM file, using bindings defaults:',
+            error,
+          );
         }
       }
 
@@ -252,26 +275,28 @@ class WasmModuleLoader {
 
     // Module-specific imports
     switch (moduleName) {
-    case 'neural':
-      return {
-        ...baseImports,
-        neural: {
-          log_training_progress: (epoch, loss) => {
-            console.log(`Training progress - Epoch: ${epoch}, Loss: ${loss}`);
+      case 'neural':
+        return {
+          ...baseImports,
+          neural: {
+            log_training_progress: (epoch, loss) => {
+              console.log(`Training progress - Epoch: ${epoch}, Loss: ${loss}`);
+            },
           },
-        },
-      };
-    case 'forecasting':
-      return {
-        ...baseImports,
-        forecasting: {
-          log_forecast: (model, horizon) => {
-            console.log(`Forecasting with model: ${model}, horizon: ${horizon}`);
+        };
+      case 'forecasting':
+        return {
+          ...baseImports,
+          forecasting: {
+            log_forecast: (model, horizon) => {
+              console.log(
+                `Forecasting with model: ${model}, horizon: ${horizon}`,
+              );
+            },
           },
-        },
-      };
-    default:
-      return baseImports;
+        };
+      default:
+        return baseImports;
     }
   }
 
@@ -288,27 +313,29 @@ class WasmModuleLoader {
 
     // Add module-specific placeholder functions
     switch (moduleName) {
-    case 'neural':
-      placeholderExports.create_neural_network = () => {
-        console.warn('Neural network module not loaded, using placeholder');
-        return 0;
-      };
-      placeholderExports.train_network = () => 0;
-      placeholderExports.forward_pass = () => new Float32Array([0.5]);
-      break;
-    case 'forecasting':
-      placeholderExports.create_forecasting_model = () => {
-        console.warn('Forecasting module not loaded, using placeholder');
-        return 0;
-      };
-      placeholderExports.forecast = () => new Float32Array([0.0]);
-      break;
-    case 'swarm':
-      placeholderExports.create_swarm_orchestrator = () => {
-        console.warn('Swarm orchestration module not loaded, using placeholder');
-        return 0;
-      };
-      break;
+      case 'neural':
+        placeholderExports.create_neural_network = () => {
+          console.warn('Neural network module not loaded, using placeholder');
+          return 0;
+        };
+        placeholderExports.train_network = () => 0;
+        placeholderExports.forward_pass = () => new Float32Array([0.5]);
+        break;
+      case 'forecasting':
+        placeholderExports.create_forecasting_model = () => {
+          console.warn('Forecasting module not loaded, using placeholder');
+          return 0;
+        };
+        placeholderExports.forecast = () => new Float32Array([0.0]);
+        break;
+      case 'swarm':
+        placeholderExports.create_swarm_orchestrator = () => {
+          console.warn(
+            'Swarm orchestration module not loaded, using placeholder',
+          );
+          return 0;
+        };
+        break;
     }
 
     return {
@@ -330,12 +357,15 @@ class WasmModuleLoader {
 
   async loadAllModules() {
     // Only load modules that actually exist
-    const existingModules = Object.keys(this.moduleManifest)
-      .filter(name => this.moduleManifest[name].exists);
+    const existingModules = Object.keys(this.moduleManifest).filter(
+      (name) => this.moduleManifest[name].exists,
+    );
 
-    await Promise.all(existingModules.map(name => this.loadModule(name)));
+    await Promise.all(existingModules.map((name) => this.loadModule(name)));
 
-    console.log(`🎯 All available WASM modules loaded successfully (${existingModules.length} modules)`);
+    console.log(
+      `🎯 All available WASM modules loaded successfully (${existingModules.length} modules)`,
+    );
     return true;
   }
 
@@ -344,18 +374,23 @@ class WasmModuleLoader {
     const moduleProxies = {};
 
     for (const moduleName of Object.keys(this.moduleManifest)) {
-      moduleProxies[moduleName] = new Proxy({}, {
-        get: (target, prop) => {
-          if (!this.modules.has(moduleName)) {
-            // Trigger module loading
-            this.loadModule(moduleName);
-            throw new Error(`Module ${moduleName} is loading. Please await loadModule('${moduleName}') first.`);
-          }
+      moduleProxies[moduleName] = new Proxy(
+        {},
+        {
+          get: (target, prop) => {
+            if (!this.modules.has(moduleName)) {
+              // Trigger module loading
+              this.loadModule(moduleName);
+              throw new Error(
+                `Module ${moduleName} is loading. Please await loadModule('${moduleName}') first.`,
+              );
+            }
 
-          const module = this.modules.get(moduleName);
-          return module.exports[prop];
+            const module = this.modules.get(moduleName);
+            return module.exports[prop];
+          },
         },
-      });
+      );
     }
 
     return moduleProxies;
@@ -371,7 +406,8 @@ class WasmModuleLoader {
         size: info.size,
         priority: info.priority,
         dependencies: info.dependencies,
-        isPlaceholder: this.modules.has(name) && this.modules.get(name).isPlaceholder,
+        isPlaceholder:
+          this.modules.has(name) && this.modules.get(name).isPlaceholder,
       };
     }
 
@@ -397,7 +433,7 @@ class WasmModuleLoader {
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2)) } ${ sizes[i]}`;
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   }
 }
 

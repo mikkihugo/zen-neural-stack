@@ -13,9 +13,7 @@
           "title": "Axios Cross-Site Request Forgery Vulnerability",
           "url": "https://github.com/advisories/GHSA-wf5p-g6vw-rhxx",
           "severity": "moderate",
-          "cwe": [
-            "CWE-352"
-          ],
+          "cwe": ["CWE-352"],
           "cvss": {
             "score": 6.5,
             "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N"
@@ -29,9 +27,7 @@
           "title": "axios Requests Vulnerable To Possible SSRF and Credential Leakage via Absolute URL",
           "url": "https://github.com/advisories/GHSA-jr5f-v2jv-69x6",
           "severity": "high",
-          "cwe": [
-            "CWE-918"
-          ],
+          "cwe": ["CWE-918"],
           "cvss": {
             "score": 0,
             "vectorString": null
@@ -39,13 +35,9 @@
           "range": "<0.30.0"
         }
       ],
-      "effects": [
-        "binary-install"
-      ],
+      "effects": ["binary-install"],
       "range": "<=0.29.0",
-      "nodes": [
-        "node_modules/axios"
-      ],
+      "nodes": ["node_modules/axios"],
       "fixAvailable": {
         "name": "wasm-pack",
         "version": "0.0.0",
@@ -56,16 +48,10 @@
       "name": "binary-install",
       "severity": "high",
       "isDirect": false,
-      "via": [
-        "axios"
-      ],
-      "effects": [
-        "wasm-pack"
-      ],
+      "via": ["axios"],
+      "effects": ["wasm-pack"],
       "range": "*",
-      "nodes": [
-        "node_modules/binary-install"
-      ],
+      "nodes": ["node_modules/binary-install"],
       "fixAvailable": {
         "name": "wasm-pack",
         "version": "0.0.0",
@@ -76,14 +62,10 @@
       "name": "wasm-pack",
       "severity": "high",
       "isDirect": true,
-      "via": [
-        "binary-install"
-      ],
+      "via": ["binary-install"],
       "effects": [],
       "range": ">=0.8.1",
-      "nodes": [
-        "node_modules/wasm-pack"
-      ],
+      "nodes": ["node_modules/wasm-pack"],
       "fixAvailable": {
         "name": "wasm-pack",
         "version": "0.0.0",

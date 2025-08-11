@@ -7,7 +7,14 @@ import path from 'path';
 import fs from 'fs';
 
 class SwarmPersistence {
-  constructor(dbPath = path.join(new URL('.', import.meta.url).pathname, '..', 'data', 'ruv-swarm.db')) {
+  constructor(
+    dbPath = path.join(
+      new URL('.', import.meta.url).pathname,
+      '..',
+      'data',
+      'ruv-swarm.db',
+    ),
+  ) {
     // Ensure data directory exists
     const dataDir = path.dirname(dbPath);
     if (!fs.existsSync(dataDir)) {
@@ -147,7 +154,7 @@ class SwarmPersistence {
   getActiveSwarms() {
     const stmt = this.db.prepare('SELECT * FROM swarms WHERE status = ?');
     const swarms = stmt.all('active');
-    return swarms.map(s => {
+    return swarms.map((s) => {
       s.metadata = JSON.parse(s.metadata || '{}');
       return s;
     });
@@ -198,7 +205,7 @@ class SwarmPersistence {
     const stmt = this.db.prepare(query);
     const agents = stmt.all(...params);
 
-    return agents.map(a => {
+    return agents.map((a) => {
       a.capabilities = JSON.parse(a.capabilities || '[]');
       a.neural_config = JSON.parse(a.neural_config || '{}');
       a.metrics = JSON.parse(a.metrics || '{}');
@@ -237,7 +244,9 @@ class SwarmPersistence {
     });
 
     values.push(taskId);
-    const stmt = this.db.prepare(`UPDATE tasks SET ${fields.join(', ')} WHERE id = ?`);
+    const stmt = this.db.prepare(
+      `UPDATE tasks SET ${fields.join(', ')} WHERE id = ?`,
+    );
     return stmt.run(...values);
   }
 
@@ -263,7 +272,7 @@ class SwarmPersistence {
     const stmt = this.db.prepare(query);
     const tasks = stmt.all(...params);
 
-    return tasks.map(t => {
+    return tasks.map((t) => {
       t.assigned_agents = JSON.parse(t.assigned_agents || '[]');
       t.result = t.result ? JSON.parse(t.result) : null;
       return t;
@@ -285,20 +294,23 @@ class SwarmPersistence {
 
   getAgentMemory(agentId, key = null) {
     if (key) {
-      const stmt = this.db.prepare('SELECT * FROM agent_memory WHERE agent_id = ? AND key = ?');
+      const stmt = this.db.prepare(
+        'SELECT * FROM agent_memory WHERE agent_id = ? AND key = ?',
+      );
       const memory = stmt.get(agentId, key);
       if (memory) {
         memory.value = JSON.parse(memory.value);
       }
       return memory;
     }
-    const stmt = this.db.prepare('SELECT * FROM agent_memory WHERE agent_id = ?');
+    const stmt = this.db.prepare(
+      'SELECT * FROM agent_memory WHERE agent_id = ?',
+    );
     const memories = stmt.all(agentId);
-    return memories.map(m => {
+    return memories.map((m) => {
       m.value = JSON.parse(m.value);
       return m;
     });
-
   }
 
   // Neural network operations
@@ -330,15 +342,19 @@ class SwarmPersistence {
     fields.push('updated_at = CURRENT_TIMESTAMP');
     values.push(id);
 
-    const stmt = this.db.prepare(`UPDATE neural_networks SET ${fields.join(', ')} WHERE id = ?`);
+    const stmt = this.db.prepare(
+      `UPDATE neural_networks SET ${fields.join(', ')} WHERE id = ?`,
+    );
     return stmt.run(...values);
   }
 
   getAgentNeuralNetworks(agentId) {
-    const stmt = this.db.prepare('SELECT * FROM neural_networks WHERE agent_id = ?');
+    const stmt = this.db.prepare(
+      'SELECT * FROM neural_networks WHERE agent_id = ?',
+    );
     const networks = stmt.all(agentId);
 
-    return networks.map(n => {
+    return networks.map((n) => {
       n.architecture = JSON.parse(n.architecture);
       n.weights = JSON.parse(n.weights);
       n.training_data = JSON.parse(n.training_data || '{}');
@@ -390,7 +406,7 @@ class SwarmPersistence {
     `);
     const events = stmt.all(swarmId, limit);
 
-    return events.map(e => {
+    return events.map((e) => {
       e.event_data = JSON.parse(e.event_data || '{}');
       return e;
     });
@@ -398,7 +414,9 @@ class SwarmPersistence {
 
   // Memory operations
   storeMemory(agentId, key, value, ttlSecs = null) {
-    const expiresAt = ttlSecs ? new Date(Date.now() + ttlSecs * 1000).toISOString() : null;
+    const expiresAt = ttlSecs
+      ? new Date(Date.now() + ttlSecs * 1000).toISOString()
+      : null;
 
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO agent_memory (id, agent_id, key, value, ttl_secs, expires_at, updated_at)
@@ -406,7 +424,14 @@ class SwarmPersistence {
     `);
 
     const id = `mem_${agentId}_${Date.now()}`;
-    return stmt.run(id, agentId, key, JSON.stringify(value), ttlSecs, expiresAt);
+    return stmt.run(
+      id,
+      agentId,
+      key,
+      JSON.stringify(value),
+      ttlSecs,
+      expiresAt,
+    );
   }
 
   getMemory(agentId, key) {
@@ -420,10 +445,12 @@ class SwarmPersistence {
     `);
 
     const memory = stmt.get(agentId, key);
-    return memory ? {
-      ...memory,
-      value: JSON.parse(memory.value),
-    } : null;
+    return memory
+      ? {
+          ...memory,
+          value: JSON.parse(memory.value),
+        }
+      : null;
   }
 
   getAllMemory(agentId) {
@@ -438,19 +465,23 @@ class SwarmPersistence {
     `);
 
     const memories = stmt.all(agentId);
-    return memories.map(m => ({
+    return memories.map((m) => ({
       ...m,
       value: JSON.parse(m.value),
     }));
   }
 
   deleteMemory(agentId, key) {
-    const stmt = this.db.prepare('DELETE FROM agent_memory WHERE agent_id = ? AND key = ?');
+    const stmt = this.db.prepare(
+      'DELETE FROM agent_memory WHERE agent_id = ? AND key = ?',
+    );
     return stmt.run(agentId, key);
   }
 
   cleanupExpiredMemory() {
-    const stmt = this.db.prepare('DELETE FROM agent_memory WHERE expires_at IS NOT NULL AND expires_at <= CURRENT_TIMESTAMP');
+    const stmt = this.db.prepare(
+      'DELETE FROM agent_memory WHERE expires_at IS NOT NULL AND expires_at <= CURRENT_TIMESTAMP',
+    );
     return stmt.run();
   }
 
@@ -460,12 +491,18 @@ class SwarmPersistence {
     this.cleanupExpiredMemory();
 
     // Delete old events (older than 7 days)
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const sevenDaysAgo = new Date(
+      Date.now() - 7 * 24 * 60 * 60 * 1000,
+    ).toISOString();
     this.db.prepare('DELETE FROM events WHERE timestamp < ?').run(sevenDaysAgo);
 
     // Delete old metrics (older than 30 days)
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    this.db.prepare('DELETE FROM metrics WHERE timestamp < ?').run(thirtyDaysAgo);
+    const thirtyDaysAgo = new Date(
+      Date.now() - 30 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    this.db
+      .prepare('DELETE FROM metrics WHERE timestamp < ?')
+      .run(thirtyDaysAgo);
 
     // Vacuum to reclaim space
     this.db.exec('VACUUM');

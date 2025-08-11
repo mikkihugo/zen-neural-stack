@@ -26,39 +26,51 @@ async function runProtectionTests() {
   }
 
   // Create temporary test directory
-  const testDir = path.join(process.cwd(), `temp-test-${ Date.now()}`);
+  const testDir = path.join(process.cwd(), `temp-test-${Date.now()}`);
   await fs.mkdir(testDir, { recursive: true });
 
   try {
     // Test file existence checking
-    await test('should detect when CLAUDE.md exists', async() => {
+    await test('should detect when CLAUDE.md exists', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       await fs.writeFile(claudePath, 'existing content');
 
-      const exists = await fs.access(claudePath).then(() => true).catch(() => false);
+      const exists = await fs
+        .access(claudePath)
+        .then(() => true)
+        .catch(() => false);
       assert(exists === true);
     });
 
-    await test('should detect when CLAUDE.md does not exist', async() => {
+    await test('should detect when CLAUDE.md does not exist', async () => {
       const claudePath = path.join(testDir, 'NONEXISTENT.md');
 
-      const exists = await fs.access(claudePath).then(() => true).catch(() => false);
+      const exists = await fs
+        .access(claudePath)
+        .then(() => true)
+        .catch(() => false);
       assert(exists === false);
     });
 
     // Test backup creation
-    await test('should create backup with timestamp', async() => {
+    await test('should create backup with timestamp', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = 'original content for backup test';
       await fs.writeFile(claudePath, originalContent);
 
       // Create backup
-      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+      const timestamp = new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace(/[:-]/g, '');
       const backupPath = `${claudePath}.backup.${timestamp}`;
       await fs.copyFile(claudePath, backupPath);
 
       // Check backup was created
-      const backupExists = await fs.access(backupPath).then(() => true).catch(() => false);
+      const backupExists = await fs
+        .access(backupPath)
+        .then(() => true)
+        .catch(() => false);
       assert(backupExists === true);
 
       // Check backup content matches original
@@ -66,11 +78,13 @@ async function runProtectionTests() {
       assert(backupContent === originalContent);
 
       // Check backup naming pattern
-      assert(path.basename(backupPath).match(/^CLAUDE\.md\.backup\.\d{8}T\d{6}$/));
+      assert(
+        path.basename(backupPath).match(/^CLAUDE\.md\.backup\.\d{8}T\d{6}$/),
+      );
     });
 
     // Test content merging logic
-    await test('should merge content correctly', async() => {
+    await test('should merge content correctly', async () => {
       const existingContent = `# My Project Configuration
 
 This is important project information that should be preserved.
@@ -109,11 +123,13 @@ Remember: **ruv-swarm coordinates, Claude Code creates!**`;
       assert(mergedContent.includes('important project information'));
       assert(mergedContent.includes('Setup Instructions'));
       assert(mergedContent.includes('Claude Code Configuration for ruv-swarm'));
-      assert(mergedContent.includes('ruv-swarm coordinates, Claude Code creates'));
+      assert(
+        mergedContent.includes('ruv-swarm coordinates, Claude Code creates'),
+      );
     });
 
     // Test section detection
-    await test('should detect section ends correctly', async() => {
+    await test('should detect section ends correctly', async () => {
       const lines = [
         '# First Section',
         'Content here',
@@ -138,10 +154,10 @@ Remember: **ruv-swarm coordinates, Claude Code creates!**`;
     });
 
     // Test argument parsing logic
-    await test('should parse CLI arguments correctly', async() => {
+    await test('should parse CLI arguments correctly', async () => {
       // Simulate argument parsing
       function parseArgs(args) {
-        const positionalArgs = args.filter(arg => !arg.startsWith('--'));
+        const positionalArgs = args.filter((arg) => !arg.startsWith('--'));
         const setupClaude = args.includes('--claude');
         const forceSetup = args.includes('--force');
         const mergeSetup = args.includes('--merge');
@@ -166,7 +182,13 @@ Remember: **ruv-swarm coordinates, Claude Code creates!**`;
       assert(test1.mergeSetup === false);
       assert(test1.interactive === true);
 
-      const test2 = parseArgs(['hierarchical', '8', '--claude', '--merge', '--no-interactive']);
+      const test2 = parseArgs([
+        'hierarchical',
+        '8',
+        '--claude',
+        '--merge',
+        '--no-interactive',
+      ]);
       assert(test2.topology === 'hierarchical');
       assert(test2.maxAgents === 8);
       assert(test2.setupClaude === true);
@@ -176,7 +198,7 @@ Remember: **ruv-swarm coordinates, Claude Code creates!**`;
     });
 
     // Test error handling scenarios
-    await test('should handle protection scenarios correctly', async() => {
+    await test('should handle protection scenarios correctly', async () => {
       // Simulate protection logic
       function shouldProceed(fileExists, options) {
         if (!fileExists) {
@@ -194,7 +216,8 @@ Remember: **ruv-swarm coordinates, Claude Code creates!**`;
         if (!options.interactive) {
           return {
             proceed: false,
-            error: 'CLAUDE.md already exists. Use --force to overwrite or --merge to combine.',
+            error:
+              'CLAUDE.md already exists. Use --force to overwrite or --merge to combine.',
           };
         }
 
@@ -202,29 +225,46 @@ Remember: **ruv-swarm coordinates, Claude Code creates!**`;
       }
 
       // Test scenarios
-      const scenario1 = shouldProceed(false, { force: false, merge: false, interactive: true });
+      const scenario1 = shouldProceed(false, {
+        force: false,
+        merge: false,
+        interactive: true,
+      });
       assert(scenario1.proceed === true);
       assert(scenario1.action === 'create');
 
-      const scenario2 = shouldProceed(true, { force: true, merge: false, interactive: false });
+      const scenario2 = shouldProceed(true, {
+        force: true,
+        merge: false,
+        interactive: false,
+      });
       assert(scenario2.proceed === true);
       assert(scenario2.action === 'overwrite');
 
-      const scenario3 = shouldProceed(true, { force: false, merge: true, interactive: false });
+      const scenario3 = shouldProceed(true, {
+        force: false,
+        merge: true,
+        interactive: false,
+      });
       assert(scenario3.proceed === true);
       assert(scenario3.action === 'merge');
 
-      const scenario4 = shouldProceed(true, { force: false, merge: false, interactive: false });
+      const scenario4 = shouldProceed(true, {
+        force: false,
+        merge: false,
+        interactive: false,
+      });
       assert(scenario4.proceed === false);
       assert(scenario4.error.includes('already exists'));
     });
 
-    console.log(`\n✅ CLAUDE.md Protection Tests completed: ${passed} passed, ${failed} failed`);
+    console.log(
+      `\n✅ CLAUDE.md Protection Tests completed: ${passed} passed, ${failed} failed`,
+    );
 
     if (failed > 0) {
       throw new Error(`${failed} tests failed`);
     }
-
   } finally {
     // Clean up test directory
     try {
@@ -240,7 +280,7 @@ export { runProtectionTests };
 
 // Run directly if this is the main module
 if (process.argv[1].endsWith('claude-md-protection-simple.test.js')) {
-  runProtectionTests().catch(error => {
+  runProtectionTests().catch((error) => {
     console.error('Protection test error:', error);
     process.exit(1);
   });

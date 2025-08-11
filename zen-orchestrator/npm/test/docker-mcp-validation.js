@@ -38,7 +38,7 @@ let ws = null;
 
 // Test utilities
 async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function addTestResult(name, status, message, error = null) {
@@ -78,16 +78,27 @@ async function startMCPServer() {
       const output = data.toString();
       console.log('  Server stderr:', output.trim());
 
-      if (output.includes('MCP server ready') || output.includes('Listening on')) {
+      if (
+        output.includes('MCP server ready') ||
+        output.includes('Listening on')
+      ) {
         serverReady = true;
-        addTestResult('MCP Server Start', 'passed', 'Server started successfully');
+        addTestResult(
+          'MCP Server Start',
+          'passed',
+          'Server started successfully',
+        );
         resolve();
       }
     });
 
-
     mcpProcess.on('error', (error) => {
-      addTestResult('MCP Server Start', 'failed', 'Failed to start server', error.message);
+      addTestResult(
+        'MCP Server Start',
+        'failed',
+        'Failed to start server',
+        error.message,
+      );
       reject(error);
     });
 
@@ -110,12 +121,21 @@ async function testWebSocketConnection() {
     ws = new WebSocket('ws://localhost:3000');
 
     ws.on('open', () => {
-      addTestResult('WebSocket Connection', 'passed', 'Connected to MCP server');
+      addTestResult(
+        'WebSocket Connection',
+        'passed',
+        'Connected to MCP server',
+      );
       resolve();
     });
 
     ws.on('error', (error) => {
-      addTestResult('WebSocket Connection', 'failed', 'Connection failed', error.message);
+      addTestResult(
+        'WebSocket Connection',
+        'failed',
+        'Connection failed',
+        error.message,
+      );
       reject(error);
     });
 
@@ -185,12 +205,25 @@ async function testMethod(method, params) {
       try {
         const response = JSON.parse(data.toString());
         if (response.error) {
-          addTestResult(`MCP Method: ${method}`, 'failed', response.error.message);
+          addTestResult(
+            `MCP Method: ${method}`,
+            'failed',
+            response.error.message,
+          );
         } else {
-          addTestResult(`MCP Method: ${method}`, 'passed', 'Method executed successfully');
+          addTestResult(
+            `MCP Method: ${method}`,
+            'passed',
+            'Method executed successfully',
+          );
         }
       } catch (error) {
-        addTestResult(`MCP Method: ${method}`, 'failed', 'Invalid response', error.message);
+        addTestResult(
+          `MCP Method: ${method}`,
+          'failed',
+          'Invalid response',
+          error.message,
+        );
       }
       resolve();
     });
@@ -294,9 +327,17 @@ async function cleanup() {
 
 // Generate report
 async function generateReport() {
-  results.summary.passRate = (results.summary.passed / results.summary.total * 100).toFixed(2);
+  results.summary.passRate = (
+    (results.summary.passed / results.summary.total) *
+    100
+  ).toFixed(2);
 
-  const resultsPath = path.join(__dirname, '..', 'test-results', 'mcp-validation.json');
+  const resultsPath = path.join(
+    __dirname,
+    '..',
+    'test-results',
+    'mcp-validation.json',
+  );
   await fs.mkdir(path.dirname(resultsPath), { recursive: true });
   await fs.writeFile(resultsPath, JSON.stringify(results, null, 2));
 
@@ -324,7 +365,12 @@ async function runTests() {
     await testPerformanceMonitoring();
   } catch (error) {
     console.error('Test failed:', error);
-    addTestResult('Test Suite', 'failed', 'Suite execution failed', error.message);
+    addTestResult(
+      'Test Suite',
+      'failed',
+      'Suite execution failed',
+      error.message,
+    );
   } finally {
     await cleanup();
     await generateReport();
@@ -333,7 +379,7 @@ async function runTests() {
 }
 
 // Handle interrupts
-process.on('SIGINT', async() => {
+process.on('SIGINT', async () => {
   console.log('\nInterrupted, cleaning up...');
   await cleanup();
   process.exit(1);

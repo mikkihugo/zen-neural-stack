@@ -10,7 +10,12 @@ export interface SwarmOptions {
   wasmPath?: string;
 }
 
-export type SwarmTopology = 'mesh' | 'hierarchical' | 'distributed' | 'centralized' | 'hybrid';
+export type SwarmTopology =
+  | 'mesh'
+  | 'hierarchical'
+  | 'distributed'
+  | 'centralized'
+  | 'hybrid';
 
 export interface AgentConfig {
   id: string;
@@ -20,7 +25,7 @@ export interface AgentConfig {
   memory?: AgentMemory;
 }
 
-export type AgentType = 
+export type AgentType =
   | 'researcher'
   | 'coder'
   | 'analyst'
@@ -66,7 +71,12 @@ export interface Task {
 }
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
-export type TaskStatus = 'pending' | 'assigned' | 'in_progress' | 'completed' | 'failed';
+export type TaskStatus =
+  | 'pending'
+  | 'assigned'
+  | 'in_progress'
+  | 'completed'
+  | 'failed';
 
 export interface SwarmState {
   agents: Map<string, Agent>;
@@ -129,7 +139,7 @@ export interface Message {
   timestamp: number;
 }
 
-export type MessageType = 
+export type MessageType =
   | 'task_assignment'
   | 'task_result'
   | 'status_update'

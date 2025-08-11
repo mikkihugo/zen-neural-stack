@@ -79,7 +79,7 @@ async function executeMcpTool(toolName, args = {}) {
     });
 
     // Send request
-    mcp.stdin.write(`${JSON.stringify(request) }\n`);
+    mcp.stdin.write(`${JSON.stringify(request)}\n`);
     mcp.stdin.end();
   });
 }
@@ -87,7 +87,7 @@ async function executeMcpTool(toolName, args = {}) {
 // Test all MCP tools
 async function testAllMcpTools() {
   log('\n🚀 Starting Comprehensive MCP Tools Test Suite', 'cyan');
-  log('=' .repeat(60), 'cyan');
+  log('='.repeat(60), 'cyan');
 
   const results = {
     passed: 0,
@@ -116,7 +116,13 @@ async function testAllMcpTools() {
 
   // Test 2: Create 5 Agents in Parallel
   log('\n2. Creating 5-agent swarm in parallel...', 'blue');
-  const agentTypes = ['researcher', 'coder', 'analyst', 'optimizer', 'coordinator'];
+  const agentTypes = [
+    'researcher',
+    'coder',
+    'analyst',
+    'optimizer',
+    'coordinator',
+  ];
   const agentPromises = agentTypes.map((type, index) =>
     executeMcpTool('agent_spawn', {
       type,
@@ -301,7 +307,10 @@ async function testAllMcpTools() {
       results.tools.task_results = { status: 'passed', result };
     } else {
       log('⚠️  task_results: SKIPPED (no tasks found)', 'yellow');
-      results.tools.task_results = { status: 'skipped', reason: 'No tasks available' };
+      results.tools.task_results = {
+        status: 'skipped',
+        reason: 'No tasks available',
+      };
     }
   } catch (error) {
     log('❌ task_results: FAILED', 'red');
@@ -311,9 +320,9 @@ async function testAllMcpTools() {
   }
 
   // Summary
-  log(`\n${ '=' .repeat(60)}`, 'cyan');
+  log(`\n${'='.repeat(60)}`, 'cyan');
   log('📊 Test Summary', 'cyan');
-  log('=' .repeat(60), 'cyan');
+  log('='.repeat(60), 'cyan');
   log(`Total Tests: ${results.passed + results.failed}`, 'blue');
   log(`Passed: ${results.passed}`, 'green');
   log(`Failed: ${results.failed}`, results.failed > 0 ? 'red' : 'green');
@@ -321,8 +330,18 @@ async function testAllMcpTools() {
   // Tool-by-tool summary
   log('\nTool Results:', 'blue');
   Object.entries(results.tools).forEach(([tool, result]) => {
-    const status = result.status === 'passed' ? '✅' : result.status === 'failed' ? '❌' : '⚠️';
-    const color = result.status === 'passed' ? 'green' : result.status === 'failed' ? 'red' : 'yellow';
+    const status =
+      result.status === 'passed'
+        ? '✅'
+        : result.status === 'failed'
+          ? '❌'
+          : '⚠️';
+    const color =
+      result.status === 'passed'
+        ? 'green'
+        : result.status === 'failed'
+          ? 'red'
+          : 'yellow';
     log(`  ${status} ${tool}: ${result.status.toUpperCase()}`, color);
   });
 
@@ -334,14 +353,14 @@ async function testAllMcpTools() {
   }
 
   // Final result
-  log(`\n${ '=' .repeat(60)}`, 'cyan');
+  log(`\n${'='.repeat(60)}`, 'cyan');
   if (results.failed === 0) {
     log('🎉 All MCP tools are working correctly!', 'green');
     log('✨ The 5-agent swarm was successfully created and tested.', 'green');
   } else {
     log('⚠️  Some tests failed. Please check the errors above.', 'red');
   }
-  log('=' .repeat(60), 'cyan');
+  log('='.repeat(60), 'cyan');
 
   // Save detailed results
   const resultsPath = path.join(__dirname, 'mcp-test-results.json');
@@ -350,7 +369,7 @@ async function testAllMcpTools() {
 }
 
 // Run tests
-testAllMcpTools().catch(error => {
+testAllMcpTools().catch((error) => {
   log('\n💥 Fatal error during testing:', 'red');
   log(error.message, 'red');
   process.exit(1);

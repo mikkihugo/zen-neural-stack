@@ -56,7 +56,9 @@ class PerformanceCLI {
         memory: {
           used: memUsage.heapUsed,
           total: memUsage.heapTotal,
-          utilization: ((memUsage.heapUsed / memUsage.heapTotal) * 100).toFixed(1),
+          utilization: ((memUsage.heapUsed / memUsage.heapTotal) * 100).toFixed(
+            1,
+          ),
         },
         cpu: {
           user: cpuUsage.user,
@@ -64,8 +66,12 @@ class PerformanceCLI {
         },
       };
 
-      console.log(`   Memory: ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB / ${(memUsage.heapTotal / 1024 / 1024).toFixed(1)}MB (${analysis.performance.system.memory.utilization}%)`);
-      console.log(`   CPU: User ${(cpuUsage.user / 1000).toFixed(1)}ms, System ${(cpuUsage.system / 1000).toFixed(1)}ms`);
+      console.log(
+        `   Memory: ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB / ${(memUsage.heapTotal / 1024 / 1024).toFixed(1)}MB (${analysis.performance.system.memory.utilization}%)`,
+      );
+      console.log(
+        `   CPU: User ${(cpuUsage.user / 1000).toFixed(1)}ms, System ${(cpuUsage.system / 1000).toFixed(1)}ms`,
+      );
 
       // 2. WASM Performance Analysis
       console.log('\n📦 WASM Performance:');
@@ -91,9 +97,15 @@ class PerformanceCLI {
 
       analysis.performance.swarm = swarmMetrics;
       console.log(`   Active Agents: ${swarmMetrics.agentCount}`);
-      console.log(`   Coordination Latency: ${swarmMetrics.coordinationLatency.toFixed(1)}ms`);
-      console.log(`   Distribution Efficiency: ${swarmMetrics.taskDistributionEfficiency.toFixed(1)}%`);
-      console.log(`   Communication Overhead: ${swarmMetrics.communicationOverhead.toFixed(1)}%`);
+      console.log(
+        `   Coordination Latency: ${swarmMetrics.coordinationLatency.toFixed(1)}ms`,
+      );
+      console.log(
+        `   Distribution Efficiency: ${swarmMetrics.taskDistributionEfficiency.toFixed(1)}%`,
+      );
+      console.log(
+        `   Communication Overhead: ${swarmMetrics.communicationOverhead.toFixed(1)}%`,
+      );
 
       // 4. Neural Network Performance
       if (rs.features.neural_networks) {
@@ -106,10 +118,16 @@ class PerformanceCLI {
         };
 
         analysis.performance.neural = neuralMetrics;
-        console.log(`   Inference: ${neuralMetrics.inferenceSpeed.toFixed(0)} ops/sec`);
-        console.log(`   Training: ${neuralMetrics.trainingSpeed.toFixed(1)} epochs/min`);
+        console.log(
+          `   Inference: ${neuralMetrics.inferenceSpeed.toFixed(0)} ops/sec`,
+        );
+        console.log(
+          `   Training: ${neuralMetrics.trainingSpeed.toFixed(1)} epochs/min`,
+        );
         console.log(`   Accuracy: ${neuralMetrics.accuracy.toFixed(1)}%`);
-        console.log(`   Convergence: ${neuralMetrics.convergenceRate.toFixed(4)}`);
+        console.log(
+          `   Convergence: ${neuralMetrics.convergenceRate.toFixed(4)}`,
+        );
       }
 
       // 5. Bottleneck Detection
@@ -152,7 +170,9 @@ class PerformanceCLI {
         console.log('   ✅ No significant bottlenecks detected');
       } else {
         analysis.bottlenecks.forEach((bottleneck, i) => {
-          console.log(`   ${i + 1}. ${bottleneck.description} (${bottleneck.severity})`);
+          console.log(
+            `   ${i + 1}. ${bottleneck.description} (${bottleneck.severity})`,
+          );
           console.log(`      Impact: ${bottleneck.impact}`);
           if (detailed) {
             console.log(`      Fix: ${bottleneck.recommendation}`);
@@ -182,7 +202,10 @@ class PerformanceCLI {
         });
       }
 
-      if (rs.features.neural_networks && analysis.performance.neural?.accuracy < 90) {
+      if (
+        rs.features.neural_networks &&
+        analysis.performance.neural?.accuracy < 90
+      ) {
         analysis.recommendations.push({
           category: 'neural_optimization',
           priority: 'medium',
@@ -204,9 +227,12 @@ class PerformanceCLI {
 
       // 7. Performance Score
       let score = 100;
-      score -= analysis.bottlenecks.filter(b => b.severity === 'high').length * 20;
-      score -= analysis.bottlenecks.filter(b => b.severity === 'medium').length * 10;
-      score -= analysis.bottlenecks.filter(b => b.severity === 'low').length * 5;
+      score -=
+        analysis.bottlenecks.filter((b) => b.severity === 'high').length * 20;
+      score -=
+        analysis.bottlenecks.filter((b) => b.severity === 'medium').length * 10;
+      score -=
+        analysis.bottlenecks.filter((b) => b.severity === 'low').length * 5;
       score = Math.max(0, score);
 
       analysis.overallScore = score;
@@ -227,7 +253,6 @@ class PerformanceCLI {
         await fs.writeFile(outputFile, JSON.stringify(analysis, null, 2));
         console.log(`\n💾 Analysis saved to: ${outputFile}`);
       }
-
     } catch (error) {
       console.error('❌ Analysis failed:', error.message);
       process.exit(1);
@@ -295,7 +320,7 @@ class PerformanceCLI {
 
         if (!dryRun) {
           // Simulate applying optimization
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
           console.log('   ✅ Applied');
         } else {
           console.log('   🔍 Would apply');
@@ -338,12 +363,13 @@ class PerformanceCLI {
       console.log(`   Token Efficiency: ${expected.tokens}`);
 
       if (dryRun) {
-        console.log('\n💡 To apply these optimizations, run without --dry-run flag');
+        console.log(
+          '\n💡 To apply these optimizations, run without --dry-run flag',
+        );
       } else {
         console.log('\n✅ Optimization Complete!');
         console.log('💡 Run benchmarks to measure actual improvements');
       }
-
     } catch (error) {
       console.error('❌ Optimization failed:', error.message);
       process.exit(1);
@@ -407,8 +433,10 @@ class PerformanceCLI {
       const priorityOrder = ['HIGH', 'MEDIUM', 'LOW'];
       const groupedSuggestions = {};
 
-      priorityOrder.forEach(priority => {
-        groupedSuggestions[priority] = suggestions.filter(s => s.priority === priority);
+      priorityOrder.forEach((priority) => {
+        groupedSuggestions[priority] = suggestions.filter(
+          (s) => s.priority === priority,
+        );
       });
 
       let totalShown = 0;
@@ -436,11 +464,18 @@ class PerformanceCLI {
       }
 
       console.log('\n🔧 Quick optimization commands:');
-      console.log('   ruv-swarm performance optimize --target speed    # Optimize for speed');
-      console.log('   ruv-swarm performance optimize --target memory   # Optimize for memory');
-      console.log('   ruv-swarm performance optimize --target tokens   # Optimize for efficiency');
-      console.log('   ruv-swarm benchmark run --iterations 10          # Run performance tests');
-
+      console.log(
+        '   ruv-swarm performance optimize --target speed    # Optimize for speed',
+      );
+      console.log(
+        '   ruv-swarm performance optimize --target memory   # Optimize for memory',
+      );
+      console.log(
+        '   ruv-swarm performance optimize --target tokens   # Optimize for efficiency',
+      );
+      console.log(
+        '   ruv-swarm benchmark run --iterations 10          # Run performance tests',
+      );
     } catch (error) {
       console.error('❌ Failed to generate suggestions:', error.message);
       process.exit(1);

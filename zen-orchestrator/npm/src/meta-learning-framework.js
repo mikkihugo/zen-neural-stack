@@ -193,9 +193,15 @@ class MetaLearningFramework {
     const strategy = this.selectMetaLearningStrategy(learningPatterns, config);
 
     // Adapt configuration based on strategy
-    const adaptedConfig = await this.applyMetaLearningStrategy(config, strategy, learningPatterns);
+    const adaptedConfig = await this.applyMetaLearningStrategy(
+      config,
+      strategy,
+      learningPatterns,
+    );
 
-    console.log(`Applied meta-learning strategy '${strategy.name}' for agent ${agentId}`);
+    console.log(
+      `Applied meta-learning strategy '${strategy.name}' for agent ${agentId}`,
+    );
 
     return adaptedConfig;
   }
@@ -336,8 +342,8 @@ class MetaLearningFramework {
       return 0.5;
     }
 
-    const successfulAdaptations = experiences.filter(exp =>
-      exp.adaptationResult && exp.adaptationResult.success,
+    const successfulAdaptations = experiences.filter(
+      (exp) => exp.adaptationResult && exp.adaptationResult.success,
     ).length;
 
     return successfulAdaptations / experiences.length;
@@ -359,9 +365,17 @@ class MetaLearningFramework {
       const prev = experiences[i - 1];
       const curr = experiences[i];
 
-      if (prev.metrics && curr.metrics && prev.metrics.accuracy && curr.metrics.accuracy) {
+      if (
+        prev.metrics &&
+        curr.metrics &&
+        prev.metrics.accuracy &&
+        curr.metrics.accuracy
+      ) {
         // If accuracy drops significantly when learning new task, high forgetting
-        const forgetting = Math.max(0, prev.metrics.accuracy - curr.metrics.accuracy);
+        const forgetting = Math.max(
+          0,
+          prev.metrics.accuracy - curr.metrics.accuracy,
+        );
         totalForgetting += forgetting;
         validComparisons++;
       }
@@ -379,7 +393,9 @@ class MetaLearningFramework {
       return 0.5;
     }
 
-    const transferExperiences = experiences.filter(exp => exp.transferLearning);
+    const transferExperiences = experiences.filter(
+      (exp) => exp.transferLearning,
+    );
     if (transferExperiences.length === 0) {
       return 0.5;
     }
@@ -392,7 +408,9 @@ class MetaLearningFramework {
       }
     }
 
-    return transferExperiences.length > 0 ? totalEfficiency / transferExperiences.length : 0.5;
+    return transferExperiences.length > 0
+      ? totalEfficiency / transferExperiences.length
+      : 0.5;
   }
 
   /**
@@ -436,7 +454,10 @@ class MetaLearningFramework {
         score += 0.2; // Boost memory-based methods for high forgetting
       }
 
-      if (patterns.domainVariability > 0.6 && strategy.type === 'domain_based') {
+      if (
+        patterns.domainVariability > 0.6 &&
+        strategy.type === 'domain_based'
+      ) {
         score += 0.15; // Boost domain adaptation for high variability
       }
 
@@ -474,39 +495,61 @@ class MetaLearningFramework {
 
     // Apply strategy-specific adaptations
     switch (strategy.type) {
-    case 'gradient_based':
-      adaptedConfig.metaLearning = this.applyGradientBasedMeta(strategy, patterns);
-      break;
+      case 'gradient_based':
+        adaptedConfig.metaLearning = this.applyGradientBasedMeta(
+          strategy,
+          patterns,
+        );
+        break;
 
-    case 'metric_based':
-      adaptedConfig.metaLearning = this.applyMetricBasedMeta(strategy, patterns);
-      break;
+      case 'metric_based':
+        adaptedConfig.metaLearning = this.applyMetricBasedMeta(
+          strategy,
+          patterns,
+        );
+        break;
 
-    case 'memory_based':
-      adaptedConfig.metaLearning = this.applyMemoryBasedMeta(strategy, patterns);
-      break;
+      case 'memory_based':
+        adaptedConfig.metaLearning = this.applyMemoryBasedMeta(
+          strategy,
+          patterns,
+        );
+        break;
 
-    case 'optimization_based':
-      adaptedConfig.metaLearning = this.applyOptimizationBasedMeta(strategy, patterns);
-      break;
+      case 'optimization_based':
+        adaptedConfig.metaLearning = this.applyOptimizationBasedMeta(
+          strategy,
+          patterns,
+        );
+        break;
 
-    case 'domain_based':
-      adaptedConfig.metaLearning = this.applyDomainBasedMeta(strategy, patterns);
-      break;
+      case 'domain_based':
+        adaptedConfig.metaLearning = this.applyDomainBasedMeta(
+          strategy,
+          patterns,
+        );
+        break;
 
-    case 'continual_based':
-      adaptedConfig.metaLearning = this.applyContinualBasedMeta(strategy, patterns);
-      break;
+      case 'continual_based':
+        adaptedConfig.metaLearning = this.applyContinualBasedMeta(
+          strategy,
+          patterns,
+        );
+        break;
 
-    case 'multi_task_based':
-      adaptedConfig.metaLearning = this.applyMultiTaskBasedMeta(strategy, patterns);
-      break;
+      case 'multi_task_based':
+        adaptedConfig.metaLearning = this.applyMultiTaskBasedMeta(
+          strategy,
+          patterns,
+        );
+        break;
     }
 
     // Add common meta-learning properties
     adaptedConfig.metaLearning.strategyName = strategy.name;
     adaptedConfig.metaLearning.enabled = true;
-    adaptedConfig.metaLearning.adaptiveThreshold = this.calculateAdaptiveThreshold(patterns);
+    adaptedConfig.metaLearning.adaptiveThreshold =
+      this.calculateAdaptiveThreshold(patterns);
 
     return adaptedConfig;
   }
@@ -591,7 +634,10 @@ class MetaLearningFramework {
 
     // Adapt optimizer based on learning speed
     if (patterns.learningSpeed < 0.4) {
-      config.optimizerHiddenSize = Math.min(40, config.optimizerHiddenSize * 1.3);
+      config.optimizerHiddenSize = Math.min(
+        40,
+        config.optimizerHiddenSize * 1.3,
+      );
     }
 
     // Enable coordinate-wise optimization for complex tasks
@@ -706,10 +752,16 @@ class MetaLearningFramework {
     const optimizedOptions = { ...options };
 
     // Optimize learning rate
-    optimizedOptions.learningRate = this.optimizeLearningRate(patterns, options.learningRate);
+    optimizedOptions.learningRate = this.optimizeLearningRate(
+      patterns,
+      options.learningRate,
+    );
 
     // Optimize batch size
-    optimizedOptions.batchSize = this.optimizeBatchSize(patterns, options.batchSize);
+    optimizedOptions.batchSize = this.optimizeBatchSize(
+      patterns,
+      options.batchSize,
+    );
 
     // Optimize epochs
     optimizedOptions.epochs = this.optimizeEpochs(patterns, options.epochs);
@@ -722,7 +774,9 @@ class MetaLearningFramework {
       earlyStoppingPatience: this.optimizeEarlyStopping(patterns),
     };
 
-    console.log(`Optimized training parameters for agent ${agentId} based on meta-learning`);
+    console.log(
+      `Optimized training parameters for agent ${agentId} based on meta-learning`,
+    );
 
     return optimizedOptions;
   }
@@ -826,7 +880,6 @@ class MetaLearningFramework {
       return 'step_decay'; // Stepwise reduction for complex tasks
     }
     return 'constant'; // Keep constant for stable cases
-
   }
 
   /**
@@ -960,9 +1013,11 @@ class MetaLearningFramework {
 
     // Update success rate
     if (experience.adaptationResult) {
-      const successCount = metrics.adaptationSuccessRate * (metrics.totalExperiences - 1);
+      const successCount =
+        metrics.adaptationSuccessRate * (metrics.totalExperiences - 1);
       const newSuccess = experience.adaptationResult.success ? 1 : 0;
-      metrics.adaptationSuccessRate = (successCount + newSuccess) / metrics.totalExperiences;
+      metrics.adaptationSuccessRate =
+        (successCount + newSuccess) / metrics.totalExperiences;
     }
 
     // Count domain transfers
@@ -1026,7 +1081,10 @@ class MetaLearningFramework {
    */
   analyzeDomainShift(sourceData, targetData) {
     return {
-      distributionShift: this.calculateDistributionShift(sourceData, targetData),
+      distributionShift: this.calculateDistributionShift(
+        sourceData,
+        targetData,
+      ),
       featureShift: this.calculateFeatureShift(sourceData, targetData),
       labelShift: this.calculateLabelShift(sourceData, targetData),
       marginalShift: this.calculateMarginalShift(sourceData, targetData),
@@ -1066,14 +1124,15 @@ class MetaLearningFramework {
     }
 
     // Flatten samples to get all numeric values
-    const values = samples.flat().filter(v => typeof v === 'number');
+    const values = samples.flat().filter((v) => typeof v === 'number');
 
     if (values.length === 0) {
       return { mean: 0, variance: 0 };
     }
 
     const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
-    const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
+    const variance =
+      values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
 
     return { mean, variance };
   }
@@ -1129,10 +1188,12 @@ class MetaLearningFramework {
       return 0.5;
     }
 
-    const intersection = new Set([...sourceLabels].filter(x => targetLabels.has(x)));
+    const intersection = new Set(
+      [...sourceLabels].filter((x) => targetLabels.has(x)),
+    );
     const union = new Set([...sourceLabels, ...targetLabels]);
 
-    return 1 - (intersection.size / union.size); // Jaccard distance
+    return 1 - intersection.size / union.size; // Jaccard distance
   }
 
   /**
@@ -1143,7 +1204,7 @@ class MetaLearningFramework {
     const labels = new Set();
 
     if (data.samples) {
-      data.samples.forEach(sample => {
+      data.samples.forEach((sample) => {
         if (sample.label !== undefined) {
           labels.add(sample.label);
         }
@@ -1194,7 +1255,6 @@ class MetaLearningFramework {
       return 'label_adaptation';
     }
     return 'fine_tuning';
-
   }
 
   /**
@@ -1205,7 +1265,9 @@ class MetaLearningFramework {
    * @param {Object} targetData - Target domain data
    */
   async applyDomainAdaptation(agentId, strategy, sourceData, targetData) {
-    console.log(`Applying domain adaptation strategy '${strategy}' for agent ${agentId}`);
+    console.log(
+      `Applying domain adaptation strategy '${strategy}' for agent ${agentId}`,
+    );
 
     // Simulate domain adaptation (in practice, would involve actual training)
     const adaptationResult = {
@@ -1214,7 +1276,10 @@ class MetaLearningFramework {
       efficiencyGain: Math.random() * 0.4 + 0.1, // 10-50% efficiency gain
       accuracyImprovement: Math.random() * 0.2 + 0.05, // 5-25% accuracy improvement
       adaptationTime: Math.random() * 100 + 50, // 50-150 time units
-      transferredKnowledge: this.calculateTransferredKnowledge(sourceData, targetData),
+      transferredKnowledge: this.calculateTransferredKnowledge(
+        sourceData,
+        targetData,
+      ),
     };
 
     // Store adaptation in transfer learning map
@@ -1240,7 +1305,8 @@ class MetaLearningFramework {
    */
   calculateTransferredKnowledge(sourceData, targetData) {
     // Simplified calculation based on data similarity
-    const similarity = 1 - this.calculateDistributionShift(sourceData, targetData);
+    const similarity =
+      1 - this.calculateDistributionShift(sourceData, targetData);
     return Math.max(0.1, similarity * 0.8); // 10-80% knowledge transfer
   }
 
@@ -1299,7 +1365,9 @@ class MetaLearningFramework {
     for (const [agentId, experiences] of this.agentExperiences.entries()) {
       totalExperiences += experiences.length;
 
-      const adaptations = experiences.filter(exp => exp.type === 'domain_adaptation');
+      const adaptations = experiences.filter(
+        (exp) => exp.type === 'domain_adaptation',
+      );
       totalAdaptations += adaptations.length;
 
       const metrics = this.learningMetrics.get(agentId);
@@ -1312,7 +1380,8 @@ class MetaLearningFramework {
       totalAgents,
       totalExperiences,
       totalAdaptations,
-      avgExperiencesPerAgent: totalAgents > 0 ? totalExperiences / totalAgents : 0,
+      avgExperiencesPerAgent:
+        totalAgents > 0 ? totalExperiences / totalAgents : 0,
       avgSuccessRate: totalAgents > 0 ? avgSuccessRate / totalAgents : 0,
       availableStrategies: this.metaStrategies.size,
       transferLearningInstances: this.transferLearning.size,

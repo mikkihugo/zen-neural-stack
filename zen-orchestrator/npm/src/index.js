@@ -20,7 +20,9 @@ let wasmInstance = null;
 class WASMLoader {
   constructor(options = {}) {
     this.useSIMD = options.useSIMD && this.detectSIMDSupport();
-    this.wasmPath = options.wasmPath || path.join(new URL('.', import.meta.url).pathname, '..', 'wasm');
+    this.wasmPath =
+      options.wasmPath ||
+      path.join(new URL('.', import.meta.url).pathname, '..', 'wasm');
     this.debug = options.debug || false;
   }
 
@@ -30,10 +32,9 @@ class WASMLoader {
       if (typeof WebAssembly !== 'undefined' && WebAssembly.validate) {
         // Test SIMD instruction
         const simdTest = new Uint8Array([
-          0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00,
-          0x01, 0x05, 0x01, 0x60, 0x00, 0x01, 0x7b, 0x03,
-          0x02, 0x01, 0x00, 0x0a, 0x0a, 0x01, 0x08, 0x00,
-          0x41, 0x00, 0xfd, 0x0f, 0x26, 0x0b,
+          0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, 0x01, 0x05, 0x01,
+          0x60, 0x00, 0x01, 0x7b, 0x03, 0x02, 0x01, 0x00, 0x0a, 0x0a, 0x01,
+          0x08, 0x00, 0x41, 0x00, 0xfd, 0x0f, 0x26, 0x0b,
         ]);
         return WebAssembly.validate(simdTest);
       }
@@ -63,7 +64,9 @@ class WASMLoader {
     }
 
     // Fallback to manual loading
-    const moduleFile = this.useSIMD ? 'ruv_swarm_simd.wasm' : 'ruv_swarm_wasm_bg.wasm';
+    const moduleFile = this.useSIMD
+      ? 'ruv_swarm_simd.wasm'
+      : 'ruv_swarm_wasm_bg.wasm';
     const wasmFilePath = path.join(this.wasmPath, moduleFile);
 
     try {
@@ -138,7 +141,7 @@ class WorkerPool {
   }
 
   terminate() {
-    this.workers.forEach(worker => {
+    this.workers.forEach((worker) => {
       if (worker.terminate) {
         worker.terminate();
       }
@@ -197,7 +200,9 @@ class RuvSwarm {
 
   static getRuntimeFeatures() {
     if (!wasmInstance) {
-      throw new Error('RuvSwarm not initialized. Call RuvSwarm.initialize() first.');
+      throw new Error(
+        'RuvSwarm not initialized. Call RuvSwarm.initialize() first.',
+      );
     }
 
     const features = new wasmInstance.exports.RuntimeFeatures();
@@ -261,14 +266,14 @@ class SwarmWrapper {
   }
 
   async spawn(config) {
-    return await this._retryOperation(async() => {
+    return await this._retryOperation(async () => {
       const agent = await this._swarm.spawn(config);
       return new AgentWrapper(agent, this._options);
     });
   }
 
   async orchestrate(task) {
-    return await this._retryOperation(async() => {
+    return await this._retryOperation(async () => {
       return await this._swarm.orchestrate(task);
     });
   }
@@ -290,7 +295,7 @@ class SwarmWrapper {
       } catch (error) {
         lastError = error;
         if (attempt < this._retryAttempts - 1) {
-          await new Promise(resolve => setTimeout(resolve, this._retryDelay));
+          await new Promise((resolve) => setTimeout(resolve, this._retryDelay));
         }
       }
     }

@@ -30,14 +30,28 @@ async function testNeuralPresetsIntegration() {
   const testPresets = [
     { modelType: 'transformer', preset: 'bert_base', agentId: 'bert-agent' },
     { modelType: 'cnn', preset: 'efficientnet_b0', agentId: 'vision-agent' },
-    { modelType: 'lstm', preset: 'bilstm_sentiment', agentId: 'sentiment-agent' },
-    { modelType: 'diffusion', preset: 'ddpm_mnist', agentId: 'diffusion-agent' },
-    { modelType: 'neural_ode', preset: 'node_dynamics', agentId: 'dynamics-agent' },
+    {
+      modelType: 'lstm',
+      preset: 'bilstm_sentiment',
+      agentId: 'sentiment-agent',
+    },
+    {
+      modelType: 'diffusion',
+      preset: 'ddpm_mnist',
+      agentId: 'diffusion-agent',
+    },
+    {
+      modelType: 'neural_ode',
+      preset: 'node_dynamics',
+      agentId: 'dynamics-agent',
+    },
   ];
 
   for (const test of testPresets) {
     try {
-      console.log(`\n  Creating ${test.agentId} with ${test.modelType}/${test.preset}...`);
+      console.log(
+        `\n  Creating ${test.agentId} with ${test.modelType}/${test.preset}...`,
+      );
 
       const agent = await neuralManager.createAgentFromPreset(
         test.agentId,
@@ -54,8 +68,12 @@ async function testNeuralPresetsIntegration() {
 
       if (presetInfo) {
         console.log(`  ✓ Created: ${presetInfo.name}`);
-        console.log(`    Performance: ${presetInfo.performance.expectedAccuracy}`);
-        console.log(`    Cognitive patterns: ${presetInfo.cognitivePatterns.join(', ')}`);
+        console.log(
+          `    Performance: ${presetInfo.performance.expectedAccuracy}`,
+        );
+        console.log(
+          `    Cognitive patterns: ${presetInfo.cognitivePatterns.join(', ')}`,
+        );
       }
     } catch (error) {
       console.log(`  ✗ Failed to create ${test.agentId}: ${error.message}`);
@@ -68,18 +86,29 @@ async function testNeuralPresetsIntegration() {
   console.log('\n🎯 Test 3: Preset Recommendations');
 
   const useCases = [
-    { useCase: 'chatbot', requirements: { maxInferenceTime: 20, minAccuracy: 90 } },
-    { useCase: 'object detection', requirements: { maxInferenceTime: 10, maxMemoryUsage: 50 } },
+    {
+      useCase: 'chatbot',
+      requirements: { maxInferenceTime: 20, minAccuracy: 90 },
+    },
+    {
+      useCase: 'object detection',
+      requirements: { maxInferenceTime: 10, maxMemoryUsage: 50 },
+    },
     { useCase: 'time series prediction', requirements: { minAccuracy: 85 } },
   ];
 
   for (const { useCase, requirements } of useCases) {
     console.log(`\n  Recommendations for "${useCase}":`);
-    const recommendations = neuralManager.getPresetRecommendations(useCase, requirements);
+    const recommendations = neuralManager.getPresetRecommendations(
+      useCase,
+      requirements,
+    );
 
     recommendations.slice(0, 3).forEach((rec, idx) => {
       console.log(`    ${idx + 1}. ${rec.preset.name} (${rec.modelType})`);
-      console.log(`       Score: ${rec.score.toFixed(2)}, Patterns: ${rec.cognitivePatterns.join(', ')}`);
+      console.log(
+        `       Score: ${rec.score.toFixed(2)}, Patterns: ${rec.cognitivePatterns.join(', ')}`,
+      );
     });
   }
 
@@ -107,11 +136,12 @@ async function testNeuralPresetsIntegration() {
     console.log(`\n  Scenario: ${scenario.name}`);
 
     // Test with transformer model
-    const patterns = neuralManager.cognitivePatternSelector.selectPatternsForPreset(
-      'transformer',
-      'bert_base',
-      scenario.config,
-    );
+    const patterns =
+      neuralManager.cognitivePatternSelector.selectPatternsForPreset(
+        'transformer',
+        'bert_base',
+        scenario.config,
+      );
 
     console.log(`    Selected patterns: ${patterns.join(', ')}`);
   }
@@ -132,12 +162,14 @@ async function testNeuralPresetsIntegration() {
 
   console.log(`  Total neural model categories: ${modelCategories}`);
   console.log(`  Total production-ready presets: ${totalPresets}`);
-  console.log(`  Average presets per category: ${(totalPresets / modelCategories).toFixed(1)}`);
+  console.log(
+    `  Average presets per category: ${(totalPresets / modelCategories).toFixed(1)}`,
+  );
 
   // List all unique model types
   const uniqueModels = new Set();
-  Object.values(COMPLETE_NEURAL_PRESETS).forEach(categoryPresets => {
-    Object.values(categoryPresets).forEach(preset => {
+  Object.values(COMPLETE_NEURAL_PRESETS).forEach((categoryPresets) => {
+    Object.values(categoryPresets).forEach((preset) => {
       uniqueModels.add(preset.model);
     });
   });
@@ -151,7 +183,7 @@ async function testNeuralPresetsIntegration() {
   console.log('\n🔄 Test 6: Neural Adaptation Engine');
 
   // Simulate training and adaptation
-  const adaptationTest = await (async() => {
+  const adaptationTest = await (async () => {
     const agentId = 'adaptive-agent';
 
     try {
@@ -171,7 +203,8 @@ async function testNeuralPresetsIntegration() {
       };
 
       // Fine-tune with cognitive evolution
-      await neuralManager.fineTuneNetwork(agentId,
+      await neuralManager.fineTuneNetwork(
+        agentId,
         { samples: Array(100).fill({ input: [1, 2, 3], target: 1 }) },
         {
           epochs: 5,
@@ -181,7 +214,8 @@ async function testNeuralPresetsIntegration() {
       );
 
       // Get adaptation recommendations
-      const recommendations = await neuralManager.getAdaptationRecommendations(agentId);
+      const recommendations =
+        await neuralManager.getAdaptationRecommendations(agentId);
 
       console.log('  Adaptation test completed');
       if (recommendations) {
@@ -198,7 +232,7 @@ async function testNeuralPresetsIntegration() {
   console.log('\n✅ Test 6 passed: Neural adaptation engine functional');
 
   // Summary
-  console.log(`\n${ '='.repeat(60)}`);
+  console.log(`\n${'='.repeat(60)}`);
   console.log('🎉 NEURAL PRESETS INTEGRATION TEST SUMMARY');
   console.log('='.repeat(60));
   console.log(`✅ Model Types Available: ${Object.keys(modelTypes).length}`);

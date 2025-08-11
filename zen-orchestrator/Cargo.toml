@@ -52,7 +52,7 @@ atty = "0.2"
 wasm-bindgen = "0.2"
 js-sys = "0.3"
 web-sys = { version = "0.3", features = ["console", "Window"] }
-wee_alloc = "0.4"
+# wee_alloc removed due to security vulnerability GHSA-rc23-xxgq-x27g
 
 # MCP dependencies
 axum = "0.7"

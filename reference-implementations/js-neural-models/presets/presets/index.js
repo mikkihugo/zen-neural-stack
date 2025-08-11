@@ -3,14 +3,22 @@
  * Centralized access to all production-ready neural network configurations
  */
 
-import { availableGraphPresets, getGraphPreset, graphPresets } from './graph.js';
+import {
+  availableGraphPresets,
+  getGraphPreset,
+  graphPresets,
+} from './graph.js';
 import { availableNLPPresets, getNLPPreset, nlpPresets } from './nlp.js';
 import {
   availableTimeSeriesPresets,
   getTimeSeriesPreset,
   timeSeriesPresets,
 } from './timeseries.js';
-import { availableVisionPresets, getVisionPreset, visionPresets } from './vision.js';
+import {
+  availableVisionPresets,
+  getVisionPreset,
+  visionPresets,
+} from './vision.js';
 
 // Combined presets object
 export const NEURAL_PRESETS = {
@@ -42,7 +50,7 @@ export const getPreset = (category, presetName) => {
 
   if (!categoryMap[category]) {
     throw new Error(
-      `Unknown preset category: ${category}. Available categories: ${Object.keys(categoryMap).join(', ')}`
+      `Unknown preset category: ${category}. Available categories: ${Object.keys(categoryMap).join(', ')}`,
     );
   }
 
@@ -60,7 +68,7 @@ export const getCategoryPresets = (category) => {
 
   if (!categoryMap[category]) {
     throw new Error(
-      `Unknown preset category: ${category}. Available categories: ${Object.keys(categoryMap).join(', ')}`
+      `Unknown preset category: ${category}. Available categories: ${Object.keys(categoryMap).join(', ')}`,
     );
   }
 
@@ -253,7 +261,9 @@ export const validatePresetConfig = (preset) => {
   const missingFields = requiredFields.filter((field) => !preset[field]);
 
   if (missingFields.length > 0) {
-    throw new Error(`Preset validation failed. Missing fields: ${missingFields.join(', ')}`);
+    throw new Error(
+      `Preset validation failed. Missing fields: ${missingFields.join(', ')}`,
+    );
   }
 
   // Validate performance fields
@@ -263,11 +273,13 @@ export const validatePresetConfig = (preset) => {
     'memoryUsage',
     'trainingTime',
   ];
-  const missingPerfFields = requiredPerformanceFields.filter((field) => !preset.performance[field]);
+  const missingPerfFields = requiredPerformanceFields.filter(
+    (field) => !preset.performance[field],
+  );
 
   if (missingPerfFields.length > 0) {
     throw new Error(
-      `Preset performance validation failed. Missing fields: ${missingPerfFields.join(', ')}`
+      `Preset performance validation failed. Missing fields: ${missingPerfFields.join(', ')}`,
     );
   }
 
@@ -280,7 +292,10 @@ export const DEFAULT_RECOMMENDATIONS = {
   sentiment_analysis: { category: 'nlp', preset: 'sentiment_analysis_social' },
   object_detection: { category: 'vision', preset: 'object_detection_realtime' },
   face_recognition: { category: 'vision', preset: 'facial_recognition_secure' },
-  stock_prediction: { category: 'timeseries', preset: 'stock_market_prediction' },
+  stock_prediction: {
+    category: 'timeseries',
+    preset: 'stock_market_prediction',
+  },
   weather_forecast: { category: 'timeseries', preset: 'weather_forecasting' },
   fraud_detection: { category: 'graph', preset: 'fraud_detection_financial' },
   recommendation: { category: 'graph', preset: 'recommendation_engine' },

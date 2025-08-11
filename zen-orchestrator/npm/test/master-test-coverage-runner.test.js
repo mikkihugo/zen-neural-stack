@@ -49,7 +49,7 @@ class MasterTestCoverageRunner {
 
   async runTestSuite(SuiteClass, suiteName) {
     console.log(`\n🗣️ Starting ${suiteName}...`);
-    console.log('=' .repeat(60));
+    console.log('='.repeat(60));
 
     const startTime = performance.now();
 
@@ -71,7 +71,9 @@ class MasterTestCoverageRunner {
       this.results.suites.push(suiteResult);
 
       console.log(`\n✅ ${suiteName} completed in ${Math.round(duration)}ms`);
-      console.log(`   Tests: ${report.summary.totalTests} | Passed: ${report.summary.passed} | Failed: ${report.summary.failed}`);
+      console.log(
+        `   Tests: ${report.summary.totalTests} | Passed: ${report.summary.passed} | Failed: ${report.summary.failed}`,
+      );
 
       return suiteResult;
     } catch (error) {
@@ -100,10 +102,14 @@ class MasterTestCoverageRunner {
 
     try {
       // Run nyc coverage on all source files
-      const coverageProcess = spawn('npx', ['nyc', '--reporter=json', 'node', 'test/test.js'], {
-        cwd: path.dirname(__dirname),
-        stdio: 'pipe',
-      });
+      const coverageProcess = spawn(
+        'npx',
+        ['nyc', '--reporter=json', 'node', 'test/test.js'],
+        {
+          cwd: path.dirname(__dirname),
+          stdio: 'pipe',
+        },
+      );
 
       let coverageOutput = '';
       coverageProcess.stdout.on('data', (data) => {
@@ -122,7 +128,9 @@ class MasterTestCoverageRunner {
         });
 
         coverageProcess.on('error', (error) => {
-          console.log('   Coverage analysis encountered an error, using simulated data');
+          console.log(
+            '   Coverage analysis encountered an error, using simulated data',
+          );
           resolve();
         });
 
@@ -135,7 +143,11 @@ class MasterTestCoverageRunner {
       });
 
       // Try to read coverage file
-      const coveragePath = path.join(path.dirname(__dirname), 'coverage', 'coverage-final.json');
+      const coveragePath = path.join(
+        path.dirname(__dirname),
+        'coverage',
+        'coverage-final.json',
+      );
 
       let coverageData = {};
       if (fs.existsSync(coveragePath)) {
@@ -148,26 +160,34 @@ class MasterTestCoverageRunner {
       }
 
       // Calculate coverage metrics
-      let totalLines = 0, coveredLines = 0;
-      let totalFunctions = 0, coveredFunctions = 0;
-      let totalBranches = 0, coveredBranches = 0;
-      let totalStatements = 0, coveredStatements = 0;
+      let totalLines = 0,
+        coveredLines = 0;
+      let totalFunctions = 0,
+        coveredFunctions = 0;
+      let totalBranches = 0,
+        coveredBranches = 0;
+      let totalStatements = 0,
+        coveredStatements = 0;
 
-      Object.values(coverageData).forEach(file => {
+      Object.values(coverageData).forEach((file) => {
         if (file.s) {
           totalStatements += Object.keys(file.s).length;
-          coveredStatements += Object.values(file.s).filter(count => count > 0).length;
+          coveredStatements += Object.values(file.s).filter(
+            (count) => count > 0,
+          ).length;
         }
 
         if (file.f) {
           totalFunctions += Object.keys(file.f).length;
-          coveredFunctions += Object.values(file.f).filter(count => count > 0).length;
+          coveredFunctions += Object.values(file.f).filter(
+            (count) => count > 0,
+          ).length;
         }
 
         if (file.b) {
-          Object.values(file.b).forEach(branches => {
+          Object.values(file.b).forEach((branches) => {
             totalBranches += branches.length;
-            coveredBranches += branches.filter(count => count > 0).length;
+            coveredBranches += branches.filter((count) => count > 0).length;
           });
         }
       });
@@ -186,10 +206,22 @@ class MasterTestCoverageRunner {
       }
 
       this.results.coverage = {
-        lines: totalLines > 0 ? (coveredLines / totalLines * 100).toFixed(2) : '0.00',
-        functions: totalFunctions > 0 ? (coveredFunctions / totalFunctions * 100).toFixed(2) : '0.00',
-        branches: totalBranches > 0 ? (coveredBranches / totalBranches * 100).toFixed(2) : '0.00',
-        statements: totalStatements > 0 ? (coveredStatements / totalStatements * 100).toFixed(2) : '0.00',
+        lines:
+          totalLines > 0
+            ? ((coveredLines / totalLines) * 100).toFixed(2)
+            : '0.00',
+        functions:
+          totalFunctions > 0
+            ? ((coveredFunctions / totalFunctions) * 100).toFixed(2)
+            : '0.00',
+        branches:
+          totalBranches > 0
+            ? ((coveredBranches / totalBranches) * 100).toFixed(2)
+            : '0.00',
+        statements:
+          totalStatements > 0
+            ? ((coveredStatements / totalStatements) * 100).toFixed(2)
+            : '0.00',
         details: {
           lines: { covered: coveredLines, total: totalLines },
           functions: { covered: coveredFunctions, total: totalFunctions },
@@ -199,17 +231,32 @@ class MasterTestCoverageRunner {
       };
 
       console.log('   ✅ Code coverage analysis completed');
-
     } catch (error) {
       console.log(`   ⚠️ Coverage analysis failed: ${error.message}`);
       console.log('   Using test-based coverage estimation');
 
       const testBasedCoverage = this.estimateCoverageFromTests();
       this.results.coverage = {
-        lines: (testBasedCoverage.coveredStatements / testBasedCoverage.totalStatements * 100).toFixed(2),
-        functions: (testBasedCoverage.coveredFunctions / testBasedCoverage.totalFunctions * 100).toFixed(2),
-        branches: (testBasedCoverage.coveredBranches / testBasedCoverage.totalBranches * 100).toFixed(2),
-        statements: (testBasedCoverage.coveredStatements / testBasedCoverage.totalStatements * 100).toFixed(2),
+        lines: (
+          (testBasedCoverage.coveredStatements /
+            testBasedCoverage.totalStatements) *
+          100
+        ).toFixed(2),
+        functions: (
+          (testBasedCoverage.coveredFunctions /
+            testBasedCoverage.totalFunctions) *
+          100
+        ).toFixed(2),
+        branches: (
+          (testBasedCoverage.coveredBranches /
+            testBasedCoverage.totalBranches) *
+          100
+        ).toFixed(2),
+        statements: (
+          (testBasedCoverage.coveredStatements /
+            testBasedCoverage.totalStatements) *
+          100
+        ).toFixed(2),
         details: testBasedCoverage,
       };
     }
@@ -220,12 +267,12 @@ class MasterTestCoverageRunner {
     let totalCoveragePoints = 0;
     let maxCoveragePoints = 0;
 
-    this.results.suites.forEach(suite => {
+    this.results.suites.forEach((suite) => {
       if (suite.report && suite.report.coverage) {
         const coverage = suite.report.coverage;
 
         // Sum up coverage points from each test suite
-        Object.values(coverage).forEach(points => {
+        Object.values(coverage).forEach((points) => {
           if (typeof points === 'number') {
             totalCoveragePoints += points;
           }
@@ -242,17 +289,25 @@ class MasterTestCoverageRunner {
     });
 
     // Estimate lines of code coverage based on test coverage
-    const estimatedCoveragePercent = maxCoveragePoints > 0 ?
-      Math.min((totalCoveragePoints / maxCoveragePoints) * 100, 85) : 25; // Cap at 85% for estimates
+    const estimatedCoveragePercent =
+      maxCoveragePoints > 0
+        ? Math.min((totalCoveragePoints / maxCoveragePoints) * 100, 85)
+        : 25; // Cap at 85% for estimates
 
     const estimatedTotalStatements = 5500; // Approximate based on src folder
-    const estimatedCoveredStatements = Math.round(estimatedTotalStatements * estimatedCoveragePercent / 100);
+    const estimatedCoveredStatements = Math.round(
+      (estimatedTotalStatements * estimatedCoveragePercent) / 100,
+    );
 
     const estimatedTotalFunctions = 800;
-    const estimatedCoveredFunctions = Math.round(estimatedTotalFunctions * estimatedCoveragePercent / 100);
+    const estimatedCoveredFunctions = Math.round(
+      (estimatedTotalFunctions * estimatedCoveragePercent) / 100,
+    );
 
     const estimatedTotalBranches = 2500;
-    const estimatedCoveredBranches = Math.round(estimatedTotalBranches * (estimatedCoveragePercent * 0.8) / 100); // Branches typically lower
+    const estimatedCoveredBranches = Math.round(
+      (estimatedTotalBranches * (estimatedCoveragePercent * 0.8)) / 100,
+    ); // Branches typically lower
 
     return {
       totalStatements: estimatedTotalStatements,
@@ -270,7 +325,7 @@ class MasterTestCoverageRunner {
     let totalFailed = 0;
     let totalCoverageScore = 0;
 
-    this.results.suites.forEach(suite => {
+    this.results.suites.forEach((suite) => {
       if (suite.report && suite.report.summary) {
         totalTests += suite.report.summary.totalTests || 0;
         totalPassed += suite.report.summary.passed || 0;
@@ -284,7 +339,8 @@ class MasterTestCoverageRunner {
       }
     });
 
-    const overallPassRate = totalTests > 0 ? (totalPassed / totalTests * 100).toFixed(2) : '0.00';
+    const overallPassRate =
+      totalTests > 0 ? ((totalPassed / totalTests) * 100).toFixed(2) : '0.00';
 
     this.results.summary = {
       totalTests,
@@ -293,8 +349,11 @@ class MasterTestCoverageRunner {
       overallPassRate: `${overallPassRate}%`,
       coverageScore: totalCoverageScore,
       suiteCount: this.results.suites.length,
-      successfulSuites: this.results.suites.filter(s => s.status === 'completed').length,
-      failedSuites: this.results.suites.filter(s => s.status === 'failed').length,
+      successfulSuites: this.results.suites.filter(
+        (s) => s.status === 'completed',
+      ).length,
+      failedSuites: this.results.suites.filter((s) => s.status === 'failed')
+        .length,
     };
   }
 
@@ -305,7 +364,9 @@ class MasterTestCoverageRunner {
 
     // Test coverage recommendations
     if (parseFloat(summary.overallPassRate) < 80) {
-      recommendations.push('Improve overall test pass rate - currently below 80%');
+      recommendations.push(
+        'Improve overall test pass rate - currently below 80%',
+      );
     }
 
     if (summary.failedSuites > 0) {
@@ -318,7 +379,9 @@ class MasterTestCoverageRunner {
     } else if (parseFloat(coverage.lines) < 50) {
       recommendations.push('Good progress on line coverage - aim for 50% next');
     } else if (parseFloat(coverage.lines) < 75) {
-      recommendations.push('Excellent line coverage - aim for 75% for production readiness');
+      recommendations.push(
+        'Excellent line coverage - aim for 75% for production readiness',
+      );
     }
 
     if (parseFloat(coverage.functions) < 70) {
@@ -326,13 +389,15 @@ class MasterTestCoverageRunner {
     }
 
     if (parseFloat(coverage.branches) < 60) {
-      recommendations.push('Improve branch coverage for better edge case testing');
+      recommendations.push(
+        'Improve branch coverage for better edge case testing',
+      );
     }
 
     // Specific suite recommendations
-    this.results.suites.forEach(suite => {
+    this.results.suites.forEach((suite) => {
       if (suite.report && suite.report.recommendations) {
-        suite.report.recommendations.forEach(rec => {
+        suite.report.recommendations.forEach((rec) => {
           recommendations.push(`${suite.name}: ${rec}`);
         });
       }
@@ -340,15 +405,21 @@ class MasterTestCoverageRunner {
 
     // Overall recommendations
     if (summary.totalTests < 100) {
-      recommendations.push('Consider adding more tests to reach 100+ total tests');
+      recommendations.push(
+        'Consider adding more tests to reach 100+ total tests',
+      );
     }
 
     if (summary.coverageScore < 200) {
-      recommendations.push('Expand test coverage to achieve higher coverage score');
+      recommendations.push(
+        'Expand test coverage to achieve higher coverage score',
+      );
     }
 
     if (recommendations.length === 0) {
-      recommendations.push('Outstanding test coverage! Consider adding performance benchmarks and stress tests.');
+      recommendations.push(
+        'Outstanding test coverage! Consider adding performance benchmarks and stress tests.',
+      );
     }
 
     this.results.recommendations = recommendations;
@@ -450,24 +521,36 @@ class MasterTestCoverageRunner {
         </div>
         
         <h2>Test Suites</h2>
-        ${this.results.suites.map(suite => `
+        ${this.results.suites
+          .map(
+            (suite) => `
             <div class="suite ${suite.status}">
                 <h3>${suite.name} <span class="timestamp">(${suite.duration}ms)</span></h3>
-                ${suite.report ? `
+                ${
+                  suite.report
+                    ? `
                     <p><strong>Tests:</strong> ${suite.report.summary.totalTests} | 
                        <strong>Passed:</strong> ${suite.report.summary.passed} | 
                        <strong>Failed:</strong> ${suite.report.summary.failed} | 
                        <strong>Pass Rate:</strong> ${suite.report.summary.passRate || 'N/A'}</p>
-                ` : ''}
+                `
+                    : ''
+                }
                 ${suite.error ? `<p style="color: #dc3545;"><strong>Error:</strong> ${suite.error}</p>` : ''}
             </div>
-        `).join('')}
+        `,
+          )
+          .join('')}
         
         <div class="recommendations">
             <h2>💡 Recommendations</h2>
-            ${this.results.recommendations.map(rec => `
+            ${this.results.recommendations
+              .map(
+                (rec) => `
                 <div class="recommendation">• ${rec}</div>
-            `).join('')}
+            `,
+              )
+              .join('')}
         </div>
     </div>
 </body>
@@ -479,16 +562,22 @@ class MasterTestCoverageRunner {
 
   async run() {
     console.log('🏆 Starting Master Test Coverage Analysis');
-    console.log('=' .repeat(80));
+    console.log('='.repeat(80));
     console.log(`Timestamp: ${new Date().toISOString()}`);
     console.log(`Node Version: ${process.version}`);
     console.log(`Platform: ${process.platform}`);
 
     // Run all test suites
     await this.runTestSuite(MCPToolsTestSuite, 'MCP Tools Comprehensive Tests');
-    await this.runTestSuite(DAAFunctionalityTestSuite, 'DAA Functionality Tests');
+    await this.runTestSuite(
+      DAAFunctionalityTestSuite,
+      'DAA Functionality Tests',
+    );
     await this.runTestSuite(ErrorHandlingTestSuite, 'Error Handling Tests');
-    await this.runTestSuite(MCPProtocolIntegrationTestSuite, 'MCP Protocol Integration Tests');
+    await this.runTestSuite(
+      MCPProtocolIntegrationTestSuite,
+      'MCP Protocol Integration Tests',
+    );
 
     // Run code coverage analysis
     await this.runCodeCoverageAnalysis();
@@ -514,8 +603,10 @@ class MasterTestCoverageRunner {
 
     // Console Summary
     console.log('\n\n📊 MASTER TEST COVERAGE REPORT');
-    console.log('=' .repeat(80));
-    console.log(`📅 Completed: ${new Date(this.results.endTime).toLocaleString()}`);
+    console.log('='.repeat(80));
+    console.log(
+      `📅 Completed: ${new Date(this.results.endTime).toLocaleString()}`,
+    );
     console.log(`⏱️  Duration: ${this.results.totalDuration}ms`);
     console.log('');
 
@@ -535,21 +626,25 @@ class MasterTestCoverageRunner {
     console.log('');
 
     console.log('📊 Test Suites:');
-    this.results.suites.forEach(suite => {
+    this.results.suites.forEach((suite) => {
       const status = suite.status === 'completed' ? '✅' : '❌';
       console.log(`   ${status} ${suite.name} (${suite.duration}ms)`);
       if (suite.report) {
-        console.log(`      Tests: ${suite.report.summary.totalTests} | Passed: ${suite.report.summary.passed} | Failed: ${suite.report.summary.failed}`);
+        console.log(
+          `      Tests: ${suite.report.summary.totalTests} | Passed: ${suite.report.summary.passed} | Failed: ${suite.report.summary.failed}`,
+        );
       }
     });
     console.log('');
 
     console.log('💡 Recommendations:');
-    this.results.recommendations.slice(0, 10).forEach(rec => {
+    this.results.recommendations.slice(0, 10).forEach((rec) => {
       console.log(`   • ${rec}`);
     });
     if (this.results.recommendations.length > 10) {
-      console.log(`   ... and ${this.results.recommendations.length - 10} more`);
+      console.log(
+        `   ... and ${this.results.recommendations.length - 10} more`,
+      );
     }
     console.log('');
 
@@ -560,12 +655,17 @@ class MasterTestCoverageRunner {
 
     // Determine if coverage target was met
     const coverageTarget = 25; // 25% minimum target
-    const coverageMet = parseFloat(this.results.coverage.lines) >= coverageTarget;
+    const coverageMet =
+      parseFloat(this.results.coverage.lines) >= coverageTarget;
 
     if (coverageMet) {
-      console.log(`✅ SUCCESS: Coverage target of ${coverageTarget}% achieved (${this.results.coverage.lines}%)`);
+      console.log(
+        `✅ SUCCESS: Coverage target of ${coverageTarget}% achieved (${this.results.coverage.lines}%)`,
+      );
     } else {
-      console.log(`⚠️  WARNING: Coverage target of ${coverageTarget}% not achieved (${this.results.coverage.lines}%)`);
+      console.log(
+        `⚠️  WARNING: Coverage target of ${coverageTarget}% not achieved (${this.results.coverage.lines}%)`,
+      );
     }
 
     console.log('\n🏆 Master Test Coverage Analysis Complete!');

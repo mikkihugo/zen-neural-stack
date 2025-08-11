@@ -18,7 +18,17 @@ export const visionPresets = {
         { filters: 128, kernelSize: 3, stride: 1, activation: 'mish' },
         { filters: 256, kernelSize: 3, stride: 2, activation: 'mish' },
       ],
-      anchors: [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]],
+      anchors: [
+        [10, 13],
+        [16, 30],
+        [33, 23],
+        [30, 61],
+        [62, 45],
+        [59, 119],
+        [116, 90],
+        [156, 198],
+        [373, 326],
+      ],
       numClasses: 80,
       dropoutRate: 0.2,
     },
@@ -86,10 +96,34 @@ export const visionPresets = {
       inputShape: [512, 512, 1], // Grayscale medical images
       architecture: 'unet_3d',
       convLayers: [
-        { filters: 64, kernelSize: 3, stride: 1, activation: 'relu', batchNorm: true },
-        { filters: 128, kernelSize: 3, stride: 1, activation: 'relu', batchNorm: true },
-        { filters: 256, kernelSize: 3, stride: 1, activation: 'relu', batchNorm: true },
-        { filters: 512, kernelSize: 3, stride: 1, activation: 'relu', batchNorm: true },
+        {
+          filters: 64,
+          kernelSize: 3,
+          stride: 1,
+          activation: 'relu',
+          batchNorm: true,
+        },
+        {
+          filters: 128,
+          kernelSize: 3,
+          stride: 1,
+          activation: 'relu',
+          batchNorm: true,
+        },
+        {
+          filters: 256,
+          kernelSize: 3,
+          stride: 1,
+          activation: 'relu',
+          batchNorm: true,
+        },
+        {
+          filters: 512,
+          kernelSize: 3,
+          stride: 1,
+          activation: 'relu',
+          batchNorm: true,
+        },
       ],
       skipConnections: true,
       attentionGates: true,
@@ -378,7 +412,9 @@ export const visionPresets = {
 // Export utility function to get preset by name
 export const getVisionPreset = (presetName) => {
   if (!visionPresets[presetName]) {
-    throw new Error(`Vision preset '${presetName}' not found. Available presets: ${Object.keys(visionPresets).join(', ')}`);
+    throw new Error(
+      `Vision preset '${presetName}' not found. Available presets: ${Object.keys(visionPresets).join(', ')}`,
+    );
   }
   return visionPresets[presetName];
 };

@@ -4,7 +4,11 @@
  * Test script to demonstrate memory optimization
  */
 
-import { NeuralCLI, MemoryOptimizer, PATTERN_MEMORY_CONFIG } from '../src/neural';
+import {
+  NeuralCLI,
+  MemoryOptimizer,
+  PATTERN_MEMORY_CONFIG,
+} from '../src/neural';
 import { NeuralAgentFactory, COGNITIVE_PATTERNS } from '../src/neural-agent';
 
 async function testMemoryOptimization() {
@@ -37,7 +41,7 @@ async function testMemoryOptimization() {
   for (const pattern of Object.keys(PATTERN_MEMORY_CONFIG)) {
     const beforeMem = beforeOptimization[pattern];
     const afterMem = await neuralCLI.getPatternMemoryUsage(pattern);
-    const reduction = ((beforeMem - afterMem) / beforeMem * 100).toFixed(1);
+    const reduction = (((beforeMem - afterMem) / beforeMem) * 100).toFixed(1);
 
     console.log(
       `${pattern.padEnd(12)} | ${beforeMem.toFixed(0).padStart(6)} | ${afterMem.toFixed(0).padStart(6)} | ${reduction.padStart(8)}%`,
@@ -64,8 +68,12 @@ async function testMemoryOptimization() {
     const status = agent.getStatus();
     console.log(`\n${agentType} agent:`);
     console.log(`  Current Memory: ${status.neuralState.memoryUsage.current}`);
-    console.log(`  Baseline Memory: ${status.neuralState.memoryUsage.baseline}`);
-    console.log(`  Memory Efficiency: ${status.neuralState.memoryUsage.efficiency}`);
+    console.log(
+      `  Baseline Memory: ${status.neuralState.memoryUsage.baseline}`,
+    );
+    console.log(
+      `  Memory Efficiency: ${status.neuralState.memoryUsage.efficiency}`,
+    );
   }
 
   // Test 6: Simulate garbage collection

@@ -259,7 +259,10 @@ const config = {
 // Apply platform-specific overrides
 const platformConfig = config.platform[os.platform()];
 if (platformConfig) {
-  config.swarm.maxAgents.stress = Math.min(config.swarm.maxAgents.stress, platformConfig.maxAgents);
+  config.swarm.maxAgents.stress = Math.min(
+    config.swarm.maxAgents.stress,
+    platformConfig.maxAgents,
+  );
   config.swarm.performance.maxMemoryUsage = Math.min(
     config.swarm.performance.maxMemoryUsage,
     platformConfig.maxMemory,
@@ -293,7 +296,8 @@ config.getResourceLimits = () => {
   const platformLimits = config.platform[os.platform()] || {};
   return {
     maxAgents: platformLimits.maxAgents || config.swarm.maxAgents.large,
-    maxMemory: platformLimits.maxMemory || config.swarm.performance.maxMemoryUsage,
+    maxMemory:
+      platformLimits.maxMemory || config.swarm.performance.maxMemoryUsage,
     maxCpu: config.swarm.performance.maxCpuUsage,
   };
 };

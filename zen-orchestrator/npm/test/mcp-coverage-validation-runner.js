@@ -38,7 +38,15 @@ const mcpToolsToTest = [
   {
     name: 'neural_train',
     command: 'neural',
-    args: ['train', '--iterations', '3', '--learning-rate', '0.01', '--model-type', 'feedforward'],
+    args: [
+      'train',
+      '--iterations',
+      '3',
+      '--learning-rate',
+      '0.01',
+      '--model-type',
+      'feedforward',
+    ],
     expectedOutput: 'Training Complete',
   },
   {
@@ -74,7 +82,13 @@ const daaToolsToTest = [
 /**
  * Run a single test with timeout and error handling
  */
-async function runTest(testName, command, args, expectedOutput, timeout = 30000) {
+async function runTest(
+  testName,
+  command,
+  args,
+  expectedOutput,
+  timeout = 30000,
+) {
   return new Promise((resolve) => {
     console.log(`\n🧪 Testing ${testName}...`);
 
@@ -120,7 +134,9 @@ async function runTest(testName, command, args, expectedOutput, timeout = 30000)
         if (success) {
           console.log(`✅ ${testName}: PASSED`);
         } else {
-          console.log(`❌ ${testName}: FAILED - Expected "${expectedOutput}" in output`);
+          console.log(
+            `❌ ${testName}: FAILED - Expected "${expectedOutput}" in output`,
+          );
           console.log(`   Exit code: ${code}`);
           console.log(`   Stdout: ${stdout.slice(0, 200)}...`);
           console.log(`   Stderr: ${stderr.slice(0, 200)}...`);
@@ -128,7 +144,9 @@ async function runTest(testName, command, args, expectedOutput, timeout = 30000)
 
         resolve({
           success,
-          error: success ? null : `Expected "${expectedOutput}" in output, got exit code ${code}`,
+          error: success
+            ? null
+            : `Expected "${expectedOutput}" in output, got exit code ${code}`,
           stdout,
           stderr,
           exitCode: code,
@@ -165,7 +183,12 @@ async function runCoverageValidation() {
     testResults.totalTests++;
     testResults.mcpTools.tested++;
 
-    const result = await runTest(test.name, test.command, test.args, test.expectedOutput);
+    const result = await runTest(
+      test.name,
+      test.command,
+      test.args,
+      test.expectedOutput,
+    );
 
     if (result.success) {
       testResults.passed++;
@@ -188,7 +211,12 @@ async function runCoverageValidation() {
     testResults.totalTests++;
     testResults.daaTools.tested++;
 
-    const result = await runTest(test.name, test.command, test.args, test.expectedOutput);
+    const result = await runTest(
+      test.name,
+      test.command,
+      test.args,
+      test.expectedOutput,
+    );
 
     if (result.success) {
       testResults.passed++;
@@ -216,85 +244,116 @@ function generateFinalReport() {
   const endTime = Date.now();
   const duration = (endTime - testResults.startTime) / 1000;
 
-  const mcpSuccessRate = (testResults.mcpTools.passed / testResults.mcpTools.tested) * 100;
-  const daaSuccessRate = (testResults.daaTools.passed / testResults.daaTools.tested) * 100;
-  const overallSuccessRate = (testResults.passed / testResults.totalTests) * 100;
+  const mcpSuccessRate =
+    (testResults.mcpTools.passed / testResults.mcpTools.tested) * 100;
+  const daaSuccessRate =
+    (testResults.daaTools.passed / testResults.daaTools.tested) * 100;
+  const overallSuccessRate =
+    (testResults.passed / testResults.totalTests) * 100;
 
   console.log('\n\n📊 MCP COVERAGE SPECIALIST MISSION REPORT');
   console.log('==========================================');
   console.log(`\n⏱️  Duration: ${duration.toFixed(1)}s`);
   console.log(`📋 Total Tests: ${testResults.totalTests}`);
-  console.log(`✅ Passed: ${testResults.passed} (${overallSuccessRate.toFixed(1)}%)`);
-  console.log(`❌ Failed: ${testResults.failed} (${((testResults.failed / testResults.totalTests) * 100).toFixed(1)}%)`);
+  console.log(
+    `✅ Passed: ${testResults.passed} (${overallSuccessRate.toFixed(1)}%)`,
+  );
+  console.log(
+    `❌ Failed: ${testResults.failed} (${((testResults.failed / testResults.totalTests) * 100).toFixed(1)}%)`,
+  );
 
   console.log('\n🔧 MCP TOOLS COVERAGE:');
-  console.log(`   ├── Tested: ${testResults.mcpTools.tested}/3 previously failing tools`);
-  console.log(`   ├── ✅ Passed: ${testResults.mcpTools.passed} (${mcpSuccessRate.toFixed(1)}%)`);
+  console.log(
+    `   ├── Tested: ${testResults.mcpTools.tested}/3 previously failing tools`,
+  );
+  console.log(
+    `   ├── ✅ Passed: ${testResults.mcpTools.passed} (${mcpSuccessRate.toFixed(1)}%)`,
+  );
   console.log(`   └── ❌ Failed: ${testResults.mcpTools.failed.length}`);
 
   if (testResults.mcpTools.failed.length > 0) {
     console.log('\n   Failed MCP Tools:');
-    testResults.mcpTools.failed.forEach(fail => {
+    testResults.mcpTools.failed.forEach((fail) => {
       console.log(`   ❌ ${fail.name}: ${fail.error}`);
     });
   }
 
   console.log('\n🧠 DAA TOOLS INTEGRATION:');
   console.log(`   ├── Tested: ${testResults.daaTools.tested}/10 DAA tools`);
-  console.log(`   ├── ✅ Passed: ${testResults.daaTools.passed} (${daaSuccessRate.toFixed(1)}%)`);
+  console.log(
+    `   ├── ✅ Passed: ${testResults.daaTools.passed} (${daaSuccessRate.toFixed(1)}%)`,
+  );
   console.log(`   └── ❌ Failed: ${testResults.daaTools.failed.length}`);
 
   if (testResults.daaTools.failed.length > 0) {
     console.log('\n   Failed DAA Tools:');
-    testResults.daaTools.failed.forEach(fail => {
+    testResults.daaTools.failed.forEach((fail) => {
       console.log(`   ❌ ${fail.name}: ${fail.error}`);
     });
   }
 
   // Mission status
   const missionSuccess = overallSuccessRate >= 80;
-  console.log(`\n🎯 MISSION STATUS: ${missionSuccess ? '✅ SUCCESS' : '⚠️ NEEDS IMPROVEMENT'}`);
+  console.log(
+    `\n🎯 MISSION STATUS: ${missionSuccess ? '✅ SUCCESS' : '⚠️ NEEDS IMPROVEMENT'}`,
+  );
   console.log('   Target: 80% success rate');
   console.log(`   Achieved: ${overallSuccessRate.toFixed(1)}%`);
 
   // Key improvements
   console.log('\n🔧 KEY FIXES IMPLEMENTED:');
-  console.log('   ✅ Fixed neural_train validation errors (MCPValidationError → ErrorFactory)');
+  console.log(
+    '   ✅ Fixed neural_train validation errors (MCPValidationError → ErrorFactory)',
+  );
   console.log('   ✅ Fixed task_results database graceful degradation');
   console.log('   ✅ Fixed swarm_monitor real-time monitoring');
   console.log('   ✅ Integrated all 10 DAA tools into main MCP class');
   console.log('   ✅ Replaced missing validation functions with inline logic');
 
   // Save detailed report
-  const reportPath = join(__dirname, '..', 'test-reports', `mcp-coverage-validation-${Date.now()}.json`);
-  writeFileSync(reportPath, JSON.stringify({
-    ...testResults,
-    duration,
-    mcpSuccessRate,
-    daaSuccessRate,
-    overallSuccessRate,
-    missionSuccess,
-    timestamp: new Date().toISOString(),
-    fixes: [
-      'Fixed neural_train validation errors',
-      'Fixed task_results database issues',
-      'Fixed swarm_monitor functionality',
-      'Integrated DAA tools into MCP class',
-      'Replaced missing validation functions',
-    ],
-  }, null, 2));
+  const reportPath = join(
+    __dirname,
+    '..',
+    'test-reports',
+    `mcp-coverage-validation-${Date.now()}.json`,
+  );
+  writeFileSync(
+    reportPath,
+    JSON.stringify(
+      {
+        ...testResults,
+        duration,
+        mcpSuccessRate,
+        daaSuccessRate,
+        overallSuccessRate,
+        missionSuccess,
+        timestamp: new Date().toISOString(),
+        fixes: [
+          'Fixed neural_train validation errors',
+          'Fixed task_results database issues',
+          'Fixed swarm_monitor functionality',
+          'Integrated DAA tools into MCP class',
+          'Replaced missing validation functions',
+        ],
+      },
+      null,
+      2,
+    ),
+  );
 
   console.log(`\n📄 Detailed report saved to: ${reportPath}`);
 
   if (missionSuccess) {
-    console.log('\n🎉 MISSION ACCOMPLISHED! All critical MCP and DAA tools are now functional!');
+    console.log(
+      '\n🎉 MISSION ACCOMPLISHED! All critical MCP and DAA tools are now functional!',
+    );
   } else {
     console.log('\n⚠️  Mission needs more work. Review failed tests above.');
   }
 }
 
 // Run the validation
-runCoverageValidation().catch(error => {
+runCoverageValidation().catch((error) => {
   console.error('❌ Coverage validation failed:', error);
   process.exit(1);
 });

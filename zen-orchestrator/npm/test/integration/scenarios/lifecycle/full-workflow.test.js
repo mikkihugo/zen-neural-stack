@@ -4,7 +4,9 @@ const RuvSwarm = require('../../../../src/core/ruv-swarm');
 const Agent = require('../../../../src/agent');
 const AgentCommunicator = require('../../../../src/agent-communicator');
 const NeuralAgentManager = require('../../../../src/neural-agent');
-const { taskOrchestrationSimulator } = require('../../../../src/task-orchestrator');
+const {
+  taskOrchestrationSimulator,
+} = require('../../../../src/task-orchestrator');
 
 describe('Complete Agent Workflow Integration', () => {
   let sandbox;
@@ -16,7 +18,7 @@ describe('Complete Agent Workflow Integration', () => {
     communicator = new AgentCommunicator();
   });
 
-  afterEach(async() => {
+  afterEach(async () => {
     if (swarm) {
       await swarm.shutdown();
     }
@@ -24,7 +26,7 @@ describe('Complete Agent Workflow Integration', () => {
   });
 
   describe('Full Lifecycle Tests', () => {
-    it('should handle complete workflow from spawn to completion', async() => {
+    it('should handle complete workflow from spawn to completion', async () => {
       // Initialize swarm with mesh topology
       swarm = new RuvSwarm();
       await swarm.init({
@@ -51,7 +53,7 @@ describe('Complete Agent Workflow Integration', () => {
 
       // Verify all agents spawned successfully
       expect(agents).to.have.lengthOf(4);
-      agents.forEach(agent => {
+      agents.forEach((agent) => {
         expect(agent).to.have.property('id');
         expect(agent).to.have.property('type');
         expect(agent).to.have.property('status', 'idle');
@@ -78,10 +80,13 @@ describe('Complete Agent Workflow Integration', () => {
 
       while (Date.now() - startTime < timeout) {
         taskStatus = await swarm.getTaskStatus(taskResult.id);
-        if (taskStatus.status === 'completed' || taskStatus.status === 'failed') {
+        if (
+          taskStatus.status === 'completed' ||
+          taskStatus.status === 'failed'
+        ) {
           break;
         }
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // Verify task completion
@@ -95,7 +100,7 @@ describe('Complete Agent Workflow Integration', () => {
       expect(agentMetrics).to.have.property('agents');
       expect(agentMetrics.agents).to.have.length.at.least(4);
 
-      agentMetrics.agents.forEach(metric => {
+      agentMetrics.agents.forEach((metric) => {
         expect(metric).to.have.property('tasksCompleted');
         expect(metric).to.have.property('averagePerformance');
         expect(metric).to.have.property('resourceUsage');
@@ -108,7 +113,7 @@ describe('Complete Agent Workflow Integration', () => {
       expect(shutdownStatus.agents).to.have.lengthOf(0);
     });
 
-    it('should handle agent communication throughout lifecycle', async() => {
+    it('should handle agent communication throughout lifecycle', async () => {
       swarm = new RuvSwarm();
       await swarm.init({ topology: 'star' });
 
@@ -136,24 +141,28 @@ describe('Complete Agent Workflow Integration', () => {
       });
 
       // Wait for some communication
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify communication patterns
       expect(messages.length).to.be.greaterThan(0);
 
-      const coordinatorMessages = messages.filter(m => m.from === coordinator.id);
-      const workerMessages = messages.filter(m => workers.some(w => w.id === m.from));
+      const coordinatorMessages = messages.filter(
+        (m) => m.from === coordinator.id,
+      );
+      const workerMessages = messages.filter((m) =>
+        workers.some((w) => w.id === m.from),
+      );
 
       expect(coordinatorMessages.length).to.be.greaterThan(0);
       expect(workerMessages.length).to.be.greaterThan(0);
 
       // Verify star topology communication
-      workerMessages.forEach(msg => {
+      workerMessages.forEach((msg) => {
         expect(msg.to).to.equal(coordinator.id);
       });
     });
 
-    it('should persist and restore swarm state', async() => {
+    it('should persist and restore swarm state', async () => {
       // Create initial swarm
       swarm = new RuvSwarm();
       await swarm.init({
@@ -201,7 +210,7 @@ describe('Complete Agent Workflow Integration', () => {
   });
 
   describe('Neural Integration Lifecycle', () => {
-    it('should integrate neural agents with standard workflow', async() => {
+    it('should integrate neural agents with standard workflow', async () => {
       swarm = new RuvSwarm();
       await swarm.init({
         topology: 'mesh',
@@ -221,7 +230,7 @@ describe('Complete Agent Workflow Integration', () => {
       ]);
 
       // Verify neural agents initialized
-      const neuralAgents = agents.filter(a => a.type === 'neural');
+      const neuralAgents = agents.filter((a) => a.type === 'neural');
       expect(neuralAgents).to.have.lengthOf(2);
 
       for (const agent of neuralAgents) {
@@ -239,7 +248,7 @@ describe('Complete Agent Workflow Integration', () => {
       });
 
       // Wait for neural processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       // Verify neural contribution
       const taskStatus = await swarm.getTaskStatus(taskResult.id);
@@ -249,7 +258,7 @@ describe('Complete Agent Workflow Integration', () => {
       expect(taskStatus.neuralContribution.confidence).to.be.greaterThan(0.7);
     });
 
-    it('should train neural patterns throughout lifecycle', async() => {
+    it('should train neural patterns throughout lifecycle', async () => {
       swarm = new RuvSwarm();
       await swarm.init({
         topology: 'mesh',
@@ -268,17 +277,21 @@ describe('Complete Agent Workflow Integration', () => {
       });
 
       // Get initial performance
-      const initialMetrics = await neuralManager.getAgentMetrics(neuralAgent.id);
+      const initialMetrics = await neuralManager.getAgentMetrics(
+        neuralAgent.id,
+      );
       const initialAccuracy = initialMetrics.accuracy || 0.5;
 
       // Execute multiple training tasks
       const trainingTasks = [];
       for (let i = 0; i < 5; i++) {
-        trainingTasks.push(swarm.orchestrateTask({
-          task: `Training task ${i}: Pattern recognition`,
-          agentId: neuralAgent.id,
-          training: true,
-        }));
+        trainingTasks.push(
+          swarm.orchestrateTask({
+            task: `Training task ${i}: Pattern recognition`,
+            agentId: neuralAgent.id,
+            training: true,
+          }),
+        );
       }
 
       await Promise.all(trainingTasks);
@@ -294,7 +307,7 @@ describe('Complete Agent Workflow Integration', () => {
   });
 
   describe('Memory and State Management', () => {
-    it('should maintain memory across agent lifecycle', async() => {
+    it('should maintain memory across agent lifecycle', async () => {
       swarm = new RuvSwarm();
       await swarm.init({
         topology: 'mesh',
@@ -335,7 +348,7 @@ describe('Complete Agent Workflow Integration', () => {
       expect(swarmMemory.collective).to.have.property('patterns');
     });
 
-    it('should share memory between agents effectively', async() => {
+    it('should share memory between agents effectively', async () => {
       swarm = new RuvSwarm();
       await swarm.init({
         topology: 'mesh',
@@ -358,7 +371,7 @@ describe('Complete Agent Workflow Integration', () => {
       });
 
       // Wait for collaboration
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify shared memory
       const sharedMemory = await swarm.getSharedMemory();

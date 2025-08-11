@@ -54,26 +54,34 @@ function log(message, color = 'reset') {
 }
 
 function logSection(title) {
-  console.log(`\n${ '='.repeat(80)}`);
+  console.log(`\n${'='.repeat(80)}`);
   log(title, 'bright');
-  console.log(`${'='.repeat(80) }\n`);
+  console.log(`${'='.repeat(80)}\n`);
 }
 
 async function runJest(suite, coverage = false) {
   return new Promise((resolve, reject) => {
     const args = [
-      '--testMatch', `**/${suite.pattern}`,
-      '--testTimeout', suite.timeout.toString(),
+      '--testMatch',
+      `**/${suite.pattern}`,
+      '--testTimeout',
+      suite.timeout.toString(),
       '--forceExit',
     ];
 
     if (coverage) {
       args.push(
         '--coverage',
-        '--coverageDirectory', 'coverage',
-        '--collectCoverageFrom', 'src/**/*.js',
-        '--coveragePathIgnorePatterns', '/node_modules/',
-        '--coverageReporters', 'text', 'lcov', 'html',
+        '--coverageDirectory',
+        'coverage',
+        '--collectCoverageFrom',
+        'src/**/*.js',
+        '--coveragePathIgnorePatterns',
+        '/node_modules/',
+        '--coverageReporters',
+        'text',
+        'lcov',
+        'html',
       );
     }
 
@@ -104,7 +112,10 @@ async function runTestSuite(suiteName, suite, options = {}) {
     await runJest(suite, options.coverage);
     const duration = Date.now() - startTime;
 
-    log(`✓ ${suite.name} completed in ${(duration / 1000).toFixed(2)}s`, 'green');
+    log(
+      `✓ ${suite.name} completed in ${(duration / 1000).toFixed(2)}s`,
+      'green',
+    );
     return { success: true, duration };
   } catch (error) {
     log(`✗ ${suite.name} failed: ${error.message}`, 'red');
@@ -155,19 +166,30 @@ async function main() {
 
   // Run selected test suites
   if (runUnit) {
-    results.unit = await runTestSuite('unit', testSuites.unit, { coverage: runCoverage });
+    results.unit = await runTestSuite('unit', testSuites.unit, {
+      coverage: runCoverage,
+    });
   }
 
   if (runIntegration) {
-    results.integration = await runTestSuite('integration', testSuites.integration, { coverage: runCoverage });
+    results.integration = await runTestSuite(
+      'integration',
+      testSuites.integration,
+      { coverage: runCoverage },
+    );
   }
 
   if (runExisting) {
-    results.existing = await runTestSuite('existing', testSuites.existing, { coverage: runCoverage });
+    results.existing = await runTestSuite('existing', testSuites.existing, {
+      coverage: runCoverage,
+    });
   }
 
   if (runPerformance) {
-    results.performance = await runTestSuite('performance', testSuites.performance);
+    results.performance = await runTestSuite(
+      'performance',
+      testSuites.performance,
+    );
   }
 
   // Generate report
@@ -177,14 +199,23 @@ async function main() {
   logSection('Test Summary');
   log(`Total Suites: ${report.summary.total}`, 'bright');
   log(`Passed: ${report.summary.passed}`, 'green');
-  log(`Failed: ${report.summary.failed}`, report.summary.failed > 0 ? 'red' : 'green');
-  log(`Total Duration: ${(report.summary.totalDuration / 1000).toFixed(2)}s`, 'cyan');
+  log(
+    `Failed: ${report.summary.failed}`,
+    report.summary.failed > 0 ? 'red' : 'green',
+  );
+  log(
+    `Total Duration: ${(report.summary.totalDuration / 1000).toFixed(2)}s`,
+    'cyan',
+  );
 
   if (runCoverage) {
     log('\nCoverage report generated in ./coverage/', 'yellow');
   }
 
-  log(`\nDetailed report saved to: ${path.basename(Object.keys(results)[0])}`, 'magenta');
+  log(
+    `\nDetailed report saved to: ${path.basename(Object.keys(results)[0])}`,
+    'magenta',
+  );
 
   // Exit with appropriate code
   process.exit(report.summary.failed > 0 ? 1 : 0);

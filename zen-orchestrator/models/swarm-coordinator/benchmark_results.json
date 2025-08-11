@@ -18,7 +18,7 @@
     },
     "test_scenarios": [
       "small_scale_coordination",
-      "medium_scale_coordination", 
+      "medium_scale_coordination",
       "large_scale_coordination",
       "stress_test_coordination",
       "cognitive_diversity_optimization",

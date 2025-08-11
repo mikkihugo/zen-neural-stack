@@ -4,10 +4,8 @@
 use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 
-// Configure allocator for WASM
-#[cfg(feature = "wee_alloc_feature")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+// wee_alloc removed due to security vulnerability GHSA-rc23-xxgq-x27g
+// Using system allocator instead for WASM
 
 // Set panic hook for better error messages
 #[wasm_bindgen(start)]
@@ -78,7 +76,7 @@ pub fn get_features() -> JsValue {
         "optimize": cfg!(feature = "optimize"),
         "neural": cfg!(feature = "ruv-fann"),
         "forecasting": cfg!(feature = "neuro-divergent"),
-        "allocator": if cfg!(feature = "wee_alloc_feature") { "wee_alloc" } else { "system" },
+        "allocator": "system", // wee_alloc removed due to security vulnerability
     });
     
     serde_wasm_bindgen::to_value(&features).unwrap()

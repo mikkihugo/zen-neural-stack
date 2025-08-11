@@ -65,18 +65,22 @@ global.afterEach = (fn) => {
 global.assert = new Proxy(assert, {
   get(target, prop) {
     if (prop === 'rejects') {
-      return async(promise, expectedError) => {
+      return async (promise, expectedError) => {
         try {
           await promise;
           throw new Error(`Expected promise to reject with: ${expectedError}`);
         } catch (error) {
           if (expectedError instanceof RegExp) {
             if (!expectedError.test(error.message)) {
-              throw new Error(`Error message "${error.message}" does not match ${expectedError}`);
+              throw new Error(
+                `Error message "${error.message}" does not match ${expectedError}`,
+              );
             }
           } else if (typeof expectedError === 'string') {
             if (!error.message.includes(expectedError)) {
-              throw new Error(`Error message "${error.message}" does not include "${expectedError}"`);
+              throw new Error(
+                `Error message "${error.message}" does not include "${expectedError}"`,
+              );
             }
           }
         }
@@ -139,14 +143,14 @@ export async function run(testFile) {
     await runSuites();
 
     // Print summary
-    console.log(`\n${ '='.repeat(50)}`);
+    console.log(`\n${'='.repeat(50)}`);
     console.log(`Total: ${results.total}`);
     console.log(`Passed: ${results.passed}`);
     console.log(`Failed: ${results.failed}`);
 
     if (results.failed > 0) {
       console.log('\nFailed Tests:');
-      results.errors.forEach(error => {
+      results.errors.forEach((error) => {
         console.log(`\n${error.suite} > ${error.test}`);
         console.log(error.error);
         if (process.env.VERBOSE) {
@@ -195,13 +199,15 @@ export async function runAll() {
   }
 
   // Print overall summary
-  console.log(`\n${ '='.repeat(50)}`);
+  console.log(`\n${'='.repeat(50)}`);
   console.log('OVERALL SUMMARY');
   console.log('='.repeat(50));
   console.log(`Total Tests: ${allResults.total}`);
   console.log(`Passed: ${allResults.passed}`);
   console.log(`Failed: ${allResults.failed}`);
-  console.log(`Success Rate: ${((allResults.passed / allResults.total) * 100).toFixed(2)}%`);
+  console.log(
+    `Success Rate: ${((allResults.passed / allResults.total) * 100).toFixed(2)}%`,
+  );
 
   return allResults;
 }
@@ -209,10 +215,10 @@ export async function runAll() {
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   runAll()
-    .then(results => {
+    .then((results) => {
       process.exit(results.failed > 0 ? 1 : 0);
     })
-    .catch(error => {
+    .catch((error) => {
       console.error('Fatal error:', error);
       process.exit(1);
     });

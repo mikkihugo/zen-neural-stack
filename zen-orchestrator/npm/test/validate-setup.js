@@ -44,7 +44,7 @@ const testFiles = [
   'README.md',
 ];
 
-testFiles.forEach(file => {
+testFiles.forEach((file) => {
   const filePath = path.join(__dirname, file);
   check(`  ${file}`, fs.existsSync(filePath), `File not found: ${filePath}`);
 });
@@ -52,7 +52,11 @@ testFiles.forEach(file => {
 // Check example files
 console.log('\n📁 Checking example files:');
 const examplePath = path.join(__dirname, '..', 'examples', 'mcp-workflows.js');
-check('  mcp-workflows.js', fs.existsSync(examplePath), `File not found: ${examplePath}`);
+check(
+  '  mcp-workflows.js',
+  fs.existsSync(examplePath),
+  `File not found: ${examplePath}`,
+);
 
 // Check dependencies
 console.log('\n📦 Checking dependencies:');
@@ -60,10 +64,12 @@ try {
   const packageJson = require('../package.json');
   const requiredDeps = ['ws', 'uuid', 'better-sqlite3'];
 
-  requiredDeps.forEach(dep => {
-    check(`  ${dep}`,
+  requiredDeps.forEach((dep) => {
+    check(
+      `  ${dep}`,
       packageJson.dependencies[dep] || packageJson.devDependencies[dep],
-      'Missing dependency in package.json');
+      'Missing dependency in package.json',
+    );
   });
 } catch (error) {
   check('  package.json', false, error.message);
@@ -73,12 +79,16 @@ try {
 console.log('\n🔧 Checking environment:');
 const nodeVersion = process.version;
 const majorVersion = parseInt(nodeVersion.split('.')[0].substring(1), 10);
-check(`  Node.js version (${nodeVersion})`, majorVersion >= 14, 'Node.js 14+ required');
+check(
+  `  Node.js version (${nodeVersion})`,
+  majorVersion >= 14,
+  'Node.js 14+ required',
+);
 
 // Check if we can import required modules
 console.log('\n📚 Checking module imports:');
 const modules = ['ws', 'uuid', 'sqlite3'];
-modules.forEach(mod => {
+modules.forEach((mod) => {
   try {
     require(mod);
     check(`  ${mod}`, true);
@@ -89,11 +99,22 @@ modules.forEach(mod => {
 
 // Check MCP server availability
 console.log('\n🌐 Checking MCP server:');
-const mcpServerPath = path.join(__dirname, '..', '..', 'crates', 'ruv-swarm-mcp', 'Cargo.toml');
-check('  MCP server crate', fs.existsSync(mcpServerPath), 'MCP server crate not found');
+const mcpServerPath = path.join(
+  __dirname,
+  '..',
+  '..',
+  'crates',
+  'ruv-swarm-mcp',
+  'Cargo.toml',
+);
+check(
+  '  MCP server crate',
+  fs.existsSync(mcpServerPath),
+  'MCP server crate not found',
+);
 
 // Summary
-console.log(`\n${ '='.repeat(50)}`);
+console.log(`\n${'='.repeat(50)}`);
 console.log('📊 Validation Summary:');
 console.log(`  ✅ Passed: ${passed}`);
 console.log(`  ❌ Failed: ${failed}`);

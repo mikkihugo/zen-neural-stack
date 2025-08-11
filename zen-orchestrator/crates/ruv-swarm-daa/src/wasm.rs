@@ -601,7 +601,7 @@ impl WasmUtils {
 
         let info = WasmPerformanceInfo {
             simd_support: simd_support.to_string(),
-            memory_management: "wee_alloc".to_string(),
+            memory_management: "system_allocator".to_string(),
             optimization_level: "release".to_string(),
             wasm_bindgen_version: env!("CARGO_PKG_VERSION").to_string(),
         };
@@ -680,10 +680,8 @@ pub fn handle_wasm_error(error: &str) -> JsValue {
     JsValue::from_str(&format!("WASM DAA Error: {}", error))
 }
 
-/// Memory optimization for WASM
-#[cfg(all(feature = "wasm", feature = "wee_alloc"))]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+/// Memory optimization for WASM - wee_alloc removed due to security vulnerability GHSA-rc23-xxgq-x27g
+/// Using system allocator instead for WASM
 
 #[cfg(test)]
 mod tests {

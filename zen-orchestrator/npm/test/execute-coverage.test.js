@@ -53,7 +53,6 @@ try {
   // Test status
   const status = await swarm.getStatus();
   console.log(`  ✓ Status: ${status.agentCount} agents`);
-
 } catch (error) {
   console.log(`  ⚠️  Mock mode: ${error.message}`);
 }
@@ -73,7 +72,9 @@ console.log('\nTesting neural.js...');
 import { NeuralCLI, PATTERN_MEMORY_CONFIG } from '../src/neural.js';
 const neural = new NeuralCLI();
 console.log('  ✓ NeuralCLI created');
-console.log(`  ✓ Pattern configs: ${Object.keys(PATTERN_MEMORY_CONFIG).length}`);
+console.log(
+  `  ✓ Pattern configs: ${Object.keys(PATTERN_MEMORY_CONFIG).length}`,
+);
 
 // 4. Test NeuralAgent
 console.log('\nTesting neural-agent.js...');
@@ -89,7 +90,6 @@ try {
   // Test initialization
   await neuralAgent.initialize();
   console.log('  ✓ NeuralAgent initialized');
-
 } catch (error) {
   console.log(`  ⚠️  NeuralAgent: ${error.message}`);
 }
@@ -147,7 +147,6 @@ try {
 
   await persistence.close();
   console.log('  ✓ Persistence closed');
-
 } catch (error) {
   console.log(`  ⚠️  Persistence: ${error.message}`);
 }
@@ -171,7 +170,6 @@ try {
   // List models
   const models = manager.listModels();
   console.log(`  ✓ Models: ${models.join(', ')}`);
-
 } catch (error) {
   console.log(`  ⚠️  NeuralNetworkManager: ${error.message}`);
 }
@@ -188,7 +186,6 @@ try {
 
   const simd = loader.hasSIMDSupport();
   console.log(`  ✓ SIMD supported: ${simd}`);
-
 } catch (error) {
   console.log(`  ⚠️  WasmLoader: ${error.message}`);
 }
@@ -206,7 +203,6 @@ try {
     enableNeuralAgents: true,
   });
   console.log('  ✓ Enhanced swarm created');
-
 } catch (error) {
   console.log(`  ⚠️  RuvSwarmEnhanced: ${error.message}`);
 }
@@ -214,7 +210,9 @@ try {
 // 9. Test Neural Models
 console.log('\nTesting neural-models...');
 import * as models from '../src/neural-models/index.js';
-console.log(`  ✓ Models loaded: ${Object.keys(models).filter(k => k.endsWith('Model')).length}`);
+console.log(
+  `  ✓ Models loaded: ${Object.keys(models).filter((k) => k.endsWith('Model')).length}`,
+);
 
 try {
   // Test base model
@@ -234,7 +232,6 @@ try {
     outputClasses: 10,
   });
   console.log('  ✓ CNNModel created');
-
 } catch (error) {
   console.log(`  ⚠️  Neural models: ${error.message}`);
 }
@@ -261,7 +258,6 @@ try {
 
   const duration = perf.formatDuration(1500);
   console.log(`  ✓ Format duration: ${duration}`);
-
 } catch (error) {
   console.log(`  ⚠️  Performance: ${error.message}`);
 }

@@ -20,7 +20,6 @@ async function loadModule(path, isESM = true) {
       return await import(path);
     }
     return require(path);
-
   } catch (error) {
     console.log(`  ⚠️  Failed to load ${path}: ${error.message}`);
     return null;
@@ -87,7 +86,9 @@ async function runCoverageTests() {
   // neural-network-manager.js
   const nnManager = await loadModule('../src/neural-network-manager.js');
   if (nnManager?.NeuralNetworkManager) {
-    console.log('  ✓ neural-network-manager.js - NeuralNetworkManager available');
+    console.log(
+      '  ✓ neural-network-manager.js - NeuralNetworkManager available',
+    );
   }
 
   // Test CommonJS modules
@@ -109,7 +110,7 @@ async function runCoverageTests() {
   console.log('\n📦 Testing Neural Models:');
   const models = await loadModule('../src/neural-models/index.js');
   if (models) {
-    const modelTypes = Object.keys(models).filter(k => k.endsWith('Model'));
+    const modelTypes = Object.keys(models).filter((k) => k.endsWith('Model'));
     console.log(`  ✓ neural-models - ${modelTypes.length} models available`);
   }
 
@@ -172,7 +173,7 @@ async function runCoverageTests() {
 }
 
 // Run the tests
-runCoverageTests().catch(error => {
+runCoverageTests().catch((error) => {
   console.error('❌ Coverage test failed:', error);
   process.exit(1);
 });

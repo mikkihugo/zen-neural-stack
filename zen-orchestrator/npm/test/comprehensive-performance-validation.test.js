@@ -20,7 +20,11 @@ class PerformanceValidator {
         simd: { target: '6-10x', actual: null, passed: false },
         speed: { target: '2.8-4.4x', actual: null, passed: false },
         loadTesting: { target: '50+ agents', actual: null, passed: false },
-        memoryEfficiency: { target: '<500MB@50agents', actual: null, passed: false },
+        memoryEfficiency: {
+          target: '<500MB@50agents',
+          actual: null,
+          passed: false,
+        },
         daaIntegration: { target: 'seamless', actual: null, passed: false },
       },
       coverage: {
@@ -105,10 +109,11 @@ class PerformanceValidator {
 
       console.log(`✅ Baselines established in ${Date.now() - startTime}ms`);
       console.log(`   Single Agent: ${singleAgentTime}ms`);
-      console.log(`   Memory: ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB`);
+      console.log(
+        `   Memory: ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB`,
+      );
       console.log(`   WASM Load: ${wasmLoadTime}ms`);
       console.log(`   SIMD Support: ${wasmSupport}\n`);
-
     } catch (error) {
       console.error('❌ Failed to establish baselines:', error.message);
       throw error;
@@ -116,7 +121,9 @@ class PerformanceValidator {
   }
 
   async validateSIMDPerformance() {
-    console.log('⚡ Validating SIMD Performance (Target: 6-10x improvement)...');
+    console.log(
+      '⚡ Validating SIMD Performance (Target: 6-10x improvement)...',
+    );
 
     const testResult = {
       test: 'SIMD Performance',
@@ -134,7 +141,10 @@ class PerformanceValidator {
 
       // Test without SIMD
       const noSIMDStart = Date.now();
-      const swarmNoSIMD = await ruvSwarm.createSwarm({ topology: 'mesh', maxAgents: 4 });
+      const swarmNoSIMD = await ruvSwarm.createSwarm({
+        topology: 'mesh',
+        maxAgents: 4,
+      });
       for (let i = 0; i < 4; i++) {
         const agent = await swarmNoSIMD.spawn({ type: 'optimizer' });
         await agent.execute({
@@ -151,7 +161,10 @@ class PerformanceValidator {
       });
 
       const simdStart = Date.now();
-      const swarmSIMD = await ruvSwarmSIMD.createSwarm({ topology: 'mesh', maxAgents: 4 });
+      const swarmSIMD = await ruvSwarmSIMD.createSwarm({
+        topology: 'mesh',
+        maxAgents: 4,
+      });
       for (let i = 0; i < 4; i++) {
         const agent = await swarmSIMD.spawn({ type: 'optimizer' });
         await agent.execute({
@@ -165,18 +178,19 @@ class PerformanceValidator {
       testResult.metrics = {
         noSIMDTime,
         simdTime,
-        improvement: `${improvement.toFixed(2) }x`,
+        improvement: `${improvement.toFixed(2)}x`,
       };
 
       testResult.passed = improvement >= 6.0 && improvement <= 10.0;
-      this.testResults.performance.simd.actual = `${improvement.toFixed(2) }x`;
+      this.testResults.performance.simd.actual = `${improvement.toFixed(2)}x`;
       this.testResults.performance.simd.passed = testResult.passed;
 
       console.log(`   No SIMD: ${noSIMDTime}ms`);
       console.log(`   With SIMD: ${simdTime}ms`);
       console.log(`   Improvement: ${improvement.toFixed(2)}x`);
-      console.log(`   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'} (Target: 6-10x)\n`);
-
+      console.log(
+        `   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'} (Target: 6-10x)\n`,
+      );
     } catch (error) {
       testResult.error = error.message;
       console.error(`❌ SIMD test failed: ${error.message}\n`);
@@ -187,7 +201,9 @@ class PerformanceValidator {
   }
 
   async validateSpeedOptimizations() {
-    console.log('🏃 Validating Speed Optimizations (Target: 2.8-4.4x improvement)...');
+    console.log(
+      '🏃 Validating Speed Optimizations (Target: 2.8-4.4x improvement)...',
+    );
 
     const testResult = {
       test: 'Speed Optimizations',
@@ -218,18 +234,19 @@ class PerformanceValidator {
       testResult.metrics = {
         baselineTime,
         optimizedTime,
-        speedup: `${speedup.toFixed(2) }x`,
+        speedup: `${speedup.toFixed(2)}x`,
       };
 
       testResult.passed = speedup >= 2.8 && speedup <= 4.4;
-      this.testResults.performance.speed.actual = `${speedup.toFixed(2) }x`;
+      this.testResults.performance.speed.actual = `${speedup.toFixed(2)}x`;
       this.testResults.performance.speed.passed = testResult.passed;
 
       console.log(`   Baseline: ${baselineTime}ms`);
       console.log(`   Optimized: ${optimizedTime}ms`);
       console.log(`   Speedup: ${speedup.toFixed(2)}x`);
-      console.log(`   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'} (Target: 2.8-4.4x)\n`);
-
+      console.log(
+        `   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'} (Target: 2.8-4.4x)\n`,
+      );
     } catch (error) {
       testResult.error = error.message;
       console.error(`❌ Speed optimization test failed: ${error.message}\n`);
@@ -240,7 +257,9 @@ class PerformanceValidator {
   }
 
   async validateLoadTesting() {
-    console.log('🔥 Validating Load Testing (Target: 50+ concurrent agents)...');
+    console.log(
+      '🔥 Validating Load Testing (Target: 50+ concurrent agents)...',
+    );
 
     const testResult = {
       test: 'Load Testing',
@@ -297,8 +316,8 @@ class PerformanceValidator {
       testResult.metrics = {
         agentsSpawned: agents.length,
         executionTime: totalTime,
-        memoryUsage: `${memoryMB.toFixed(1) }MB`,
-        avgTimePerAgent: `${(totalTime / agents.length).toFixed(1) }ms`,
+        memoryUsage: `${memoryMB.toFixed(1)}MB`,
+        avgTimePerAgent: `${(totalTime / agents.length).toFixed(1)}ms`,
       };
 
       testResult.passed = agents.length >= 50 && totalTime < 30000; // 30 second limit
@@ -308,9 +327,12 @@ class PerformanceValidator {
       console.log(`   Agents spawned: ${agents.length}`);
       console.log(`   Total time: ${totalTime}ms`);
       console.log(`   Memory usage: ${memoryMB.toFixed(1)}MB`);
-      console.log(`   Avg per agent: ${(totalTime / agents.length).toFixed(1)}ms`);
-      console.log(`   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'} (Target: 50+ agents)\n`);
-
+      console.log(
+        `   Avg per agent: ${(totalTime / agents.length).toFixed(1)}ms`,
+      );
+      console.log(
+        `   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'} (Target: 50+ agents)\n`,
+      );
     } catch (error) {
       testResult.error = error.message;
       console.error(`❌ Load testing failed: ${error.message}\n`);
@@ -321,7 +343,9 @@ class PerformanceValidator {
   }
 
   async validateMemoryEfficiency() {
-    console.log('💾 Validating Memory Efficiency (Target: <500MB @ 50 agents)...');
+    console.log(
+      '💾 Validating Memory Efficiency (Target: <500MB @ 50 agents)...',
+    );
 
     const testResult = {
       test: 'Memory Efficiency',
@@ -355,22 +379,23 @@ class PerformanceValidator {
       const memoryIncrease = peakMemory - initialMemory;
 
       testResult.metrics = {
-        initialMemory: `${initialMemory.toFixed(1) }MB`,
-        peakMemory: `${peakMemory.toFixed(1) }MB`,
-        memoryIncrease: `${memoryIncrease.toFixed(1) }MB`,
-        memoryPerAgent: `${(memoryIncrease / 50).toFixed(1) }MB`,
+        initialMemory: `${initialMemory.toFixed(1)}MB`,
+        peakMemory: `${peakMemory.toFixed(1)}MB`,
+        memoryIncrease: `${memoryIncrease.toFixed(1)}MB`,
+        memoryPerAgent: `${(memoryIncrease / 50).toFixed(1)}MB`,
       };
 
       testResult.passed = peakMemory < 500;
-      this.testResults.performance.memoryEfficiency.actual = `${peakMemory.toFixed(1) }MB`;
+      this.testResults.performance.memoryEfficiency.actual = `${peakMemory.toFixed(1)}MB`;
       this.testResults.performance.memoryEfficiency.passed = testResult.passed;
 
       console.log(`   Initial memory: ${initialMemory.toFixed(1)}MB`);
       console.log(`   Peak memory: ${peakMemory.toFixed(1)}MB`);
       console.log(`   Memory increase: ${memoryIncrease.toFixed(1)}MB`);
       console.log(`   Per agent: ${(memoryIncrease / 50).toFixed(1)}MB`);
-      console.log(`   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'} (Target: <500MB)\n`);
-
+      console.log(
+        `   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'} (Target: <500MB)\n`,
+      );
     } catch (error) {
       testResult.error = error.message;
       console.error(`❌ Memory efficiency test failed: ${error.message}\n`);
@@ -381,7 +406,9 @@ class PerformanceValidator {
   }
 
   async validateDAAIntegration() {
-    console.log('🔗 Validating DAA Integration (Target: seamless integration)...');
+    console.log(
+      '🔗 Validating DAA Integration (Target: seamless integration)...',
+    );
 
     const testResult = {
       test: 'DAA Integration',
@@ -401,7 +428,9 @@ class PerformanceValidator {
       }
 
       // Test Rust integration
-      const cargoTest = await this.runCommand('cargo test --manifest-path /workspaces/ruv-FANN/daa-repository/Cargo.toml');
+      const cargoTest = await this.runCommand(
+        'cargo test --manifest-path /workspaces/ruv-FANN/daa-repository/Cargo.toml',
+      );
 
       // Test MCP integration
       const mcpTest = await this.testMCPIntegration();
@@ -414,14 +443,17 @@ class PerformanceValidator {
       };
 
       testResult.passed = daaExists && cargoTest.success && mcpTest.success;
-      this.testResults.performance.daaIntegration.actual = testResult.passed ? 'integrated' : 'partial';
+      this.testResults.performance.daaIntegration.actual = testResult.passed
+        ? 'integrated'
+        : 'partial';
       this.testResults.performance.daaIntegration.passed = testResult.passed;
 
       console.log(`   DAA Repository: ${daaExists ? '✅' : '❌'}`);
       console.log(`   Cargo Tests: ${cargoTest.success ? '✅' : '❌'}`);
       console.log(`   MCP Integration: ${mcpTest.success ? '✅' : '❌'}`);
-      console.log(`   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'} (Target: seamless)\n`);
-
+      console.log(
+        `   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'} (Target: seamless)\n`,
+      );
     } catch (error) {
       testResult.error = error.message;
       console.error(`❌ DAA integration test failed: ${error.message}\n`);
@@ -472,7 +504,6 @@ class PerformanceValidator {
       console.log(`   WASM: ${wasmCompatible ? '✅' : '❌'}`);
       console.log(`   SQLite: ${sqliteCompatible ? '✅' : '❌'}`);
       console.log(`   ${testResult.passed ? '✅ PASSED' : '❌ FAILED'}\n`);
-
     } catch (error) {
       testResult.error = error.message;
       console.error(`❌ Cross-platform test failed: ${error.message}\n`);
@@ -485,7 +516,7 @@ class PerformanceValidator {
   async generateValidationReport() {
     console.log('📄 Generating Comprehensive Validation Report...');
 
-    const passedTests = this.testResults.tests.filter(t => t.passed).length;
+    const passedTests = this.testResults.tests.filter((t) => t.passed).length;
     const totalTests = this.testResults.tests.length;
     const successRate = ((passedTests / totalTests) * 100).toFixed(1);
 
@@ -495,25 +526,30 @@ class PerformanceValidator {
         totalTests,
         passedTests,
         failedTests: totalTests - passedTests,
-        successRate: `${successRate }%`,
+        successRate: `${successRate}%`,
         overallPassed: successRate >= 90,
       },
       recommendations: this.generateRecommendations(),
     };
 
     // Save detailed report
-    const reportPath = '/workspaces/ruv-FANN/ruv-swarm/npm/test/validation-report.json';
+    const reportPath =
+      '/workspaces/ruv-FANN/ruv-swarm/npm/test/validation-report.json';
     await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
 
     // Generate readable summary
     console.log('\n📊 VALIDATION SUMMARY');
     console.log('=====================');
     console.log(`Tests Passed: ${passedTests}/${totalTests} (${successRate}%)`);
-    console.log(`Overall Status: ${report.summary.overallPassed ? '✅ PASSED' : '❌ FAILED'}`);
+    console.log(
+      `Overall Status: ${report.summary.overallPassed ? '✅ PASSED' : '❌ FAILED'}`,
+    );
 
     console.log('\n🎯 Performance Targets:');
     Object.entries(this.testResults.performance).forEach(([key, value]) => {
-      console.log(`   ${key}: ${value.actual || 'N/A'} ${value.passed ? '✅' : '❌'} (Target: ${value.target})`);
+      console.log(
+        `   ${key}: ${value.actual || 'N/A'} ${value.passed ? '✅' : '❌'} (Target: ${value.target})`,
+      );
     });
 
     if (report.recommendations.length > 0) {
@@ -543,7 +579,7 @@ class PerformanceValidator {
       agents.push(await swarm.spawn({ type: 'coder' }));
     }
 
-    const tasks = agents.map(agent =>
+    const tasks = agents.map((agent) =>
       agent.execute({ task: 'Calculate: sum(1..1000)', timeout: 10000 }),
     );
 
@@ -573,8 +609,8 @@ class PerformanceValidator {
       const process = spawn(cmd, args, { stdio: 'pipe' });
 
       let output = '';
-      process.stdout.on('data', (data) => output += data.toString());
-      process.stderr.on('data', (data) => output += data.toString());
+      process.stdout.on('data', (data) => (output += data.toString()));
+      process.stderr.on('data', (data) => (output += data.toString()));
 
       process.on('close', (code) => {
         resolve({ success: code === 0, output });
@@ -600,7 +636,7 @@ class PerformanceValidator {
   async testWASMCompatibility() {
     try {
       const ruvSwarm = await RuvSwarm.initialize();
-      return await ruvSwarm.detectSIMDSupport() !== undefined;
+      return (await ruvSwarm.detectSIMDSupport()) !== undefined;
     } catch {
       return false;
     }
@@ -625,24 +661,34 @@ class PerformanceValidator {
   generateRecommendations() {
     const recommendations = [];
 
-    this.testResults.tests.forEach(test => {
+    this.testResults.tests.forEach((test) => {
       if (!test.passed) {
         switch (test.test) {
-        case 'SIMD Performance':
-          recommendations.push('Enable SIMD optimizations and verify WASM module compilation');
-          break;
-        case 'Speed Optimizations':
-          recommendations.push('Review parallel execution strategy and agent coordination');
-          break;
-        case 'Load Testing':
-          recommendations.push('Optimize memory usage and consider agent pooling');
-          break;
-        case 'Memory Efficiency':
-          recommendations.push('Implement memory pooling and garbage collection tuning');
-          break;
-        case 'DAA Integration':
-          recommendations.push('Verify DAA repository setup and MCP server configuration');
-          break;
+          case 'SIMD Performance':
+            recommendations.push(
+              'Enable SIMD optimizations and verify WASM module compilation',
+            );
+            break;
+          case 'Speed Optimizations':
+            recommendations.push(
+              'Review parallel execution strategy and agent coordination',
+            );
+            break;
+          case 'Load Testing':
+            recommendations.push(
+              'Optimize memory usage and consider agent pooling',
+            );
+            break;
+          case 'Memory Efficiency':
+            recommendations.push(
+              'Implement memory pooling and garbage collection tuning',
+            );
+            break;
+          case 'DAA Integration':
+            recommendations.push(
+              'Verify DAA repository setup and MCP server configuration',
+            );
+            break;
         }
       }
     });

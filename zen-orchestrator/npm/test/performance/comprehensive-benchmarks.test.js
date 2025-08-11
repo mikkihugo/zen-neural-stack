@@ -40,7 +40,7 @@ describe('Comprehensive Performance Benchmarks', () => {
   let ruvSwarm;
   let systemInfo;
 
-  beforeAll(async() => {
+  beforeAll(async () => {
     // Collect system information
     systemInfo = {
       platform: os.platform(),
@@ -56,8 +56,12 @@ describe('Comprehensive Performance Benchmarks', () => {
     console.log('\n📊 System Information:');
     console.log(`Platform: ${systemInfo.platform} ${systemInfo.arch}`);
     console.log(`CPU: ${systemInfo.cpuModel} (${systemInfo.cpus} cores)`);
-    console.log(`Memory: ${(systemInfo.totalMemory / 1024 / 1024 / 1024).toFixed(2)} GB`);
-    console.log(`Node.js: ${systemInfo.nodeVersion}, V8: ${systemInfo.v8Version}`);
+    console.log(
+      `Memory: ${(systemInfo.totalMemory / 1024 / 1024 / 1024).toFixed(2)} GB`,
+    );
+    console.log(
+      `Node.js: ${systemInfo.nodeVersion}, V8: ${systemInfo.v8Version}`,
+    );
 
     // Initialize RuvSwarm for benchmarking
     ruvSwarm = await RuvSwarm.initialize({
@@ -70,14 +74,14 @@ describe('Comprehensive Performance Benchmarks', () => {
     });
   });
 
-  afterAll(async() => {
+  afterAll(async () => {
     if (ruvSwarm) {
       await ruvSwarm.cleanup();
     }
   });
 
   describe('Initialization Benchmarks', () => {
-    it('should benchmark minimal initialization', async() => {
+    it('should benchmark minimal initialization', async () => {
       const runs = 10;
       const times = [];
 
@@ -98,11 +102,13 @@ describe('Comprehensive Performance Benchmarks', () => {
       const minTime = Math.min(...times);
       const maxTime = Math.max(...times);
 
-      console.log(`\nMinimal initialization: avg=${avgTime.toFixed(2)}ms, min=${minTime.toFixed(2)}ms, max=${maxTime.toFixed(2)}ms`);
+      console.log(
+        `\nMinimal initialization: avg=${avgTime.toFixed(2)}ms, min=${minTime.toFixed(2)}ms, max=${maxTime.toFixed(2)}ms`,
+      );
       expect(avgTime).toBeLessThan(PERFORMANCE_TARGETS.initialization.minimal);
     });
 
-    it('should benchmark progressive loading', async() => {
+    it('should benchmark progressive loading', async () => {
       const start = performance.now();
       const instance = await RuvSwarm.initialize({
         loadingStrategy: 'progressive',
@@ -118,9 +124,13 @@ describe('Comprehensive Performance Benchmarks', () => {
       await instance.enableForecasting();
       const forecastingLoadTime = performance.now() - forecastingStart;
 
-      console.log(`Progressive loading: core=${coreLoadTime.toFixed(2)}ms, forecasting=${forecastingLoadTime.toFixed(2)}ms`);
+      console.log(
+        `Progressive loading: core=${coreLoadTime.toFixed(2)}ms, forecasting=${forecastingLoadTime.toFixed(2)}ms`,
+      );
 
-      expect(coreLoadTime).toBeLessThan(PERFORMANCE_TARGETS.initialization.standard);
+      expect(coreLoadTime).toBeLessThan(
+        PERFORMANCE_TARGETS.initialization.standard,
+      );
       expect(forecastingLoadTime).toBeLessThan(100);
 
       await instance.cleanup();
@@ -128,7 +138,7 @@ describe('Comprehensive Performance Benchmarks', () => {
   });
 
   describe('Agent Performance Benchmarks', () => {
-    it('should benchmark single agent creation', async() => {
+    it('should benchmark single agent creation', async () => {
       const swarm = await ruvSwarm.createSwarm({
         name: 'benchmark-swarm',
         maxAgents: 100,
@@ -148,11 +158,13 @@ describe('Comprehensive Performance Benchmarks', () => {
       const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
       const p95Time = times.sort((a, b) => a - b)[Math.floor(runs * 0.95)];
 
-      console.log(`\nSingle agent creation: avg=${avgTime.toFixed(2)}ms, p95=${p95Time.toFixed(2)}ms`);
+      console.log(
+        `\nSingle agent creation: avg=${avgTime.toFixed(2)}ms, p95=${p95Time.toFixed(2)}ms`,
+      );
       expect(avgTime).toBeLessThan(PERFORMANCE_TARGETS.agentCreation.single);
     });
 
-    it('should benchmark batch agent creation', async() => {
+    it('should benchmark batch agent creation', async () => {
       const swarm = await ruvSwarm.createSwarm({
         name: 'batch-benchmark-swarm',
         maxAgents: 50,
@@ -164,9 +176,11 @@ describe('Comprehensive Performance Benchmarks', () => {
       for (const batchSize of batchSizes) {
         const start = performance.now();
         const agents = await Promise.all(
-          Array(batchSize).fill(null).map((_, i) =>
-            swarm.spawn({ type: ['researcher', 'coder', 'analyst'][i % 3] }),
-          ),
+          Array(batchSize)
+            .fill(null)
+            .map((_, i) =>
+              swarm.spawn({ type: ['researcher', 'coder', 'analyst'][i % 3] }),
+            ),
         );
         const time = performance.now() - start;
 
@@ -177,25 +191,31 @@ describe('Comprehensive Performance Benchmarks', () => {
         });
 
         // Clean up
-        await Promise.all(agents.map(a => a.remove()));
+        await Promise.all(agents.map((a) => a.remove()));
       }
 
       console.log('\nBatch agent creation:');
-      results.forEach(r => {
-        console.log(`  ${r.batchSize} agents: ${r.totalTime.toFixed(2)}ms total, ${r.perAgent.toFixed(2)}ms per agent`);
+      results.forEach((r) => {
+        console.log(
+          `  ${r.batchSize} agents: ${r.totalTime.toFixed(2)}ms total, ${r.perAgent.toFixed(2)}ms per agent`,
+        );
       });
 
-      expect(results[0].totalTime).toBeLessThan(PERFORMANCE_TARGETS.agentCreation.batch);
+      expect(results[0].totalTime).toBeLessThan(
+        PERFORMANCE_TARGETS.agentCreation.batch,
+      );
     });
 
-    it('should benchmark agent communication', async() => {
+    it('should benchmark agent communication', async () => {
       const swarm = await ruvSwarm.createSwarm({
         name: 'comm-benchmark-swarm',
         topology: 'mesh',
       });
 
       const agents = await Promise.all(
-        Array(10).fill(null).map(() => swarm.spawn({ type: 'researcher' })),
+        Array(10)
+          .fill(null)
+          .map(() => swarm.spawn({ type: 'researcher' })),
       );
 
       const messageCount = 1000;
@@ -213,13 +233,17 @@ describe('Comprehensive Performance Benchmarks', () => {
       const duration = performance.now() - start;
       const throughput = messageCount / (duration / 1000);
 
-      console.log(`\nAgent communication: ${throughput.toFixed(0)} messages/sec`);
-      expect(throughput).toBeGreaterThan(PERFORMANCE_TARGETS.throughput.messages);
+      console.log(
+        `\nAgent communication: ${throughput.toFixed(0)} messages/sec`,
+      );
+      expect(throughput).toBeGreaterThan(
+        PERFORMANCE_TARGETS.throughput.messages,
+      );
     });
   });
 
   describe('Neural Network Performance Benchmarks', () => {
-    it('should benchmark small network inference', async() => {
+    it('should benchmark small network inference', async () => {
       const network = await ruvSwarm.neuralManager.createNetwork({
         type: 'mlp',
         layers: [
@@ -243,11 +267,13 @@ describe('Comprehensive Performance Benchmarks', () => {
       const duration = performance.now() - start;
       const avgTime = duration / runs;
 
-      console.log(`\nSmall network inference: ${avgTime.toFixed(3)}ms per inference`);
+      console.log(
+        `\nSmall network inference: ${avgTime.toFixed(3)}ms per inference`,
+      );
       expect(avgTime).toBeLessThan(PERFORMANCE_TARGETS.neuralInference.small);
     });
 
-    it('should benchmark medium network inference', async() => {
+    it('should benchmark medium network inference', async () => {
       const network = await ruvSwarm.neuralManager.createNetwork({
         type: 'lstm',
         inputSize: 100,
@@ -271,11 +297,13 @@ describe('Comprehensive Performance Benchmarks', () => {
       const duration = performance.now() - start;
       const avgTime = duration / runs;
 
-      console.log(`\nMedium network inference: ${avgTime.toFixed(3)}ms per inference`);
+      console.log(
+        `\nMedium network inference: ${avgTime.toFixed(3)}ms per inference`,
+      );
       expect(avgTime).toBeLessThan(PERFORMANCE_TARGETS.neuralInference.medium);
     });
 
-    it('should benchmark large network inference', async() => {
+    it('should benchmark large network inference', async () => {
       const network = await ruvSwarm.neuralManager.createNetwork({
         type: 'transformer',
         inputSize: 512,
@@ -295,11 +323,13 @@ describe('Comprehensive Performance Benchmarks', () => {
       const duration = performance.now() - start;
       const avgTime = duration / runs;
 
-      console.log(`\nLarge network inference: ${avgTime.toFixed(3)}ms per inference`);
+      console.log(
+        `\nLarge network inference: ${avgTime.toFixed(3)}ms per inference`,
+      );
       expect(avgTime).toBeLessThan(PERFORMANCE_TARGETS.neuralInference.large);
     });
 
-    it('should benchmark batch inference', async() => {
+    it('should benchmark batch inference', async () => {
       const network = await ruvSwarm.neuralManager.createNetwork({
         type: 'mlp',
         layers: [
@@ -313,9 +343,9 @@ describe('Comprehensive Performance Benchmarks', () => {
       const results = [];
 
       for (const batchSize of batchSizes) {
-        const inputs = Array(batchSize).fill(null).map(() =>
-          new Float32Array(100).fill(0.5),
-        );
+        const inputs = Array(batchSize)
+          .fill(null)
+          .map(() => new Float32Array(100).fill(0.5));
 
         const start = performance.now();
         const outputs = await network.predictBatch(inputs);
@@ -329,8 +359,10 @@ describe('Comprehensive Performance Benchmarks', () => {
       }
 
       console.log('\nBatch inference performance:');
-      results.forEach(r => {
-        console.log(`  Batch size ${r.batchSize}: ${r.totalTime.toFixed(2)}ms total, ${r.perSample.toFixed(3)}ms per sample`);
+      results.forEach((r) => {
+        console.log(
+          `  Batch size ${r.batchSize}: ${r.totalTime.toFixed(2)}ms total, ${r.perSample.toFixed(3)}ms per sample`,
+        );
       });
 
       // Batch processing should be more efficient
@@ -339,7 +371,7 @@ describe('Comprehensive Performance Benchmarks', () => {
   });
 
   describe('SIMD Performance Benchmarks', () => {
-    it('should benchmark SIMD vs non-SIMD vector operations', async() => {
+    it('should benchmark SIMD vs non-SIMD vector operations', async () => {
       const size = 1000000;
       const a = new Float32Array(size).map(() => Math.random());
       const b = new Float32Array(size).map(() => Math.random());
@@ -355,12 +387,16 @@ describe('Comprehensive Performance Benchmarks', () => {
       const simdTime = performance.now() - simdStart;
 
       const speedup = nonSimdTime / simdTime;
-      const throughputNonSimd = (size * 4 / 1024 / 1024) / (nonSimdTime / 1000); // MB/s
-      const throughputSimd = (size * 4 / 1024 / 1024) / (simdTime / 1000); // MB/s
+      const throughputNonSimd = (size * 4) / 1024 / 1024 / (nonSimdTime / 1000); // MB/s
+      const throughputSimd = (size * 4) / 1024 / 1024 / (simdTime / 1000); // MB/s
 
       console.log(`\nVector operations (${size} elements):`);
-      console.log(`  Non-SIMD: ${nonSimdTime.toFixed(2)}ms (${throughputNonSimd.toFixed(0)} MB/s)`);
-      console.log(`  SIMD: ${simdTime.toFixed(2)}ms (${throughputSimd.toFixed(0)} MB/s)`);
+      console.log(
+        `  Non-SIMD: ${nonSimdTime.toFixed(2)}ms (${throughputNonSimd.toFixed(0)} MB/s)`,
+      );
+      console.log(
+        `  SIMD: ${simdTime.toFixed(2)}ms (${throughputSimd.toFixed(0)} MB/s)`,
+      );
       console.log(`  Speedup: ${speedup.toFixed(2)}x`);
 
       if (ruvSwarm.features.simd) {
@@ -368,7 +404,7 @@ describe('Comprehensive Performance Benchmarks', () => {
       }
     });
 
-    it('should benchmark SIMD matrix multiplication', async() => {
+    it('should benchmark SIMD matrix multiplication', async () => {
       const sizes = [100, 200, 500];
       const results = [];
 
@@ -378,17 +414,26 @@ describe('Comprehensive Performance Benchmarks', () => {
 
         // SIMD matrix multiplication
         const start = performance.now();
-        const result = await ruvSwarm.wasmLoader.matrixMultiplySIMD(a, size, size, b, size, size);
+        const result = await ruvSwarm.wasmLoader.matrixMultiplySIMD(
+          a,
+          size,
+          size,
+          b,
+          size,
+          size,
+        );
         const time = performance.now() - start;
 
-        const gflops = (2 * Math.pow(size, 3) / 1e9) / (time / 1000);
+        const gflops = (2 * Math.pow(size, 3)) / 1e9 / (time / 1000);
 
         results.push({ size, time, gflops });
       }
 
       console.log('\nMatrix multiplication performance:');
-      results.forEach(r => {
-        console.log(`  ${r.size}x${r.size}: ${r.time.toFixed(2)}ms (${r.gflops.toFixed(2)} GFLOPS)`);
+      results.forEach((r) => {
+        console.log(
+          `  ${r.size}x${r.size}: ${r.time.toFixed(2)}ms (${r.gflops.toFixed(2)} GFLOPS)`,
+        );
       });
 
       // Should achieve reasonable GFLOPS
@@ -397,7 +442,7 @@ describe('Comprehensive Performance Benchmarks', () => {
   });
 
   describe('Memory Performance Benchmarks', () => {
-    it('should benchmark memory allocation performance', async() => {
+    it('should benchmark memory allocation performance', async () => {
       const sizes = [1024, 10240, 102400, 1048576]; // 1KB to 1MB
       const results = [];
 
@@ -429,15 +474,17 @@ describe('Comprehensive Performance Benchmarks', () => {
       }
 
       console.log('\nMemory allocation performance:');
-      results.forEach(r => {
-        console.log(`  ${r.size} bytes: alloc=${r.allocPerOp.toFixed(3)}ms, dealloc=${r.deallocPerOp.toFixed(3)}ms`);
+      results.forEach((r) => {
+        console.log(
+          `  ${r.size} bytes: alloc=${r.allocPerOp.toFixed(3)}ms, dealloc=${r.deallocPerOp.toFixed(3)}ms`,
+        );
       });
 
       // Small allocations should be fast
       expect(results[0].allocPerOp).toBeLessThan(0.1);
     });
 
-    it('should benchmark memory transfer performance', async() => {
+    it('should benchmark memory transfer performance', async () => {
       const sizes = [1024, 10240, 102400, 1048576, 10485760]; // 1KB to 10MB
       const results = [];
 
@@ -456,8 +503,8 @@ describe('Comprehensive Performance Benchmarks', () => {
 
         await ruvSwarm.wasmLoader.deallocate(ptr);
 
-        const uploadThroughput = (size / 1024 / 1024) / (uploadTime / 1000);
-        const downloadThroughput = (size / 1024 / 1024) / (downloadTime / 1000);
+        const uploadThroughput = size / 1024 / 1024 / (uploadTime / 1000);
+        const downloadThroughput = size / 1024 / 1024 / (downloadTime / 1000);
 
         results.push({
           size,
@@ -469,8 +516,10 @@ describe('Comprehensive Performance Benchmarks', () => {
       }
 
       console.log('\nMemory transfer performance:');
-      results.forEach(r => {
-        console.log(`  ${(r.size / 1024).toFixed(0)}KB: upload=${r.uploadThroughput.toFixed(0)}MB/s, download=${r.downloadThroughput.toFixed(0)}MB/s`);
+      results.forEach((r) => {
+        console.log(
+          `  ${(r.size / 1024).toFixed(0)}KB: upload=${r.uploadThroughput.toFixed(0)}MB/s, download=${r.downloadThroughput.toFixed(0)}MB/s`,
+        );
       });
 
       // Should achieve good throughput for large transfers
@@ -478,7 +527,7 @@ describe('Comprehensive Performance Benchmarks', () => {
       expect(results[4].downloadThroughput).toBeGreaterThan(100);
     });
 
-    it('should measure memory overhead', async() => {
+    it('should measure memory overhead', async () => {
       const initialMemory = await ruvSwarm.getMemoryUsage();
 
       // Create agents and measure memory
@@ -490,36 +539,46 @@ describe('Comprehensive Performance Benchmarks', () => {
       }
 
       const afterAgentsMemory = await ruvSwarm.getMemoryUsage();
-      const agentMemoryOverhead = (afterAgentsMemory.total - initialMemory.total) / agents.length / 1024;
+      const agentMemoryOverhead =
+        (afterAgentsMemory.total - initialMemory.total) / agents.length / 1024;
 
       // Create neural networks and measure memory
       const networks = [];
 
       for (let i = 0; i < 5; i++) {
-        networks.push(await ruvSwarm.neuralManager.createNetwork({
-          type: 'mlp',
-          layers: [
-            { units: 100, activation: 'relu' },
-            { units: 50, activation: 'relu' },
-            { units: 10, activation: 'softmax' },
-          ],
-        }));
+        networks.push(
+          await ruvSwarm.neuralManager.createNetwork({
+            type: 'mlp',
+            layers: [
+              { units: 100, activation: 'relu' },
+              { units: 50, activation: 'relu' },
+              { units: 10, activation: 'softmax' },
+            ],
+          }),
+        );
       }
 
       const afterNetworksMemory = await ruvSwarm.getMemoryUsage();
-      const networkMemoryOverhead = (afterNetworksMemory.total - afterAgentsMemory.total) / networks.length / 1024;
+      const networkMemoryOverhead =
+        (afterNetworksMemory.total - afterAgentsMemory.total) /
+        networks.length /
+        1024;
 
       console.log('\nMemory overhead:');
       console.log(`  Per agent: ${agentMemoryOverhead.toFixed(0)}KB`);
       console.log(`  Per network: ${networkMemoryOverhead.toFixed(0)}KB`);
 
-      expect(agentMemoryOverhead).toBeLessThan(PERFORMANCE_TARGETS.memoryOverhead.perAgent);
-      expect(networkMemoryOverhead).toBeLessThan(PERFORMANCE_TARGETS.memoryOverhead.perNetwork);
+      expect(agentMemoryOverhead).toBeLessThan(
+        PERFORMANCE_TARGETS.memoryOverhead.perAgent,
+      );
+      expect(networkMemoryOverhead).toBeLessThan(
+        PERFORMANCE_TARGETS.memoryOverhead.perNetwork,
+      );
     });
   });
 
   describe('Swarm Orchestration Performance', () => {
-    it('should benchmark task orchestration scalability', async() => {
+    it('should benchmark task orchestration scalability', async () => {
       const swarmSizes = [5, 10, 20];
       const results = [];
 
@@ -532,16 +591,20 @@ describe('Comprehensive Performance Benchmarks', () => {
 
         // Spawn agents
         await Promise.all(
-          Array(size).fill(null).map(() => swarm.spawn({ type: 'analyst' })),
+          Array(size)
+            .fill(null)
+            .map(() => swarm.spawn({ type: 'analyst' })),
         );
 
         // Create tasks
         const taskCount = size * 10;
-        const tasks = Array(taskCount).fill(null).map((_, i) => ({
-          id: `task-${i}`,
-          type: 'compute',
-          complexity: Math.random(),
-        }));
+        const tasks = Array(taskCount)
+          .fill(null)
+          .map((_, i) => ({
+            id: `task-${i}`,
+            type: 'compute',
+            complexity: Math.random(),
+          }));
 
         const start = performance.now();
         const result = await swarm.orchestrate({
@@ -559,15 +622,17 @@ describe('Comprehensive Performance Benchmarks', () => {
       }
 
       console.log('\nTask orchestration scalability:');
-      results.forEach(r => {
-        console.log(`  ${r.swarmSize} agents, ${r.taskCount} tasks: ${r.duration.toFixed(0)}ms (${r.throughput.toFixed(0)} tasks/sec)`);
+      results.forEach((r) => {
+        console.log(
+          `  ${r.swarmSize} agents, ${r.taskCount} tasks: ${r.duration.toFixed(0)}ms (${r.throughput.toFixed(0)} tasks/sec)`,
+        );
       });
 
       // Throughput should scale with swarm size
       expect(results[2].throughput).toBeGreaterThan(results[0].throughput * 2);
     });
 
-    it('should benchmark topology performance differences', async() => {
+    it('should benchmark topology performance differences', async () => {
       const topologies = ['mesh', 'star', 'ring', 'hierarchical'];
       const results = [];
 
@@ -580,7 +645,9 @@ describe('Comprehensive Performance Benchmarks', () => {
 
         // Spawn agents
         const agents = await Promise.all(
-          Array(10).fill(null).map(() => swarm.spawn({ type: 'researcher' })),
+          Array(10)
+            .fill(null)
+            .map(() => swarm.spawn({ type: 'researcher' })),
         );
 
         // Measure broadcast performance
@@ -589,7 +656,9 @@ describe('Comprehensive Performance Benchmarks', () => {
         const broadcastTime = performance.now() - broadcastStart;
 
         // Measure task distribution
-        const tasks = Array(50).fill(null).map((_, i) => ({ id: i }));
+        const tasks = Array(50)
+          .fill(null)
+          .map((_, i) => ({ id: i }));
         const orchestrateStart = performance.now();
         await swarm.orchestrate({ tasks, strategy: 'parallel' });
         const orchestrateTime = performance.now() - orchestrateStart;
@@ -603,13 +672,15 @@ describe('Comprehensive Performance Benchmarks', () => {
       }
 
       console.log('\nTopology performance comparison:');
-      results.forEach(r => {
-        console.log(`  ${r.topology}: broadcast=${r.broadcastTime.toFixed(2)}ms, orchestrate=${r.orchestrateTime.toFixed(0)}ms`);
+      results.forEach((r) => {
+        console.log(
+          `  ${r.topology}: broadcast=${r.broadcastTime.toFixed(2)}ms, orchestrate=${r.orchestrateTime.toFixed(0)}ms`,
+        );
       });
 
       // Different topologies should have different characteristics
-      const meshResult = results.find(r => r.topology === 'mesh');
-      const starResult = results.find(r => r.topology === 'star');
+      const meshResult = results.find((r) => r.topology === 'mesh');
+      const starResult = results.find((r) => r.topology === 'star');
 
       // Star should have faster broadcast
       expect(starResult.broadcastTime).toBeLessThan(meshResult.broadcastTime);
@@ -617,7 +688,7 @@ describe('Comprehensive Performance Benchmarks', () => {
   });
 
   describe('End-to-End Performance Scenarios', () => {
-    it('should benchmark complete ML pipeline performance', async() => {
+    it('should benchmark complete ML pipeline performance', async () => {
       console.log('\n🚀 Benchmarking complete ML pipeline...');
 
       const pipelineStart = performance.now();
@@ -626,12 +697,16 @@ describe('Comprehensive Performance Benchmarks', () => {
       // Stage 1: Data generation
       const dataStart = performance.now();
       const dataset = {
-        inputs: Array(1000).fill(null).map(() => new Float32Array(50).map(() => Math.random())),
-        targets: Array(1000).fill(null).map(() => {
-          const target = new Float32Array(10).fill(0);
-          target[Math.floor(Math.random() * 10)] = 1;
-          return target;
-        }),
+        inputs: Array(1000)
+          .fill(null)
+          .map(() => new Float32Array(50).map(() => Math.random())),
+        targets: Array(1000)
+          .fill(null)
+          .map(() => {
+            const target = new Float32Array(10).fill(0);
+            target[Math.floor(Math.random() * 10)] = 1;
+            return target;
+          }),
       };
       stages.dataGeneration = performance.now() - dataStart;
 
@@ -674,7 +749,9 @@ describe('Comprehensive Performance Benchmarks', () => {
 
       console.log('Pipeline stage timings:');
       Object.entries(stages).forEach(([stage, time]) => {
-        console.log(`  ${stage}: ${time.toFixed(0)}ms (${((time / totalTime) * 100).toFixed(1)}%)`);
+        console.log(
+          `  ${stage}: ${time.toFixed(0)}ms (${((time / totalTime) * 100).toFixed(1)}%)`,
+        );
       });
       console.log(`Total pipeline time: ${totalTime.toFixed(0)}ms`);
       console.log(`Accuracy: ${correct}%`);
@@ -683,7 +760,7 @@ describe('Comprehensive Performance Benchmarks', () => {
       expect(correct).toBeGreaterThan(50); // Better than random
     });
 
-    it('should benchmark real-time processing scenario', async() => {
+    it('should benchmark real-time processing scenario', async () => {
       console.log('\n⚡ Benchmarking real-time processing...');
 
       const swarm = await ruvSwarm.createSwarm({
@@ -694,10 +771,19 @@ describe('Comprehensive Performance Benchmarks', () => {
 
       // Create processing pipeline
       const agents = {
-        ingestion: await swarm.spawn({ type: 'researcher', role: 'data-ingestion' }),
-        preprocessing: await swarm.spawn({ type: 'analyst', role: 'preprocessing' }),
+        ingestion: await swarm.spawn({
+          type: 'researcher',
+          role: 'data-ingestion',
+        }),
+        preprocessing: await swarm.spawn({
+          type: 'analyst',
+          role: 'preprocessing',
+        }),
         inference: await swarm.spawn({ type: 'coder', role: 'inference' }),
-        postprocessing: await swarm.spawn({ type: 'analyst', role: 'postprocessing' }),
+        postprocessing: await swarm.spawn({
+          type: 'analyst',
+          role: 'postprocessing',
+        }),
         output: await swarm.spawn({ type: 'coordinator', role: 'output' }),
       };
 
@@ -717,7 +803,7 @@ describe('Comprehensive Performance Benchmarks', () => {
       let processed = 0;
 
       const startTime = performance.now();
-      const interval = setInterval(async() => {
+      const interval = setInterval(async () => {
         const dataTimestamp = performance.now();
 
         // Process data through pipeline
@@ -745,11 +831,16 @@ describe('Comprehensive Performance Benchmarks', () => {
       }, 1000 / dataRate);
 
       // Wait for stream to complete
-      await new Promise(resolve => setTimeout(resolve, streamDuration + 100));
+      await new Promise((resolve) => setTimeout(resolve, streamDuration + 100));
 
-      const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
-      const p95Latency = latencies.sort((a, b) => a - b)[Math.floor(latencies.length * 0.95)];
-      const p99Latency = latencies.sort((a, b) => a - b)[Math.floor(latencies.length * 0.99)];
+      const avgLatency =
+        latencies.reduce((a, b) => a + b, 0) / latencies.length;
+      const p95Latency = latencies.sort((a, b) => a - b)[
+        Math.floor(latencies.length * 0.95)
+      ];
+      const p99Latency = latencies.sort((a, b) => a - b)[
+        Math.floor(latencies.length * 0.99)
+      ];
       const throughput = processed / (streamDuration / 1000);
 
       console.log('Real-time processing results:');
@@ -765,7 +856,7 @@ describe('Comprehensive Performance Benchmarks', () => {
   });
 
   describe('Performance Report Generation', () => {
-    it('should generate comprehensive performance report', async() => {
+    it('should generate comprehensive performance report', async () => {
       const report = {
         timestamp: new Date().toISOString(),
         system: systemInfo,

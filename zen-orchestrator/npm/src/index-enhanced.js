@@ -115,11 +115,18 @@ class RuvSwarm {
             enableBackup: process.env.POOL_ENABLE_BACKUP === 'true',
             healthCheckInterval: 60000, // 1 minute
           };
-          
-          instance.persistence = new SwarmPersistencePooled(undefined, poolOptions);
+
+          instance.persistence = new SwarmPersistencePooled(
+            undefined,
+            poolOptions,
+          );
           await instance.persistence.initialize();
-          console.log('💾 High-availability pooled persistence layer initialized');
-          console.log(`📊 Pool configuration: ${poolOptions.maxReaders} readers, ${poolOptions.maxWorkers} workers`);
+          console.log(
+            '💾 High-availability pooled persistence layer initialized',
+          );
+          console.log(
+            `📊 Pool configuration: ${poolOptions.maxReaders} readers, ${poolOptions.maxWorkers} workers`,
+          );
         } catch (error) {
           console.warn('⚠️ Pooled persistence not available:', error.message);
           instance.persistence = null;
@@ -207,7 +214,8 @@ class RuvSwarm {
       name,
       topology_type: topology,
       max_agents: maxAgents,
-      enable_cognitive_diversity: enableCognitiveDiversity && this.features.cognitive_diversity,
+      enable_cognitive_diversity:
+        enableCognitiveDiversity && this.features.cognitive_diversity,
     };
 
     // Use the core module exports to create swarm
@@ -320,10 +328,21 @@ class RuvSwarm {
       // Check for WebAssembly SIMD support using v128 type validation
       // This is more compatible across Node.js versions
       const simdTestModule = new Uint8Array([
-        0x00, 0x61, 0x73, 0x6d, // WASM magic
-        0x01, 0x00, 0x00, 0x00, // Version 1
-        0x01, 0x05, 0x01, // Type section: 1 type
-        0x60, 0x00, 0x01, 0x7b, // Function type: () -> v128 (SIMD type)
+        0x00,
+        0x61,
+        0x73,
+        0x6d, // WASM magic
+        0x01,
+        0x00,
+        0x00,
+        0x00, // Version 1
+        0x01,
+        0x05,
+        0x01, // Type section: 1 type
+        0x60,
+        0x00,
+        0x01,
+        0x7b, // Function type: () -> v128 (SIMD type)
       ]);
 
       // If v128 type is supported, SIMD is available
@@ -462,14 +481,19 @@ class Swarm {
       result = this.wasmSwarm.orchestrate(config);
     } else {
       // Enhanced fallback with proper agent assignment
-      const availableAgents = this.selectAvailableAgents(requiredCapabilities, maxAgents);
+      const availableAgents = this.selectAvailableAgents(
+        requiredCapabilities,
+        maxAgents,
+      );
 
       if (availableAgents.length === 0) {
-        throw new Error('No agents available for task orchestration. Please spawn agents first.');
+        throw new Error(
+          'No agents available for task orchestration. Please spawn agents first.',
+        );
       }
 
       // Assign task to selected agents
-      const assignedAgentIds = availableAgents.map(agent => agent.id);
+      const assignedAgentIds = availableAgents.map((agent) => agent.id);
 
       // Update agent status to busy
       for (const agent of availableAgents) {
@@ -506,13 +530,15 @@ class Swarm {
       });
     }
 
-    console.log(`📋 Orchestrated task: ${description} (${taskId}) - Assigned to ${result.assigned_agents.length} agents`);
+    console.log(
+      `📋 Orchestrated task: ${description} (${taskId}) - Assigned to ${result.assigned_agents.length} agents`,
+    );
     return task;
   }
 
   // Helper method to select available agents for task assignment
   selectAvailableAgents(requiredCapabilities = [], maxAgents = null) {
-    const availableAgents = Array.from(this.agents.values()).filter(agent => {
+    const availableAgents = Array.from(this.agents.values()).filter((agent) => {
       // Agent must be idle or active (not busy)
       if (agent.status === 'busy') {
         return false;
@@ -520,7 +546,7 @@ class Swarm {
 
       // Check if agent has required capabilities
       if (requiredCapabilities.length > 0) {
-        const hasCapabilities = requiredCapabilities.some(capability =>
+        const hasCapabilities = requiredCapabilities.some((capability) =>
           agent.capabilities.includes(capability),
         );
         if (!hasCapabilities) {
@@ -549,14 +575,24 @@ class Swarm {
       id: this.id,
       agents: {
         total: this.agents.size,
-        active: Array.from(this.agents.values()).filter(a => a.status === 'active').length,
-        idle: Array.from(this.agents.values()).filter(a => a.status === 'idle').length,
+        active: Array.from(this.agents.values()).filter(
+          (a) => a.status === 'active',
+        ).length,
+        idle: Array.from(this.agents.values()).filter(
+          (a) => a.status === 'idle',
+        ).length,
       },
       tasks: {
         total: this.tasks.size,
-        pending: Array.from(this.tasks.values()).filter(t => t.status === 'pending').length,
-        in_progress: Array.from(this.tasks.values()).filter(t => t.status === 'in_progress').length,
-        completed: Array.from(this.tasks.values()).filter(t => t.status === 'completed').length,
+        pending: Array.from(this.tasks.values()).filter(
+          (t) => t.status === 'pending',
+        ).length,
+        in_progress: Array.from(this.tasks.values()).filter(
+          (t) => t.status === 'in_progress',
+        ).length,
+        completed: Array.from(this.tasks.values()).filter(
+          (t) => t.status === 'completed',
+        ).length,
       },
     };
   }
@@ -648,7 +684,9 @@ class Task {
     this.startTime = Date.now();
     this.progress = 0.1;
 
-    console.log(`🏃 Executing task: ${this.description} with ${this.assignedAgents.length} agents`);
+    console.log(
+      `🏃 Executing task: ${this.description} with ${this.assignedAgents.length} agents`,
+    );
 
     try {
       // Execute task with all assigned agents
@@ -664,7 +702,10 @@ class Task {
             result: agentResult,
           });
         }
-        this.progress = Math.min(0.9, this.progress + (0.8 / this.assignedAgents.length));
+        this.progress = Math.min(
+          0.9,
+          this.progress + 0.8 / this.assignedAgents.length,
+        );
       }
 
       // Aggregate results
@@ -674,9 +715,15 @@ class Task {
         agent_results: agentResults,
         execution_summary: {
           total_agents: this.assignedAgents.length,
-          successful_executions: agentResults.filter(r => r.result.status === 'completed').length,
+          successful_executions: agentResults.filter(
+            (r) => r.result.status === 'completed',
+          ).length,
           execution_time_ms: Date.now() - this.startTime,
-          average_agent_time_ms: agentResults.reduce((sum, r) => sum + (r.result.executionTime || 0), 0) / agentResults.length,
+          average_agent_time_ms:
+            agentResults.reduce(
+              (sum, r) => sum + (r.result.executionTime || 0),
+              0,
+            ) / agentResults.length,
         },
       };
 
@@ -692,8 +739,9 @@ class Task {
         }
       }
 
-      console.log(`✅ Task completed: ${this.description} (${this.endTime - this.startTime}ms)`);
-
+      console.log(
+        `✅ Task completed: ${this.description} (${this.endTime - this.startTime}ms)`,
+      );
     } catch (error) {
       this.status = 'failed';
       this.result = {
@@ -719,7 +767,9 @@ class Task {
       status: this.status,
       assignedAgents: this.assignedAgents,
       progress: this.progress,
-      execution_time_ms: this.startTime ? (this.endTime || Date.now()) - this.startTime : 0,
+      execution_time_ms: this.startTime
+        ? (this.endTime || Date.now()) - this.startTime
+        : 0,
     };
   }
 

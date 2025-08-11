@@ -79,14 +79,21 @@ async function testFileSystemOps() {
     const parsed = JSON.parse(content);
 
     if (parsed.test === true) {
-      addTestResult('File System Operations', 'passed', 'File I/O working correctly');
+      addTestResult(
+        'File System Operations',
+        'passed',
+        'File I/O working correctly',
+      );
     } else {
-      addTestResult('File System Operations', 'failed', 'File content mismatch');
+      addTestResult(
+        'File System Operations',
+        'failed',
+        'File content mismatch',
+      );
     }
 
     // Cleanup
     await fs.rm(testPath, { recursive: true });
-
   } catch (error) {
     addTestResult('File System Operations', 'failed', error.message);
   }
@@ -99,21 +106,33 @@ async function testWASMCompatibility() {
 
   try {
     // Check WASM file exists
-    const wasmPath = path.join(__dirname, '..', 'wasm', 'ruv_swarm_wasm_bg.wasm');
+    const wasmPath = path.join(
+      __dirname,
+      '..',
+      'wasm',
+      'ruv_swarm_wasm_bg.wasm',
+    );
     const stats = await fs.stat(wasmPath);
 
-    addTestResult('WASM File Access', 'passed', `WASM file accessible: ${stats.size} bytes`);
+    addTestResult(
+      'WASM File Access',
+      'passed',
+      `WASM file accessible: ${stats.size} bytes`,
+    );
 
     // Try to load WASM module
     const swarm = new RuvSwarm({ maxAgents: 2 });
-    addTestResult('WASM Module Loading', 'passed', `WASM loaded successfully on ${ process.platform}`);
+    addTestResult(
+      'WASM Module Loading',
+      'passed',
+      `WASM loaded successfully on ${process.platform}`,
+    );
 
     // Test basic WASM operation
     const agent = swarm.spawnAgent('test-agent', 'researcher');
     if (agent) {
       addTestResult('WASM Functionality', 'passed', 'WASM operations working');
     }
-
   } catch (error) {
     addTestResult('WASM Compatibility', 'failed', error.message);
   }
@@ -127,16 +146,23 @@ async function testProcessSpawning() {
   try {
     // Test basic command execution
     const nodeVersion = execSync('node --version', { encoding: 'utf8' }).trim();
-    addTestResult('Process Execution', 'passed', `Can execute processes: ${nodeVersion}`);
+    addTestResult(
+      'Process Execution',
+      'passed',
+      `Can execute processes: ${nodeVersion}`,
+    );
 
     // Test npx availability
     try {
       const npxVersion = execSync('npx --version', { encoding: 'utf8' }).trim();
-      addTestResult('NPX Availability', 'passed', `NPX available: v${npxVersion}`);
+      addTestResult(
+        'NPX Availability',
+        'passed',
+        `NPX available: v${npxVersion}`,
+      );
     } catch (error) {
       addTestResult('NPX Availability', 'warning', 'NPX not available in PATH');
     }
-
   } catch (error) {
     addTestResult('Process Spawning', 'failed', error.message);
   }
@@ -156,17 +182,29 @@ async function testMemoryAllocation() {
 
     const retrieved = swarm.memory.retrieve('large-data');
     if (retrieved && retrieved.length === largeData.length) {
-      addTestResult('Large Memory Allocation', 'passed', 'Can handle large data structures');
+      addTestResult(
+        'Large Memory Allocation',
+        'passed',
+        'Can handle large data structures',
+      );
     } else {
-      addTestResult('Large Memory Allocation', 'failed', 'Data retrieval mismatch');
+      addTestResult(
+        'Large Memory Allocation',
+        'failed',
+        'Data retrieval mismatch',
+      );
     }
 
     // Test memory limits
     const memUsage = process.memoryUsage();
-    addTestResult('Memory Usage', 'passed', `Heap: ${(memUsage.heapUsed / 1024 / 1024).toFixed(2)}MB`, {
-      memoryUsage: memUsage,
-    });
-
+    addTestResult(
+      'Memory Usage',
+      'passed',
+      `Heap: ${(memUsage.heapUsed / 1024 / 1024).toFixed(2)}MB`,
+      {
+        memoryUsage: memUsage,
+      },
+    );
   } catch (error) {
     addTestResult('Memory Allocation', 'failed', error.message);
   }
@@ -184,11 +222,15 @@ async function testNativeModules() {
     db.close();
 
     addTestResult('SQLite Module', 'passed', 'Native SQLite module working');
-
   } catch (error) {
-    addTestResult('Native Modules', 'warning', 'Some native modules may not be available', {
-      error: error.message,
-    });
+    addTestResult(
+      'Native Modules',
+      'warning',
+      'Some native modules may not be available',
+      {
+        error: error.message,
+      },
+    );
   }
 }
 
@@ -203,7 +245,11 @@ async function testPlatformFeatures() {
   const value = buffer.readInt32BE(0);
 
   if (value === 0x12345678) {
-    addTestResult('Endianness Handling', 'passed', `${os.endianness()} endian system`);
+    addTestResult(
+      'Endianness Handling',
+      'passed',
+      `${os.endianness()} endian system`,
+    );
   } else {
     addTestResult('Endianness Handling', 'failed', 'Endianness mismatch');
   }
@@ -213,7 +259,11 @@ async function testPlatformFeatures() {
   const expectedSep = process.platform === 'win32' ? '\\' : '/';
 
   if (testPath.includes(expectedSep)) {
-    addTestResult('Path Separator', 'passed', `Using correct separator: ${expectedSep}`);
+    addTestResult(
+      'Path Separator',
+      'passed',
+      `Using correct separator: ${expectedSep}`,
+    );
   } else {
     addTestResult('Path Separator', 'failed', 'Path separator mismatch');
   }
@@ -236,19 +286,30 @@ async function testConcurrency() {
     await Promise.all(promises);
 
     if (swarm.agents.length === 10) {
-      addTestResult('Concurrent Agent Creation', 'passed', 'Created 10 agents concurrently');
+      addTestResult(
+        'Concurrent Agent Creation',
+        'passed',
+        'Created 10 agents concurrently',
+      );
     } else {
-      addTestResult('Concurrent Agent Creation', 'failed', `Expected 10 agents, got ${swarm.agents.length}`);
+      addTestResult(
+        'Concurrent Agent Creation',
+        'failed',
+        `Expected 10 agents, got ${swarm.agents.length}`,
+      );
     }
 
     // Test concurrent task execution
-    const taskPromises = swarm.agents.map(agent =>
+    const taskPromises = swarm.agents.map((agent) =>
       agent.assignTask({ type: 'test', data: 'concurrent' }),
     );
 
     await Promise.all(taskPromises);
-    addTestResult('Concurrent Task Execution', 'passed', 'All agents executed tasks concurrently');
-
+    addTestResult(
+      'Concurrent Task Execution',
+      'passed',
+      'All agents executed tasks concurrently',
+    );
   } catch (error) {
     addTestResult('Concurrency Test', 'failed', error.message);
   }
@@ -256,11 +317,14 @@ async function testConcurrency() {
 
 // Generate report
 async function generateReport() {
-  results.summary.passRate = (results.summary.passed / results.summary.total * 100).toFixed(2);
+  results.summary.passRate = (
+    (results.summary.passed / results.summary.total) *
+    100
+  ).toFixed(2);
 
   // Platform compatibility score
   let compatibilityScore = 100;
-  results.tests.forEach(test => {
+  results.tests.forEach((test) => {
     if (test.status === 'failed') {
       compatibilityScore -= 10;
     }
@@ -270,7 +334,12 @@ async function generateReport() {
   });
   results.summary.compatibilityScore = Math.max(0, compatibilityScore);
 
-  const resultsPath = path.join(__dirname, '..', 'test-results', 'cross-platform-validation.json');
+  const resultsPath = path.join(
+    __dirname,
+    '..',
+    'test-results',
+    'cross-platform-validation.json',
+  );
   await fs.mkdir(path.dirname(resultsPath), { recursive: true });
   await fs.writeFile(resultsPath, JSON.stringify(results, null, 2));
 

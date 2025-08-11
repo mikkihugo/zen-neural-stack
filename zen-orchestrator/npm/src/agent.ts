@@ -18,8 +18,11 @@ export class BaseAgent implements Agent {
   config: AgentConfig;
   state: AgentState;
   connections: string[] = [];
-  
-  private messageHandlers: Map<MessageType, (message: Message) => Promise<void>> = new Map();
+
+  private messageHandlers: Map<
+    MessageType,
+    (message: Message) => Promise<void>
+  > = new Map();
   private wasmAgentId?: number;
 
   constructor(config: AgentConfig) {
@@ -27,9 +30,10 @@ export class BaseAgent implements Agent {
     this.config = {
       ...config,
       id: this.id,
-      cognitiveProfile: config.cognitiveProfile || getDefaultCognitiveProfile(config.type),
+      cognitiveProfile:
+        config.cognitiveProfile || getDefaultCognitiveProfile(config.type),
     };
-    
+
     this.state = {
       status: 'idle',
       load: 0,
@@ -45,27 +49,39 @@ export class BaseAgent implements Agent {
   }
 
   private setupMessageHandlers(): void {
-    this.messageHandlers.set('task_assignment', this.handleTaskAssignment.bind(this));
-    this.messageHandlers.set('coordination', this.handleCoordination.bind(this));
-    this.messageHandlers.set('knowledge_share', this.handleKnowledgeShare.bind(this));
-    this.messageHandlers.set('status_update', this.handleStatusUpdate.bind(this));
+    this.messageHandlers.set(
+      'task_assignment',
+      this.handleTaskAssignment.bind(this),
+    );
+    this.messageHandlers.set(
+      'coordination',
+      this.handleCoordination.bind(this),
+    );
+    this.messageHandlers.set(
+      'knowledge_share',
+      this.handleKnowledgeShare.bind(this),
+    );
+    this.messageHandlers.set(
+      'status_update',
+      this.handleStatusUpdate.bind(this),
+    );
   }
 
   async execute(task: Task): Promise<any> {
     const startTime = Date.now();
-    
+
     try {
       this.update({ status: 'busy', currentTask: task.id });
-      
+
       // Execute task based on agent type
       const result = await this.executeTaskByType(task);
-      
+
       // Update performance metrics
       const executionTime = Date.now() - startTime;
       this.updatePerformanceMetrics(true, executionTime);
-      
+
       this.update({ status: 'idle', currentTask: undefined });
-      
+
       return result;
     } catch (error) {
       this.updatePerformanceMetrics(false, Date.now() - startTime);
@@ -76,11 +92,15 @@ export class BaseAgent implements Agent {
 
   protected async executeTaskByType(task: Task): Promise<any> {
     // Base implementation - override in specialized agents
-    console.log(`Agent ${this.id} executing task ${task.id}: ${task.description}`);
-    
+    console.log(
+      `Agent ${this.id} executing task ${task.id}: ${task.description}`,
+    );
+
     // Simulate work
-    await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 400));
-    
+    await new Promise((resolve) =>
+      setTimeout(resolve, 100 + Math.random() * 400),
+    );
+
     return {
       taskId: task.id,
       agentId: this.id,
@@ -102,20 +122,25 @@ export class BaseAgent implements Agent {
     this.state = { ...this.state, ...state };
   }
 
-  private updatePerformanceMetrics(success: boolean, executionTime: number): void {
+  private updatePerformanceMetrics(
+    success: boolean,
+    executionTime: number,
+  ): void {
     const performance = this.state.performance;
-    
+
     if (success) {
       performance.tasksCompleted++;
     } else {
       performance.tasksFailed++;
     }
-    
+
     const totalTasks = performance.tasksCompleted + performance.tasksFailed;
-    performance.successRate = totalTasks > 0 ? performance.tasksCompleted / totalTasks : 0;
-    
+    performance.successRate =
+      totalTasks > 0 ? performance.tasksCompleted / totalTasks : 0;
+
     // Update average execution time
-    const totalTime = performance.averageExecutionTime * (totalTasks - 1) + executionTime;
+    const totalTime =
+      performance.averageExecutionTime * (totalTasks - 1) + executionTime;
     performance.averageExecutionTime = totalTime / totalTasks;
   }
 
@@ -126,15 +151,22 @@ export class BaseAgent implements Agent {
   }
 
   private async handleCoordination(message: Message): Promise<void> {
-    console.log(`Agent ${this.id} received coordination message from ${message.from}`);
+    console.log(
+      `Agent ${this.id} received coordination message from ${message.from}`,
+    );
     // Handle coordination logic
   }
 
   private async handleKnowledgeShare(message: Message): Promise<void> {
-    console.log(`Agent ${this.id} received knowledge share from ${message.from}`);
+    console.log(
+      `Agent ${this.id} received knowledge share from ${message.from}`,
+    );
     // Store shared knowledge in memory
     if (this.config.memory) {
-      this.config.memory.shortTerm.set(`knowledge_${message.id}`, message.payload);
+      this.config.memory.shortTerm.set(
+        `knowledge_${message.id}`,
+        message.payload,
+      );
     }
   }
 
@@ -162,27 +194,35 @@ export class ResearcherAgent extends BaseAgent {
 
   protected async executeTaskByType(task: Task): Promise<any> {
     console.log(`Researcher ${this.id} analyzing: ${task.description}`);
-    
+
     // Simulate research activities
-    const phases = ['collecting_data', 'analyzing', 'synthesizing', 'reporting'];
+    const phases = [
+      'collecting_data',
+      'analyzing',
+      'synthesizing',
+      'reporting',
+    ];
     const results: any[] = [];
-    
+
     for (const phase of phases) {
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       results.push({
         phase,
         timestamp: Date.now(),
         findings: `${phase} completed for ${task.description}`,
       });
     }
-    
+
     return {
       taskId: task.id,
       agentId: this.id,
       type: 'research_report',
       phases: results,
       summary: `Research completed on: ${task.description}`,
-      recommendations: ['Further investigation needed', 'Consider alternative approaches'],
+      recommendations: [
+        'Further investigation needed',
+        'Consider alternative approaches',
+      ],
     };
   }
 }
@@ -197,20 +237,20 @@ export class CoderAgent extends BaseAgent {
 
   protected async executeTaskByType(task: Task): Promise<any> {
     console.log(`Coder ${this.id} implementing: ${task.description}`);
-    
+
     // Simulate coding activities
     const steps = ['design', 'implement', 'test', 'refactor'];
     const codeArtifacts: any[] = [];
-    
+
     for (const step of steps) {
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
       codeArtifacts.push({
         step,
         timestamp: Date.now(),
         artifact: `${step}_${task.id}.ts`,
       });
     }
-    
+
     return {
       taskId: task.id,
       agentId: this.id,
@@ -235,10 +275,10 @@ export class AnalystAgent extends BaseAgent {
 
   protected async executeTaskByType(task: Task): Promise<any> {
     console.log(`Analyst ${this.id} analyzing: ${task.description}`);
-    
+
     // Simulate analysis activities
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
     return {
       taskId: task.id,
       agentId: this.id,
@@ -262,14 +302,14 @@ export class AnalystAgent extends BaseAgent {
  */
 export function createAgent(config: AgentConfig): Agent {
   switch (config.type) {
-  case 'researcher':
-    return new ResearcherAgent(config);
-  case 'coder':
-    return new CoderAgent(config);
-  case 'analyst':
-    return new AnalystAgent(config);
-  default:
-    return new BaseAgent(config);
+    case 'researcher':
+      return new ResearcherAgent(config);
+    case 'coder':
+      return new CoderAgent(config);
+    case 'analyst':
+      return new AnalystAgent(config);
+    default:
+      return new BaseAgent(config);
   }
 }
 
@@ -333,10 +373,10 @@ export class AgentPool {
   }
 
   getAgentsByType(type: string): Agent[] {
-    return this.getAllAgents().filter(agent => agent.config.type === type);
+    return this.getAllAgents().filter((agent) => agent.config.type === type);
   }
 
   getAgentsByStatus(status: AgentStatus): Agent[] {
-    return this.getAllAgents().filter(agent => agent.state.status === status);
+    return this.getAllAgents().filter((agent) => agent.state.status === status);
   }
 }

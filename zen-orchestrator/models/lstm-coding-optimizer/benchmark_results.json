@@ -12,8 +12,20 @@
       "training_samples": 2500000,
       "validation_samples": 500000,
       "test_samples": 250000,
-      "programming_languages": ["Python", "JavaScript", "Java", "C++", "Go", "Rust"],
-      "task_types": ["bug_fixing", "code_generation", "code_completion", "refactoring"]
+      "programming_languages": [
+        "Python",
+        "JavaScript",
+        "Java",
+        "C++",
+        "Go",
+        "Rust"
+      ],
+      "task_types": [
+        "bug_fixing",
+        "code_generation",
+        "code_completion",
+        "refactoring"
+      ]
     }
   },
   "training_metrics": {

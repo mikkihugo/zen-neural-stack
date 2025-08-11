@@ -12,12 +12,12 @@ import { WasmLoader } from '../src/wasm-loader.js';
 const mockWasmLoader = {
   async loadModule() {
     return { isPlaceholder: true };
-  }
+  },
 };
 
 async function demonstratePresets() {
   console.log('🧠 Neural Network Presets Demonstration\n');
-  
+
   const neuralManager = new NeuralNetworkManager(mockWasmLoader);
 
   // 1. Show available presets by category
@@ -25,7 +25,9 @@ async function demonstratePresets() {
   const summary = neuralManager.getPresetSummary();
   Object.entries(summary).forEach(([category, info]) => {
     console.log(`  ${category.toUpperCase()}: ${info.count} presets`);
-    info.presets.slice(0, 3).forEach(preset => console.log(`    - ${preset}`));
+    info.presets
+      .slice(0, 3)
+      .forEach((preset) => console.log(`    - ${preset}`));
     if (info.presets.length > 3) {
       console.log(`    ... and ${info.presets.length - 3} more`);
     }
@@ -41,10 +43,12 @@ async function demonstratePresets() {
     const sentimentAgent = await neuralManager.createAgentFromPreset(
       'sentiment-analyzer',
       'nlp',
-      'sentiment_analysis_social'
+      'sentiment_analysis_social',
     );
     console.log('✅ Sentiment Analyzer created');
-    console.log(`   Performance: ${neuralManager.getPresetPerformance('nlp', 'sentiment_analysis_social').expectedAccuracy}`);
+    console.log(
+      `   Performance: ${neuralManager.getPresetPerformance('nlp', 'sentiment_analysis_social').expectedAccuracy}`,
+    );
     console.log();
 
     // Vision: Object Detection
@@ -52,10 +56,12 @@ async function demonstratePresets() {
     const detectionAgent = await neuralManager.createAgentFromPreset(
       'object-detector',
       'vision',
-      'object_detection_realtime'
+      'object_detection_realtime',
     );
     console.log('✅ Object Detector created');
-    console.log(`   Performance: ${neuralManager.getPresetPerformance('vision', 'object_detection_realtime').expectedAccuracy}`);
+    console.log(
+      `   Performance: ${neuralManager.getPresetPerformance('vision', 'object_detection_realtime').expectedAccuracy}`,
+    );
     console.log();
 
     // Time Series: Stock Prediction
@@ -63,10 +69,12 @@ async function demonstratePresets() {
     const stockAgent = await neuralManager.createAgentFromPreset(
       'stock-predictor',
       'timeseries',
-      'stock_market_prediction'
+      'stock_market_prediction',
     );
     console.log('✅ Stock Predictor created');
-    console.log(`   Performance: ${neuralManager.getPresetPerformance('timeseries', 'stock_market_prediction').expectedAccuracy}`);
+    console.log(
+      `   Performance: ${neuralManager.getPresetPerformance('timeseries', 'stock_market_prediction').expectedAccuracy}`,
+    );
     console.log();
 
     // Graph: Fraud Detection
@@ -74,12 +82,13 @@ async function demonstratePresets() {
     const fraudAgent = await neuralManager.createAgentFromPreset(
       'fraud-detector',
       'graph',
-      'fraud_detection_financial'
+      'fraud_detection_financial',
     );
     console.log('✅ Fraud Detector created');
-    console.log(`   Performance: ${neuralManager.getPresetPerformance('graph', 'fraud_detection_financial').expectedAccuracy}`);
+    console.log(
+      `   Performance: ${neuralManager.getPresetPerformance('graph', 'fraud_detection_financial').expectedAccuracy}`,
+    );
     console.log();
-
   } catch (error) {
     console.error('❌ Error creating agents:', error.message);
   }
@@ -90,18 +99,17 @@ async function demonstratePresets() {
   try {
     const chatbotAgent = await neuralManager.createAgentForUseCase(
       'chatbot-assistant',
-      'chatbot'
+      'chatbot',
     );
     console.log('✅ Chatbot Assistant created from recommended preset');
     console.log();
 
     const recommendationAgent = await neuralManager.createAgentForUseCase(
       'recommendation-engine',
-      'recommendation'
+      'recommendation',
     );
     console.log('✅ Recommendation Engine created from recommended preset');
     console.log();
-
   } catch (error) {
     console.error('❌ Error creating agents by use case:', error.message);
   }
@@ -111,7 +119,7 @@ async function demonstratePresets() {
 
   const weatherPresets = neuralManager.searchPresets('weather');
   console.log('Weather-related presets:');
-  weatherPresets.forEach(result => {
+  weatherPresets.forEach((result) => {
     console.log(`  - ${result.preset.name} (${result.category})`);
     console.log(`    Use case: ${result.preset.useCase}`);
   });
@@ -119,7 +127,7 @@ async function demonstratePresets() {
 
   const medicalPresets = neuralManager.searchPresets('medical');
   console.log('Medical-related presets:');
-  medicalPresets.forEach(result => {
+  medicalPresets.forEach((result) => {
     console.log(`  - ${result.preset.name} (${result.category})`);
     console.log(`    Use case: ${result.preset.useCase}`);
   });
@@ -129,29 +137,47 @@ async function demonstratePresets() {
   console.log('📦 Batch Creating Agents:\n');
 
   const batchConfigs = [
-    { agentId: 'nlp-translator', category: 'nlp', presetName: 'language_translation' },
-    { agentId: 'vision-enhancer', category: 'vision', presetName: 'image_enhancement' },
-    { agentId: 'timeseries-energy', category: 'timeseries', presetName: 'energy_consumption' },
-    { agentId: 'graph-social', category: 'graph', presetName: 'social_network_influence' }
+    {
+      agentId: 'nlp-translator',
+      category: 'nlp',
+      presetName: 'language_translation',
+    },
+    {
+      agentId: 'vision-enhancer',
+      category: 'vision',
+      presetName: 'image_enhancement',
+    },
+    {
+      agentId: 'timeseries-energy',
+      category: 'timeseries',
+      presetName: 'energy_consumption',
+    },
+    {
+      agentId: 'graph-social',
+      category: 'graph',
+      presetName: 'social_network_influence',
+    },
   ];
 
   try {
-    const batchResults = await neuralManager.batchCreateAgentsFromPresets(batchConfigs);
-    
-    console.log(`✅ Successfully created ${batchResults.results.length} agents:`);
-    batchResults.results.forEach(result => {
+    const batchResults =
+      await neuralManager.batchCreateAgentsFromPresets(batchConfigs);
+
+    console.log(
+      `✅ Successfully created ${batchResults.results.length} agents:`,
+    );
+    batchResults.results.forEach((result) => {
       const presetInfo = neuralManager.getAgentPresetInfo(result.agentId);
       console.log(`  - ${result.agentId}: ${presetInfo.name}`);
     });
 
     if (batchResults.errors.length > 0) {
       console.log(`❌ Failed to create ${batchResults.errors.length} agents:`);
-      batchResults.errors.forEach(error => {
+      batchResults.errors.forEach((error) => {
         console.log(`  - ${error.agentId}: ${error.error}`);
       });
     }
     console.log();
-
   } catch (error) {
     console.error('❌ Error in batch creation:', error.message);
   }
@@ -159,14 +185,21 @@ async function demonstratePresets() {
   // 6. Show agent preset information
   console.log('📋 Agent Preset Information:\n');
 
-  const agentIds = ['sentiment-analyzer', 'object-detector', 'stock-predictor', 'fraud-detector'];
-  agentIds.forEach(agentId => {
+  const agentIds = [
+    'sentiment-analyzer',
+    'object-detector',
+    'stock-predictor',
+    'fraud-detector',
+  ];
+  agentIds.forEach((agentId) => {
     const presetInfo = neuralManager.getAgentPresetInfo(agentId);
     if (presetInfo) {
       console.log(`${agentId}:`);
       console.log(`  Name: ${presetInfo.name}`);
       console.log(`  Category: ${presetInfo.category}`);
-      console.log(`  Expected Accuracy: ${presetInfo.performance.expectedAccuracy}`);
+      console.log(
+        `  Expected Accuracy: ${presetInfo.performance.expectedAccuracy}`,
+      );
       console.log(`  Inference Time: ${presetInfo.performance.inferenceTime}`);
       console.log(`  Memory Usage: ${presetInfo.performance.memoryUsage}`);
       console.log(`  Use Case: ${presetInfo.useCase}`);
@@ -178,16 +211,20 @@ async function demonstratePresets() {
   console.log('⚡ Performance Comparison by Category:\n');
 
   const categories = ['nlp', 'vision', 'timeseries', 'graph'];
-  categories.forEach(category => {
+  categories.forEach((category) => {
     const presets = neuralManager.getAvailablePresets(category);
-    console.log(`${category.toUpperCase()} Presets (${Object.keys(presets).length} total):`);
-    
-    Object.entries(presets).slice(0, 3).forEach(([name, preset]) => {
-      console.log(`  ${preset.name}:`);
-      console.log(`    Accuracy: ${preset.performance.expectedAccuracy}`);
-      console.log(`    Speed: ${preset.performance.inferenceTime}`);
-      console.log(`    Memory: ${preset.performance.memoryUsage}`);
-    });
+    console.log(
+      `${category.toUpperCase()} Presets (${Object.keys(presets).length} total):`,
+    );
+
+    Object.entries(presets)
+      .slice(0, 3)
+      .forEach(([name, preset]) => {
+        console.log(`  ${preset.name}:`);
+        console.log(`    Accuracy: ${preset.performance.expectedAccuracy}`);
+        console.log(`    Speed: ${preset.performance.inferenceTime}`);
+        console.log(`    Memory: ${preset.performance.memoryUsage}`);
+      });
     console.log();
   });
 

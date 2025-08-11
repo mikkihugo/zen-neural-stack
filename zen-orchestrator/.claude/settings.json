@@ -35,11 +35,7 @@
   "mcpServers": {
     "ruv-swarm": {
       "command": "npx",
-      "args": [
-        "ruv-swarm",
-        "mcp",
-        "start"
-      ],
+      "args": ["ruv-swarm", "mcp", "start"],
       "env": {
         "RUV_SWARM_HOOKS_ENABLED": "false",
         "RUV_SWARM_TELEMETRY_ENABLED": "true",

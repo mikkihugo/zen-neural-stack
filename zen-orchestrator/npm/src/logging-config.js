@@ -10,28 +10,28 @@ const DEFAULT_LOG_LEVELS = {
   'mcp-server': 'INFO',
   'mcp-tools': 'INFO',
   'swarm-core': 'INFO',
-  'agent': 'DEBUG',
-  'neural': 'INFO',
+  agent: 'DEBUG',
+  neural: 'INFO',
   'wasm-loader': 'WARN',
-  'persistence': 'INFO',
-  'hooks': 'DEBUG',
-  'performance': 'INFO',
-  'memory': 'WARN',
+  persistence: 'INFO',
+  hooks: 'DEBUG',
+  performance: 'INFO',
+  memory: 'WARN',
 };
 
 // Log level mapping from environment variables
 const ENV_LOG_MAPPING = {
-  'LOG_LEVEL': null, // Global log level
-  'MCP_LOG_LEVEL': 'mcp-server',
-  'TOOLS_LOG_LEVEL': 'mcp-tools',
-  'SWARM_LOG_LEVEL': 'swarm-core',
-  'AGENT_LOG_LEVEL': 'agent',
-  'NEURAL_LOG_LEVEL': 'neural',
-  'WASM_LOG_LEVEL': 'wasm-loader',
-  'DB_LOG_LEVEL': 'persistence',
-  'HOOKS_LOG_LEVEL': 'hooks',
-  'PERF_LOG_LEVEL': 'performance',
-  'MEMORY_LOG_LEVEL': 'memory',
+  LOG_LEVEL: null, // Global log level
+  MCP_LOG_LEVEL: 'mcp-server',
+  TOOLS_LOG_LEVEL: 'mcp-tools',
+  SWARM_LOG_LEVEL: 'swarm-core',
+  AGENT_LOG_LEVEL: 'agent',
+  NEURAL_LOG_LEVEL: 'neural',
+  WASM_LOG_LEVEL: 'wasm-loader',
+  DB_LOG_LEVEL: 'persistence',
+  HOOKS_LOG_LEVEL: 'hooks',
+  PERF_LOG_LEVEL: 'performance',
+  MEMORY_LOG_LEVEL: 'memory',
 };
 
 /**
@@ -160,9 +160,12 @@ export class LoggingConfig {
 export const loggingConfig = new LoggingConfig();
 
 // Convenience functions
-export const getLogger = (component, options) => loggingConfig.getLogger(component, options);
-export const setLogLevel = (component, level) => loggingConfig.setLogLevel(component, level);
-export const setGlobalLogLevel = (level) => loggingConfig.setGlobalLogLevel(level);
+export const getLogger = (component, options) =>
+  loggingConfig.getLogger(component, options);
+export const setLogLevel = (component, level) =>
+  loggingConfig.setLogLevel(component, level);
+export const setGlobalLogLevel = (level) =>
+  loggingConfig.setGlobalLogLevel(level);
 
 // Pre-configured loggers for common components
 export const mcpLogger = loggingConfig.getLogger('mcp-server');

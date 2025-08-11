@@ -28,7 +28,7 @@
       "name": "tcn_block_1"
     },
     {
-      "type": "temporal_conv_block", 
+      "type": "temporal_conv_block",
       "filters": 128,
       "kernel_size": 3,
       "dilation": 2,
@@ -98,17 +98,52 @@
         "pattern_classification": {
           "units": 16,
           "activation": "softmax",
-          "classes": ["factory_pattern", "singleton", "observer", "strategy", "command", "decorator", "adapter", "facade", "template_method", "builder", "prototype", "bridge", "composite", "flyweight", "proxy", "chain_of_responsibility"]
+          "classes": [
+            "factory_pattern",
+            "singleton",
+            "observer",
+            "strategy",
+            "command",
+            "decorator",
+            "adapter",
+            "facade",
+            "template_method",
+            "builder",
+            "prototype",
+            "bridge",
+            "composite",
+            "flyweight",
+            "proxy",
+            "chain_of_responsibility"
+          ]
         },
         "anti_pattern_detection": {
           "units": 8,
-          "activation": "sigmoid", 
-          "classes": ["god_object", "spaghetti_code", "copy_paste", "dead_code", "long_method", "feature_envy", "data_clumps", "shotgun_surgery"]
+          "activation": "sigmoid",
+          "classes": [
+            "god_object",
+            "spaghetti_code",
+            "copy_paste",
+            "dead_code",
+            "long_method",
+            "feature_envy",
+            "data_clumps",
+            "shotgun_surgery"
+          ]
         },
         "refactoring_opportunity": {
           "units": 8,
           "activation": "sigmoid",
-          "classes": ["extract_method", "extract_class", "move_method", "rename_variable", "replace_magic_number", "simplify_conditional", "remove_duplication", "optimize_loop"]
+          "classes": [
+            "extract_method",
+            "extract_class",
+            "move_method",
+            "rename_variable",
+            "replace_magic_number",
+            "simplify_conditional",
+            "remove_duplication",
+            "optimize_loop"
+          ]
         }
       },
       "name": "multi_output"

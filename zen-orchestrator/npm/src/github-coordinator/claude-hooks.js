@@ -23,7 +23,9 @@ class ClaudeGitHubHooks {
    * Pre-task hook: Claim a GitHub issue before starting work
    */
   async preTask(taskDescription) {
-    console.log(`🎯 Pre-task: Looking for GitHub issues related to: ${taskDescription}`);
+    console.log(
+      `🎯 Pre-task: Looking for GitHub issues related to: ${taskDescription}`,
+    );
 
     try {
       // Search for related issues
@@ -31,16 +33,21 @@ class ClaudeGitHubHooks {
 
       // Find best matching task (simple keyword matching for now)
       const keywords = taskDescription.toLowerCase().split(' ');
-      const matchedTask = tasks.find(task => {
+      const matchedTask = tasks.find((task) => {
         const taskText = `${task.title} ${task.body || ''}`.toLowerCase();
-        return keywords.some(keyword => taskText.includes(keyword));
+        return keywords.some((keyword) => taskText.includes(keyword));
       });
 
       if (matchedTask) {
-        const claimed = await this.coordinator.claimTask(this.swarmId, matchedTask.number);
+        const claimed = await this.coordinator.claimTask(
+          this.swarmId,
+          matchedTask.number,
+        );
         if (claimed) {
           this.activeTask = matchedTask.number;
-          console.log(`✅ Claimed GitHub issue #${matchedTask.number}: ${matchedTask.title}`);
+          console.log(
+            `✅ Claimed GitHub issue #${matchedTask.number}: ${matchedTask.title}`,
+          );
           return { claimed: true, issue: matchedTask.number };
         }
       }
@@ -63,8 +70,14 @@ class ClaudeGitHubHooks {
 
     try {
       const message = `Updated \`${path.basename(filePath)}\`\n\n${changes.summary || 'File modified'}`;
-      await this.coordinator.updateTaskProgress(this.swarmId, this.activeTask, message);
-      console.log(`📝 Updated GitHub issue #${this.activeTask} with edit progress`);
+      await this.coordinator.updateTaskProgress(
+        this.swarmId,
+        this.activeTask,
+        message,
+      );
+      console.log(
+        `📝 Updated GitHub issue #${this.activeTask} with edit progress`,
+      );
     } catch (error) {
       console.error('❌ Post-edit hook error:', error.message);
     }
@@ -81,7 +94,11 @@ class ClaudeGitHubHooks {
     try {
       if (result.completed) {
         const message = `✅ **Task Completed**\n\n${result.summary || 'Task completed successfully'}`;
-        await this.coordinator.updateTaskProgress(this.swarmId, this.activeTask, message);
+        await this.coordinator.updateTaskProgress(
+          this.swarmId,
+          this.activeTask,
+          message,
+        );
 
         // Option to auto-close issue (disabled by default)
         if (result.autoClose) {

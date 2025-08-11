@@ -3,7 +3,14 @@
  * Tests memory limits, resource cleanup, garbage collection scenarios
  */
 
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import {
+  describe,
+  it,
+  expect,
+  jest,
+  beforeEach,
+  afterEach,
+} from '@jest/globals';
 import { RuvSwarm } from '../../src/index-enhanced.js';
 import { NeuralAgent } from '../../src/neural-agent.js';
 import { SwarmPersistence } from '../../src/persistence.js';
@@ -33,7 +40,8 @@ describe('Memory and Resource Edge Cases', () => {
 
       try {
         // Try increasingly large allocations
-        for (let exp = 10; exp < 28; exp++) { // Up to ~256MB
+        for (let exp = 10; exp < 28; exp++) {
+          // Up to ~256MB
           const size = Math.pow(2, exp);
           const arr = new Array(size).fill(1);
           arrays.push(arr);
@@ -42,7 +50,10 @@ describe('Memory and Resource Edge Cases', () => {
           // Check memory usage periodically
           if (exp % 3 === 0) {
             const currentMemory = process.memoryUsage();
-            if (currentMemory.heapUsed > initialMemory.heapUsed + 500 * 1024 * 1024) {
+            if (
+              currentMemory.heapUsed >
+              initialMemory.heapUsed + 500 * 1024 * 1024
+            ) {
               // Stop if we've allocated too much
               break;
             }
@@ -90,7 +101,6 @@ describe('Memory and Resource Edge Cases', () => {
         expect(memoryAfterGC.heapUsed).toBeLessThan(
           initialMemory.heapUsed + 200 * 1024 * 1024, // 200MB limit
         );
-
       } finally {
         // Cleanup
         smallArrays.length = 0;
@@ -133,7 +143,7 @@ describe('Memory and Resource Edge Cases', () => {
   });
 
   describe('Resource Cleanup Edge Cases', () => {
-    it('should cleanup file handles properly', async() => {
+    it('should cleanup file handles properly', async () => {
       const fs = await import('fs/promises');
       const handles = [];
 
@@ -149,16 +159,13 @@ describe('Memory and Resource Edge Cases', () => {
         }
 
         expect(handles.length).toBeGreaterThan(0);
-
       } finally {
         // Cleanup all handles
-        await Promise.allSettled(
-          handles.map(handle => handle?.close?.()),
-        );
+        await Promise.allSettled(handles.map((handle) => handle?.close?.()));
       }
     });
 
-    it('should handle timer cleanup on object destruction', async() => {
+    it('should handle timer cleanup on object destruction', async () => {
       class TimerObject {
         constructor() {
           this.timers = [];
@@ -176,7 +183,7 @@ describe('Memory and Resource Edge Cases', () => {
 
         destroy() {
           this.destroyed = true;
-          this.timers.forEach(timer => clearInterval(timer));
+          this.timers.forEach((timer) => clearInterval(timer));
           this.timers = [];
         }
       }
@@ -193,7 +200,7 @@ describe('Memory and Resource Edge Cases', () => {
         // Destroy some objects randomly
         if (Math.random() > 0.5) {
           promises.push(
-            new Promise(resolve => {
+            new Promise((resolve) => {
               setTimeout(() => {
                 obj.destroy();
                 resolve();
@@ -206,10 +213,10 @@ describe('Memory and Resource Edge Cases', () => {
       await Promise.all(promises);
 
       // Cleanup remaining objects
-      objects.forEach(obj => obj.destroy());
+      objects.forEach((obj) => obj.destroy());
 
       // Verify cleanup
-      objects.forEach(obj => {
+      objects.forEach((obj) => {
         expect(obj.destroyed).toBe(true);
         expect(obj.timers).toHaveLength(0);
       });
@@ -244,7 +251,7 @@ describe('Memory and Resource Edge Cases', () => {
       let weakMapCount = 0;
       let weakSetCount = 0;
 
-      strongRefs.forEach(obj => {
+      strongRefs.forEach((obj) => {
         if (weakMap.has(obj)) {
           weakMapCount++;
         }
@@ -293,7 +300,7 @@ describe('Memory and Resource Edge Cases', () => {
   });
 
   describe('Memory Monitoring Edge Cases', () => {
-    it('should detect memory leaks in event listeners', async() => {
+    it('should detect memory leaks in event listeners', async () => {
       const { EventEmitter } = await import('events');
       const emitter = new EventEmitter();
       const initialListeners = emitter.listenerCount('test');
@@ -301,7 +308,9 @@ describe('Memory and Resource Edge Cases', () => {
       // Add many listeners
       const listeners = [];
       for (let i = 0; i < 1000; i++) {
-        const listener = () => { /* noop */ };
+        const listener = () => {
+          /* noop */
+        };
         listeners.push(listener);
         emitter.on('test', listener);
       }
@@ -326,7 +335,8 @@ describe('Memory and Resource Edge Cases', () => {
 
       try {
         // Create increasingly large buffers
-        for (let exp = 10; exp < 26; exp++) { // Up to 64MB
+        for (let exp = 10; exp < 26; exp++) {
+          // Up to 64MB
           const size = Math.pow(2, exp);
           const buffer = Buffer.alloc(size);
           buffers.push(buffer);
@@ -336,13 +346,13 @@ describe('Memory and Resource Edge Cases', () => {
           buffer.fill(exp % 256);
 
           // Stop if we've allocated too much
-          if (totalSize > 100 * 1024 * 1024) { // 100MB
+          if (totalSize > 100 * 1024 * 1024) {
+            // 100MB
             break;
           }
         }
 
         expect(totalSize).toBeGreaterThan(0);
-
       } catch (error) {
         // Expected on systems with low memory
         expect(error.message).toMatch(/out of memory|Invalid array length/i);
@@ -354,7 +364,7 @@ describe('Memory and Resource Edge Cases', () => {
   });
 
   describe('Resource Pool Edge Cases', () => {
-    it('should handle resource pool exhaustion', async() => {
+    it('should handle resource pool exhaustion', async () => {
       class ResourcePool {
         constructor(maxSize = 10) {
           this.resources = [];
@@ -409,7 +419,7 @@ describe('Memory and Resource Edge Cases', () => {
       pool.destroy();
     });
 
-    it('should handle concurrent resource access', async() => {
+    it('should handle concurrent resource access', async () => {
       class ConcurrentResource {
         constructor() {
           this.users = 0;
@@ -424,7 +434,7 @@ describe('Memory and Resource Edge Cases', () => {
           this.users++;
           try {
             // Simulate work
-            await new Promise(resolve => setTimeout(resolve, 10));
+            await new Promise((resolve) => setTimeout(resolve, 10));
             return `Used by ${this.users} users`;
           } finally {
             this.users--;
@@ -438,13 +448,13 @@ describe('Memory and Resource Edge Cases', () => {
       // Try to use resource concurrently
       for (let i = 0; i < 10; i++) {
         promises.push(
-          resource.use().catch(error => ({ error: error.message })),
+          resource.use().catch((error) => ({ error: error.message })),
         );
       }
 
       const results = await Promise.all(promises);
-      const successful = results.filter(r => !r.error);
-      const failed = results.filter(r => r.error);
+      const successful = results.filter((r) => !r.error);
+      const failed = results.filter((r) => r.error);
 
       expect(successful.length).toBeGreaterThan(0);
       expect(failed.length).toBeGreaterThan(0);

@@ -80,7 +80,9 @@ async function testMcpTools() {
 
     try {
       const cmd = `echo '${JSON.stringify(test.request)}' | node bin/ruv-swarm.js mcp start --protocol=stdio 2>/dev/null`;
-      const { stdout, stderr } = await execPromise(cmd, { cwd: '/workspaces/ruv-FANN/ruv-swarm/npm' });
+      const { stdout, stderr } = await execPromise(cmd, {
+        cwd: '/workspaces/ruv-FANN/ruv-swarm/npm',
+      });
 
       if (stdout) {
         const lines = stdout.trim().split('\n');
@@ -90,7 +92,9 @@ async function testMcpTools() {
             if (response.result) {
               console.log(`✅ ${test.name}: SUCCESS`);
               if (response.result.content && response.result.content[0]) {
-                console.log(`   Result: ${response.result.content[0].text.split('\n')[0]}`);
+                console.log(
+                  `   Result: ${response.result.content[0].text.split('\n')[0]}`,
+                );
               }
             } else if (response.error) {
               console.log(`❌ ${test.name}: ERROR - ${response.error.message}`);
@@ -113,7 +117,13 @@ async function testMcpTools() {
 async function testParallelAgents() {
   console.log('\n🤖 Testing Parallel Agent Creation\n');
 
-  const agentTypes = ['researcher', 'coder', 'analyst', 'optimizer', 'coordinator'];
+  const agentTypes = [
+    'researcher',
+    'coder',
+    'analyst',
+    'optimizer',
+    'coordinator',
+  ];
   const promises = [];
 
   for (let i = 0; i < agentTypes.length; i++) {
@@ -132,7 +142,9 @@ async function testParallelAgents() {
     };
 
     const cmd = `echo '${JSON.stringify(request)}' | node bin/ruv-swarm.js mcp start --protocol=stdio 2>/dev/null | grep -E "jsonrpc|result"`;
-    promises.push(execPromise(cmd, { cwd: '/workspaces/ruv-FANN/ruv-swarm/npm' }));
+    promises.push(
+      execPromise(cmd, { cwd: '/workspaces/ruv-FANN/ruv-swarm/npm' }),
+    );
   }
 
   try {

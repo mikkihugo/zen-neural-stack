@@ -17,7 +17,7 @@
             "aggregation": "mean"
           },
           {
-            "type": "graph_conv", 
+            "type": "graph_conv",
             "in_features": 256,
             "out_features": 512,
             "aggregation": "max"
@@ -45,7 +45,7 @@
         },
         "attention_patterns": [
           "global_attention",
-          "local_attention", 
+          "local_attention",
           "sliding_window",
           "dilated_attention"
         ]
@@ -132,7 +132,7 @@
         }
       },
       "edges": {
-        "type": "array", 
+        "type": "array",
         "items": {
           "source": "string",
           "target": "string",
@@ -184,7 +184,7 @@
   },
   "optimization_objectives": [
     "minimize_completion_time",
-    "maximize_resource_utilization", 
+    "maximize_resource_utilization",
     "maximize_cognitive_diversity",
     "minimize_communication_overhead",
     "maximize_fault_tolerance"
@@ -206,7 +206,7 @@
   "training_info": {
     "datasets": [
       "swarm_coordination_traces",
-      "multi_agent_benchmarks", 
+      "multi_agent_benchmarks",
       "cognitive_diversity_profiles"
     ],
     "training_epochs": 1000,

@@ -18,7 +18,7 @@ describe('CLAUDE.md Protection Features', () => {
   let originalStdin;
   let originalStdout;
 
-  beforeEach(async() => {
+  beforeEach(async () => {
     // Create temporary test directory
     testDir = path.join(__dirname, 'temp', `test-${Date.now()}`);
     await fs.mkdir(testDir, { recursive: true });
@@ -31,7 +31,7 @@ describe('CLAUDE.md Protection Features', () => {
     originalStdout = process.stdout;
   });
 
-  afterEach(async() => {
+  afterEach(async () => {
     // Clean up test directory
     try {
       await fs.rm(testDir, { recursive: true, force: true });
@@ -45,7 +45,7 @@ describe('CLAUDE.md Protection Features', () => {
   });
 
   describe('File Existence Checking', () => {
-    test('should detect when CLAUDE.md exists', async() => {
+    test('should detect when CLAUDE.md exists', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       await fs.writeFile(claudePath, 'existing content');
 
@@ -53,7 +53,7 @@ describe('CLAUDE.md Protection Features', () => {
       expect(exists).toBe(true);
     });
 
-    test('should detect when CLAUDE.md does not exist', async() => {
+    test('should detect when CLAUDE.md does not exist', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
 
       const exists = await docsGenerator.fileExists(claudePath);
@@ -62,7 +62,7 @@ describe('CLAUDE.md Protection Features', () => {
   });
 
   describe('Backup System', () => {
-    test('should create backup with timestamp', async() => {
+    test('should create backup with timestamp', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = 'original content';
       await fs.writeFile(claudePath, originalContent);
@@ -77,10 +77,12 @@ describe('CLAUDE.md Protection Features', () => {
       expect(backupContent).toBe(originalContent);
 
       // Check backup naming pattern
-      expect(path.basename(backupPath)).toMatch(/^CLAUDE\.md\.backup\.\d{8}T\d{6}$/);
+      expect(path.basename(backupPath)).toMatch(
+        /^CLAUDE\.md\.backup\.\d{8}T\d{6}$/,
+      );
     });
 
-    test('should clean up old backups (keep only 5)', async() => {
+    test('should clean up old backups (keep only 5)', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       await fs.writeFile(claudePath, 'content');
 
@@ -88,7 +90,10 @@ describe('CLAUDE.md Protection Features', () => {
       const backupPaths = [];
       for (let i = 0; i < 8; i++) {
         // Create backups with different timestamps
-        const timestamp = new Date(Date.now() + i * 1000).toISOString().slice(0, 19).replace(/[:-]/g, '');
+        const timestamp = new Date(Date.now() + i * 1000)
+          .toISOString()
+          .slice(0, 19)
+          .replace(/[:-]/g, '');
         const backupPath = `${claudePath}.backup.${timestamp}`;
         await fs.writeFile(backupPath, `backup ${i}`);
         backupPaths.push(backupPath);
@@ -112,17 +117,21 @@ describe('CLAUDE.md Protection Features', () => {
   });
 
   describe('Protection Logic - Non-Interactive Mode', () => {
-    test('should fail when CLAUDE.md exists without --force, --backup, or --merge', async() => {
+    test('should fail when CLAUDE.md exists without --force, --backup, or --merge', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       await fs.writeFile(claudePath, 'existing content');
 
       await expect(
         docsGenerator.generateClaudeMd({ interactive: false }),
-      ).rejects.toThrow('CLAUDE.md already exists. Use --force to overwrite, --backup to backup existing, or --merge to combine.');
+      ).rejects.toThrow(
+        'CLAUDE.md already exists. Use --force to overwrite, --backup to backup existing, or --merge to combine.',
+      );
     });
 
-    test('should create new file when CLAUDE.md does not exist', async() => {
-      const result = await docsGenerator.generateClaudeMd({ interactive: false });
+    test('should create new file when CLAUDE.md does not exist', async () => {
+      const result = await docsGenerator.generateClaudeMd({
+        interactive: false,
+      });
 
       expect(result.success).toBe(true);
       expect(result.action).toBe('created');
@@ -134,7 +143,7 @@ describe('CLAUDE.md Protection Features', () => {
       expect(content).toContain('Claude Code Configuration for ruv-swarm');
     });
 
-    test('should overwrite WITHOUT backup when --force is used (ruv spec)', async() => {
+    test('should overwrite WITHOUT backup when --force is used (ruv spec)', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = 'existing content';
       await fs.writeFile(claudePath, originalContent);
@@ -154,11 +163,13 @@ describe('CLAUDE.md Protection Features', () => {
 
       // Check NO backup was created (ruv's requirement)
       const files = await fs.readdir(testDir);
-      const backupFiles = files.filter(f => f.startsWith('CLAUDE.md.backup.'));
+      const backupFiles = files.filter((f) =>
+        f.startsWith('CLAUDE.md.backup.'),
+      );
       expect(backupFiles).toHaveLength(0);
     });
 
-    test('should create backup with --backup flag', async() => {
+    test('should create backup with --backup flag', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = 'existing content';
       await fs.writeFile(claudePath, originalContent);
@@ -178,14 +189,19 @@ describe('CLAUDE.md Protection Features', () => {
 
       // Check backup was created
       const files = await fs.readdir(testDir);
-      const backupFiles = files.filter(f => f.startsWith('CLAUDE.md.backup.'));
+      const backupFiles = files.filter((f) =>
+        f.startsWith('CLAUDE.md.backup.'),
+      );
       expect(backupFiles).toHaveLength(1);
 
-      const backupContent = await fs.readFile(path.join(testDir, backupFiles[0]), 'utf8');
+      const backupContent = await fs.readFile(
+        path.join(testDir, backupFiles[0]),
+        'utf8',
+      );
       expect(backupContent).toBe(originalContent);
     });
 
-    test('should create backup when using --force --backup together', async() => {
+    test('should create backup when using --force --backup together', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = 'existing content';
       await fs.writeFile(claudePath, originalContent);
@@ -206,14 +222,19 @@ describe('CLAUDE.md Protection Features', () => {
 
       // Check backup was created
       const files = await fs.readdir(testDir);
-      const backupFiles = files.filter(f => f.startsWith('CLAUDE.md.backup.'));
+      const backupFiles = files.filter((f) =>
+        f.startsWith('CLAUDE.md.backup.'),
+      );
       expect(backupFiles).toHaveLength(1);
 
-      const backupContent = await fs.readFile(path.join(testDir, backupFiles[0]), 'utf8');
+      const backupContent = await fs.readFile(
+        path.join(testDir, backupFiles[0]),
+        'utf8',
+      );
       expect(backupContent).toBe(originalContent);
     });
 
-    test('should intelligently merge when --merge is used (not just append)', async() => {
+    test('should intelligently merge when --merge is used (not just append)', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = `# My Project Configuration
 
@@ -237,13 +258,21 @@ This is my existing project setup.
       const mergedContent = await fs.readFile(claudePath, 'utf8');
       expect(mergedContent).toContain('My Project Configuration');
       expect(mergedContent).toContain('Keep this content');
-      expect(mergedContent).toContain('Claude Code Configuration for ruv-swarm');
+      expect(mergedContent).toContain(
+        'Claude Code Configuration for ruv-swarm',
+      );
 
       // Should intelligently position content, not just append to bottom
       const lines = mergedContent.split('\n');
-      const projectConfigIndex = lines.findIndex(line => line.includes('My Project Configuration'));
-      const ruvSwarmIndex = lines.findIndex(line => line.includes('Claude Code Configuration for ruv-swarm'));
-      const notesIndex = lines.findIndex(line => line.includes('Important Notes'));
+      const projectConfigIndex = lines.findIndex((line) =>
+        line.includes('My Project Configuration'),
+      );
+      const ruvSwarmIndex = lines.findIndex((line) =>
+        line.includes('Claude Code Configuration for ruv-swarm'),
+      );
+      const notesIndex = lines.findIndex((line) =>
+        line.includes('Important Notes'),
+      );
 
       // ruv-swarm content should be positioned intelligently, not necessarily at the end
       expect(projectConfigIndex).toBeGreaterThanOrEqual(0);
@@ -252,11 +281,13 @@ This is my existing project setup.
 
       // Check NO backup was created by default with merge
       const files = await fs.readdir(testDir);
-      const backupFiles = files.filter(f => f.startsWith('CLAUDE.md.backup.'));
+      const backupFiles = files.filter((f) =>
+        f.startsWith('CLAUDE.md.backup.'),
+      );
       expect(backupFiles).toHaveLength(0);
     });
 
-    test('should create backup when --merge --backup is used', async() => {
+    test('should create backup when --merge --backup is used', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = `# My Project Configuration
 This is my existing project setup.`;
@@ -274,16 +305,21 @@ This is my existing project setup.`;
 
       // Check backup was created when both flags used
       const files = await fs.readdir(testDir);
-      const backupFiles = files.filter(f => f.startsWith('CLAUDE.md.backup.'));
+      const backupFiles = files.filter((f) =>
+        f.startsWith('CLAUDE.md.backup.'),
+      );
       expect(backupFiles).toHaveLength(1);
 
-      const backupContent = await fs.readFile(path.join(testDir, backupFiles[0]), 'utf8');
+      const backupContent = await fs.readFile(
+        path.join(testDir, backupFiles[0]),
+        'utf8',
+      );
       expect(backupContent).toBe(originalContent);
     });
   });
 
   describe('Content Merging Logic', () => {
-    test('should replace existing ruv-swarm section in place (true combining)', async() => {
+    test('should replace existing ruv-swarm section in place (true combining)', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = `# My Project
 
@@ -314,11 +350,13 @@ More content here.`;
       expect(mergedContent).toContain('MANDATORY RULE #1: BATCH EVERYTHING');
 
       // Verify section replacement, not duplication
-      const ruvSwarmOccurrences = (mergedContent.match(/Claude Code Configuration for ruv-swarm/g) || []).length;
+      const ruvSwarmOccurrences = (
+        mergedContent.match(/Claude Code Configuration for ruv-swarm/g) || []
+      ).length;
       expect(ruvSwarmOccurrences).toBe(1); // Should appear only once
     });
 
-    test('should intelligently insert ruv-swarm section when none exists (not just append)', async() => {
+    test('should intelligently insert ruv-swarm section when none exists (not just append)', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       const originalContent = `# My Project Configuration
 
@@ -341,19 +379,25 @@ This is my existing project setup.
       expect(mergedContent).toContain('My Project Configuration');
       expect(mergedContent).toContain('Setup Instructions');
       expect(mergedContent).toContain('---'); // Section separator
-      expect(mergedContent).toContain('Claude Code Configuration for ruv-swarm');
+      expect(mergedContent).toContain(
+        'Claude Code Configuration for ruv-swarm',
+      );
 
       // Should intelligently position content (not necessarily at bottom)
       const lines = mergedContent.split('\n');
-      const setupIndex = lines.findIndex(line => line.includes('Setup Instructions'));
-      const ruvSwarmIndex = lines.findIndex(line => line.includes('Claude Code Configuration for ruv-swarm'));
+      const setupIndex = lines.findIndex((line) =>
+        line.includes('Setup Instructions'),
+      );
+      const ruvSwarmIndex = lines.findIndex((line) =>
+        line.includes('Claude Code Configuration for ruv-swarm'),
+      );
 
       // Content should be intelligently positioned
       expect(setupIndex).toBeGreaterThanOrEqual(0);
       expect(ruvSwarmIndex).toBeGreaterThanOrEqual(0);
     });
 
-    test('should handle section end detection correctly', async() => {
+    test('should handle section end detection correctly', async () => {
       const lines = [
         '# First Section',
         'Content here',
@@ -367,7 +411,7 @@ This is my existing project setup.
       expect(sectionEnd).toBe(4); // Should stop at "# Second Section"
     });
 
-    test('should handle missing section end', async() => {
+    test('should handle missing section end', async () => {
       const lines = [
         '# Only Section',
         'Content here',
@@ -381,15 +425,13 @@ This is my existing project setup.
   });
 
   describe('Error Handling', () => {
-    test('should handle backup creation failure gracefully', async() => {
+    test('should handle backup creation failure gracefully', async () => {
       const claudePath = path.join(testDir, 'nonexistent', 'CLAUDE.md');
 
-      await expect(
-        docsGenerator.createBackup(claudePath),
-      ).rejects.toThrow();
+      await expect(docsGenerator.createBackup(claudePath)).rejects.toThrow();
     });
 
-    test('should handle merge failure gracefully', async() => {
+    test('should handle merge failure gracefully', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
 
       // Create file with no read permissions (simulate permission error)
@@ -397,9 +439,7 @@ This is my existing project setup.
       await fs.chmod(claudePath, 0o000);
 
       try {
-        await expect(
-          docsGenerator.mergeClaudeMd(claudePath),
-        ).rejects.toThrow();
+        await expect(docsGenerator.mergeClaudeMd(claudePath)).rejects.toThrow();
       } finally {
         // Restore permissions for cleanup
         await fs.chmod(claudePath, 0o644);
@@ -408,7 +448,7 @@ This is my existing project setup.
   });
 
   describe('Integration with generateAll', () => {
-    test('should pass options through to generateClaudeMd', async() => {
+    test('should pass options through to generateClaudeMd', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       await fs.writeFile(claudePath, 'existing content');
 
@@ -416,7 +456,7 @@ This is my existing project setup.
       const originalGenerateClaudeMd = docsGenerator.generateClaudeMd;
       let calledWithOptions = null;
 
-      docsGenerator.generateClaudeMd = async(options) => {
+      docsGenerator.generateClaudeMd = async (options) => {
         calledWithOptions = options;
         return { file: 'CLAUDE.md', success: true, action: 'created' };
       };
@@ -441,7 +481,7 @@ This is my existing project setup.
   });
 
   describe('Edge Cases', () => {
-    test('should handle empty existing file', async() => {
+    test('should handle empty existing file', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       await fs.writeFile(claudePath, '');
 
@@ -453,10 +493,12 @@ This is my existing project setup.
       expect(result.success).toBe(true);
 
       const mergedContent = await fs.readFile(claudePath, 'utf8');
-      expect(mergedContent).toContain('Claude Code Configuration for ruv-swarm');
+      expect(mergedContent).toContain(
+        'Claude Code Configuration for ruv-swarm',
+      );
     });
 
-    test('should handle file with only whitespace', async() => {
+    test('should handle file with only whitespace', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
       await fs.writeFile(claudePath, '   \n\n   \t   \n   ');
 
@@ -468,14 +510,16 @@ This is my existing project setup.
       expect(result.success).toBe(true);
 
       const mergedContent = await fs.readFile(claudePath, 'utf8');
-      expect(mergedContent).toContain('Claude Code Configuration for ruv-swarm');
+      expect(mergedContent).toContain(
+        'Claude Code Configuration for ruv-swarm',
+      );
     });
 
-    test('should handle very large existing file', async() => {
+    test('should handle very large existing file', async () => {
       const claudePath = path.join(testDir, 'CLAUDE.md');
 
       // Create large content (> 1MB)
-      const largeContent = `# Large File\n${ 'x'.repeat(1024 * 1024) }\n# End`;
+      const largeContent = `# Large File\n${'x'.repeat(1024 * 1024)}\n# End`;
       await fs.writeFile(claudePath, largeContent);
 
       const result = await docsGenerator.generateClaudeMd({
@@ -487,7 +531,9 @@ This is my existing project setup.
 
       const mergedContent = await fs.readFile(claudePath, 'utf8');
       expect(mergedContent).toContain('Large File');
-      expect(mergedContent).toContain('Claude Code Configuration for ruv-swarm');
+      expect(mergedContent).toContain(
+        'Claude Code Configuration for ruv-swarm',
+      );
     });
   });
 });

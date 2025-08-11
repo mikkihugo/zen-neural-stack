@@ -2,7 +2,12 @@
  * Utility functions for RuvSwarm
  */
 
-import { CognitiveProfile, SwarmTopology, AgentType, TaskPriority } from './types';
+import {
+  CognitiveProfile,
+  SwarmTopology,
+  AgentType,
+  TaskPriority,
+} from './types';
 
 /**
  * Generate a unique ID for agents, tasks, and messages
@@ -171,9 +176,10 @@ export function formatMetrics(metrics: {
   averageCompletionTime: number;
   throughput: number;
 }): string {
-  const successRate = metrics.totalTasks > 0 
-    ? ((metrics.completedTasks / metrics.totalTasks) * 100).toFixed(1)
-    : '0.0';
+  const successRate =
+    metrics.totalTasks > 0
+      ? ((metrics.completedTasks / metrics.totalTasks) * 100).toFixed(1)
+      : '0.0';
 
   return `
 Swarm Metrics:
@@ -209,7 +215,13 @@ export function validateSwarmOptions(options: any): string[] {
   }
 
   if (options.topology !== undefined) {
-    const validTopologies = ['mesh', 'hierarchical', 'distributed', 'centralized', 'hybrid'];
+    const validTopologies = [
+      'mesh',
+      'hierarchical',
+      'distributed',
+      'centralized',
+      'hybrid',
+    ];
     if (!validTopologies.includes(options.topology)) {
       errors.push(`topology must be one of: ${validTopologies.join(', ')}`);
     }
@@ -231,7 +243,7 @@ export function deepClone<T>(obj: T): T {
   }
 
   if (obj instanceof Array) {
-    return obj.map(item => deepClone(item)) as any;
+    return obj.map((item) => deepClone(item)) as any;
   }
 
   if (obj instanceof Map) {
@@ -244,7 +256,7 @@ export function deepClone<T>(obj: T): T {
 
   if (obj instanceof Set) {
     const cloned = new Set();
-    obj.forEach(value => {
+    obj.forEach((value) => {
       cloned.add(deepClone(value));
     });
     return cloned as any;
@@ -269,7 +281,7 @@ export async function retryWithBackoff<T>(
   initialDelay: number = 100,
 ): Promise<T> {
   let lastError: Error;
-  
+
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await fn();
@@ -277,7 +289,7 @@ export async function retryWithBackoff<T>(
       lastError = error as Error;
       if (i < maxRetries - 1) {
         const delay = initialDelay * Math.pow(2, i);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }

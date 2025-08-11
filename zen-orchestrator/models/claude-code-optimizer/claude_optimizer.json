@@ -47,7 +47,7 @@
       "optimization_strategies": {
         "token_efficiency": {
           "enabled": true,
-          "target_reduction": 0.30,
+          "target_reduction": 0.3,
           "methods": [
             "redundancy_elimination",
             "context_compression",
@@ -121,15 +121,27 @@
       "swe_bench_patterns": {
         "bug_fixing": {
           "context_focus": ["error_traces", "related_code", "test_cases"],
-          "token_allocation": {"analysis": 0.3, "solution": 0.5, "validation": 0.2}
+          "token_allocation": {
+            "analysis": 0.3,
+            "solution": 0.5,
+            "validation": 0.2
+          }
         },
         "feature_implementation": {
           "context_focus": ["requirements", "existing_code", "interfaces"],
-          "token_allocation": {"planning": 0.2, "implementation": 0.6, "testing": 0.2}
+          "token_allocation": {
+            "planning": 0.2,
+            "implementation": 0.6,
+            "testing": 0.2
+          }
         },
         "refactoring": {
           "context_focus": ["code_structure", "dependencies", "tests"],
-          "token_allocation": {"analysis": 0.4, "refactoring": 0.4, "validation": 0.2}
+          "token_allocation": {
+            "analysis": 0.4,
+            "refactoring": 0.4,
+            "validation": 0.2
+          }
         }
       }
     }
@@ -143,11 +155,11 @@
       },
       "workflow_patterns": {
         "sparc_mode_optimization": {
-          "orchestrator": {"token_budget": 3000, "context_priority": "high"},
-          "coder": {"token_budget": 4000, "context_priority": "medium"},
-          "researcher": {"token_budget": 3500, "context_priority": "high"},
-          "tdd": {"token_budget": 3800, "context_priority": "medium"},
-          "reviewer": {"token_budget": 2800, "context_priority": "high"}
+          "orchestrator": { "token_budget": 3000, "context_priority": "high" },
+          "coder": { "token_budget": 4000, "context_priority": "medium" },
+          "researcher": { "token_budget": 3500, "context_priority": "high" },
+          "tdd": { "token_budget": 3800, "context_priority": "medium" },
+          "reviewer": { "token_budget": 2800, "context_priority": "high" }
         }
       }
     }

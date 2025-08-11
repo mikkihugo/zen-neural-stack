@@ -19,7 +19,13 @@ export interface SwarmConfig {
   /** Name of the swarm */
   name: string;
   /** Swarm strategy */
-  strategy: 'research' | 'development' | 'analysis' | 'testing' | 'optimization' | 'maintenance';
+  strategy:
+    | 'research'
+    | 'development'
+    | 'analysis'
+    | 'testing'
+    | 'optimization'
+    | 'maintenance';
   /** Coordination mode */
   mode: 'centralized' | 'distributed' | 'hierarchical' | 'mesh' | 'hybrid';
   /** Maximum number of agents */

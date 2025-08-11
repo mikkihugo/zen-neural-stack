@@ -86,34 +86,31 @@ pub mod traits;
 
 // Re-export ruv-FANN types for convenience
 pub use ruv_fann::{
-    ActivationFunction, Network, NetworkBuilder, TrainingAlgorithm, TrainingData,
+  ActivationFunction, Network, NetworkBuilder, TrainingAlgorithm, TrainingData,
 };
 
 // Public API re-exports
-pub use crate::{
-    config::*,
-    data::*,
-    error::*,
-    integration::*,
-    traits::*,
-};
+pub use crate::{config::*, data::*, error::*, integration::*, traits::*};
 
 /// Commonly used types and traits for convenient importing
 pub mod prelude {
-    pub use crate::{
-        config::ModelConfigBuilder,
-        traits::ModelConfig,
-        data::{TimeSeriesDataFrame, TimeSeriesDataset, TimeSeriesDatasetBuilder, TimeSeriesSchema},
-        error::{NeuroDivergentError, NeuroDivergentResult},
-        integration::{NetworkAdapter, TrainingBridge},
-        traits::{BaseModel, ForecastingEngine, ModelState},
-    };
-    
-    // Essential external types
-    pub use chrono::{DateTime, Utc};
-    pub use num_traits::Float;
-    pub use polars::prelude::*;
-    pub use serde::{Deserialize, Serialize};
+  pub use crate::{
+    config::ModelConfigBuilder,
+    data::{
+      TimeSeriesDataFrame, TimeSeriesDataset, TimeSeriesDatasetBuilder,
+      TimeSeriesSchema,
+    },
+    error::{NeuroDivergentError, NeuroDivergentResult},
+    integration::{NetworkAdapter, TrainingBridge},
+    traits::ModelConfig,
+    traits::{BaseModel, ForecastingEngine, ModelState},
+  };
+
+  // Essential external types
+  pub use chrono::{DateTime, Utc};
+  pub use num_traits::Float;
+  pub use polars::prelude::*;
+  pub use serde::{Deserialize, Serialize};
 }
 
 /// Library version information
@@ -127,23 +124,23 @@ pub const DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+  use super::*;
 
-    #[test]
-    fn test_version_info() {
-        assert!(!VERSION.is_empty());
-        assert!(!NAME.is_empty());
-        assert!(!DESCRIPTION.is_empty());
-    }
+  #[test]
+  fn test_version_info() {
+    assert!(!VERSION.is_empty());
+    assert!(!NAME.is_empty());
+    assert!(!DESCRIPTION.is_empty());
+  }
 
-    #[test]
-    fn test_prelude_imports() {
-        // Ensure all prelude imports are accessible
-        use crate::prelude::*;
-        
-        // Test that we can reference the main types
-        let _: Option<TimeSeriesSchema> = None;
-        let _: Option<NeuroDivergentError> = None;
-        let _: Option<ModelConfigBuilder<f64>> = None;
-    }
+  #[test]
+  fn test_prelude_imports() {
+    // Ensure all prelude imports are accessible
+    use crate::prelude::*;
+
+    // Test that we can reference the main types
+    let _: Option<TimeSeriesSchema> = None;
+    let _: Option<NeuroDivergentError> = None;
+    let _: Option<ModelConfigBuilder<f64>> = None;
+  }
 }

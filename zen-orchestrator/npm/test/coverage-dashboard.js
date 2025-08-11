@@ -12,11 +12,19 @@ const startTime = Date.now();
 export async function trackCoverage() {
   try {
     // Run coverage with JSON output
-    const { stdout, stderr } = await execAsync('npm run test:coverage -- --reporter=json-summary');
+    const { stdout, stderr } = await execAsync(
+      'npm run test:coverage -- --reporter=json-summary',
+    );
 
     // Read the coverage summary
-    const coverageSummaryPath = path.join(process.cwd(), 'coverage', 'coverage-summary.json');
-    const coverageData = JSON.parse(await fs.readFile(coverageSummaryPath, 'utf8'));
+    const coverageSummaryPath = path.join(
+      process.cwd(),
+      'coverage',
+      'coverage-summary.json',
+    );
+    const coverageData = JSON.parse(
+      await fs.readFile(coverageSummaryPath, 'utf8'),
+    );
 
     const totalCoverage = coverageData.total;
 
@@ -72,8 +80,12 @@ async function extractUncoveredFiles(coverageData) {
     };
 
     // Only include files with less than 100% coverage
-    if (coverage.lines < 100 || coverage.branches < 100 ||
-        coverage.functions < 100 || coverage.statements < 100) {
+    if (
+      coverage.lines < 100 ||
+      coverage.branches < 100 ||
+      coverage.functions < 100 ||
+      coverage.statements < 100
+    ) {
       uncovered.push(coverage);
     }
   }
@@ -84,7 +96,9 @@ async function extractUncoveredFiles(coverageData) {
 
 export async function generateProgressReport() {
   const latest = coverageHistory[coverageHistory.length - 1];
-  const initial = coverageHistory[0] || { coverage: { lines: 0, branches: 0, functions: 0, statements: 0 } };
+  const initial = coverageHistory[0] || {
+    coverage: { lines: 0, branches: 0, functions: 0, statements: 0 },
+  };
 
   const progress = {
     current: latest,
@@ -95,7 +109,9 @@ export async function generateProgressReport() {
       statements: latest.coverage.statements - initial.coverage.statements,
     },
     rate: {
-      perMinute: (latest.coverage.lines - initial.coverage.lines) / (latest.elapsed / 60000),
+      perMinute:
+        (latest.coverage.lines - initial.coverage.lines) /
+        (latest.elapsed / 60000),
     },
     target: {
       lines: 100 - latest.coverage.lines,
@@ -145,8 +161,14 @@ export async function validatePresets() {
 
 async function getPresetCoverage(preset) {
   try {
-    const { stdout } = await execAsync(`npm run test:coverage -- --preset=${preset} --reporter=json-summary`);
-    const summaryPath = path.join(process.cwd(), 'coverage', 'coverage-summary.json');
+    const { stdout } = await execAsync(
+      `npm run test:coverage -- --preset=${preset} --reporter=json-summary`,
+    );
+    const summaryPath = path.join(
+      process.cwd(),
+      'coverage',
+      'coverage-summary.json',
+    );
     const data = JSON.parse(await fs.readFile(summaryPath, 'utf8'));
     return data.total;
   } catch (error) {
@@ -163,21 +185,35 @@ export async function startLiveMonitoring(intervalMs = 30000) {
   console.log('\n📈 Initial Coverage:', initial?.coverage);
 
   // Set up interval
-  const monitoringInterval = setInterval(async() => {
+  const monitoringInterval = setInterval(async () => {
     const current = await trackCoverage();
     const progress = await generateProgressReport();
 
     console.log('\n📊 Coverage Update:');
-    console.log(`  Lines:      ${current.coverage.lines.toFixed(2)}% ${getProgressBar(current.coverage.lines)}`);
-    console.log(`  Branches:   ${current.coverage.branches.toFixed(2)}% ${getProgressBar(current.coverage.branches)}`);
-    console.log(`  Functions:  ${current.coverage.functions.toFixed(2)}% ${getProgressBar(current.coverage.functions)}`);
-    console.log(`  Statements: ${current.coverage.statements.toFixed(2)}% ${getProgressBar(current.coverage.statements)}`);
+    console.log(
+      `  Lines:      ${current.coverage.lines.toFixed(2)}% ${getProgressBar(current.coverage.lines)}`,
+    );
+    console.log(
+      `  Branches:   ${current.coverage.branches.toFixed(2)}% ${getProgressBar(current.coverage.branches)}`,
+    );
+    console.log(
+      `  Functions:  ${current.coverage.functions.toFixed(2)}% ${getProgressBar(current.coverage.functions)}`,
+    );
+    console.log(
+      `  Statements: ${current.coverage.statements.toFixed(2)}% ${getProgressBar(current.coverage.statements)}`,
+    );
     console.log(`\n  ⏱️  Elapsed: ${Math.floor(current.elapsed / 1000)}s`);
-    console.log(`  📈 Improvement Rate: ${progress.rate.perMinute.toFixed(2)}% per minute`);
+    console.log(
+      `  📈 Improvement Rate: ${progress.rate.perMinute.toFixed(2)}% per minute`,
+    );
 
     // Check if we've reached 100%
-    if (current.coverage.lines >= 100 && current.coverage.branches >= 100 &&
-        current.coverage.functions >= 100 && current.coverage.statements >= 100) {
+    if (
+      current.coverage.lines >= 100 &&
+      current.coverage.branches >= 100 &&
+      current.coverage.functions >= 100 &&
+      current.coverage.statements >= 100
+    ) {
       console.log('\n🎉 100% COVERAGE ACHIEVED! 🎉');
       clearInterval(monitoringInterval);
       await generateFinalReport();
@@ -190,7 +226,7 @@ export async function startLiveMonitoring(intervalMs = 30000) {
 function getProgressBar(percentage) {
   const filled = Math.floor(percentage / 5);
   const empty = 20 - filled;
-  return `[${ '█'.repeat(filled) }${'░'.repeat(empty) }]`;
+  return `[${'█'.repeat(filled)}${'░'.repeat(empty)}]`;
 }
 
 export async function generateFinalReport() {
@@ -215,12 +251,15 @@ export async function generateFinalReport() {
 ${generateProgressChart()}
 
 ## 🧬 Preset Validation
-${Object.entries(presetResults).map(([preset, result]) =>
-    `### ${preset}
+${Object.entries(presetResults)
+  .map(
+    ([preset, result]) =>
+      `### ${preset}
 - Success: ${result.success ? '✅' : '❌'}
 - Tests: ${result.passed || 0} passed, ${result.failed || 0} failed
 - Coverage: ${result.coverage ? `${result.coverage.lines.pct}%` : 'N/A'}`,
-  ).join('\n\n')}
+  )
+  .join('\n\n')}
 
 ## 🚀 Performance Impact
 - No regression detected
@@ -244,10 +283,12 @@ function generateProgressChart() {
     return 'No history data';
   }
 
-  const chart = coverageHistory.map(metric => {
-    const time = new Date(metric.timestamp).toLocaleTimeString();
-    return `${time}: ${metric.coverage.lines.toFixed(1)}%`;
-  }).join('\n');
+  const chart = coverageHistory
+    .map((metric) => {
+      const time = new Date(metric.timestamp).toLocaleTimeString();
+      return `${time}: ${metric.coverage.lines.toFixed(1)}%`;
+    })
+    .join('\n');
 
   return `\`\`\`
 ${chart}

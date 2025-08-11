@@ -26,10 +26,7 @@ describe('Hooks System 100% Coverage', () => {
   describe('HooksManager Core', () => {
     it('should handle hook registration edge cases', () => {
       // Null hook
-      assert.throws(
-        () => hooks.register(null, () => {}),
-        /Invalid hook name/,
-      );
+      assert.throws(() => hooks.register(null, () => {}), /Invalid hook name/);
 
       // Non-function handler
       assert.throws(
@@ -45,8 +42,8 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle hook execution failures', async() => {
-      hooks.register('failing-hook', async() => {
+    it('should handle hook execution failures', async () => {
+      hooks.register('failing-hook', async () => {
         throw new Error('Hook failed');
       });
 
@@ -56,21 +53,18 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle hook timeout', async() => {
-      hooks.register('slow-hook', async() => {
-        await new Promise(resolve => setTimeout(resolve, 5000));
+    it('should handle hook timeout', async () => {
+      hooks.register('slow-hook', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
       });
 
       hooks.setTimeout(100);
 
-      await assert.rejects(
-        hooks.execute('slow-hook', {}),
-        /Hook timeout/,
-      );
+      await assert.rejects(hooks.execute('slow-hook', {}), /Hook timeout/);
     });
 
-    it('should handle hook context validation', async() => {
-      hooks.register('validated-hook', async(context) => {
+    it('should handle hook context validation', async () => {
+      hooks.register('validated-hook', async (context) => {
         if (!context.required) {
           throw new Error('Missing required field');
         }
@@ -83,15 +77,15 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle hook chain execution', async() => {
+    it('should handle hook chain execution', async () => {
       const results = [];
 
-      hooks.register('chain-1', async() => {
+      hooks.register('chain-1', async () => {
         results.push(1);
         return { step: 1 };
       });
 
-      hooks.register('chain-2', async(context) => {
+      hooks.register('chain-2', async (context) => {
         results.push(2);
         return { ...context, step: 2 };
       });
@@ -100,20 +94,17 @@ describe('Hooks System 100% Coverage', () => {
       assert.deepEqual(results, [1, 2]);
     });
 
-    it('should handle hook middleware errors', async() => {
-      hooks.addMiddleware(async(hookName, context, next) => {
+    it('should handle hook middleware errors', async () => {
+      hooks.addMiddleware(async (hookName, context, next) => {
         if (hookName === 'restricted') {
           throw new Error('Access denied');
         }
         return next();
       });
 
-      hooks.register('restricted', async() => ({ success: true }));
+      hooks.register('restricted', async () => ({ success: true }));
 
-      await assert.rejects(
-        hooks.execute('restricted', {}),
-        /Access denied/,
-      );
+      await assert.rejects(hooks.execute('restricted', {}), /Access denied/);
     });
   });
 
@@ -125,32 +116,26 @@ describe('Hooks System 100% Coverage', () => {
     });
 
     it('should handle invalid command parsing', () => {
-      assert.throws(
-        () => cliHooks.parseCommand(null),
-        /Invalid command/,
-      );
+      assert.throws(() => cliHooks.parseCommand(null), /Invalid command/);
 
-      assert.throws(
-        () => cliHooks.parseCommand(''),
-        /Empty command/,
-      );
+      assert.throws(() => cliHooks.parseCommand(''), /Empty command/);
     });
 
-    it('should handle command execution with missing arguments', async() => {
+    it('should handle command execution with missing arguments', async () => {
       await assert.rejects(
         cliHooks.execute('swarm', []), // Missing required args
         /Missing required arguments/,
       );
     });
 
-    it('should handle command validation failures', async() => {
+    it('should handle command validation failures', async () => {
       await assert.rejects(
         cliHooks.execute('swarm', ['init', '--invalid-flag']),
         /Unknown flag/,
       );
     });
 
-    it('should handle interactive mode edge cases', async() => {
+    it('should handle interactive mode edge cases', async () => {
       cliHooks.setInteractive(true);
 
       // Simulate no TTY
@@ -173,7 +158,7 @@ describe('Hooks System 100% Coverage', () => {
       claude = new ClaudeIntegration();
     });
 
-    it('should handle API key validation', async() => {
+    it('should handle API key validation', async () => {
       claude.setApiKey(''); // Empty API key
 
       await assert.rejects(
@@ -182,7 +167,7 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle rate limiting', async() => {
+    it('should handle rate limiting', async () => {
       claude.setRateLimit(1); // 1 request per second
 
       const promises = [];
@@ -191,12 +176,12 @@ describe('Hooks System 100% Coverage', () => {
       }
 
       const results = await Promise.allSettled(promises);
-      const rejected = results.filter(r => r.status === 'rejected');
+      const rejected = results.filter((r) => r.status === 'rejected');
 
       assert(rejected.length > 0, 'Some requests should be rate limited');
     });
 
-    it('should handle response parsing errors', async() => {
+    it('should handle response parsing errors', async () => {
       claude._mockResponse = 'invalid-json';
 
       await assert.rejects(
@@ -205,7 +190,7 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle context window overflow', async() => {
+    it('should handle context window overflow', async () => {
       const hugePrompt = 'x'.repeat(200000); // Exceeds context window
 
       await assert.rejects(
@@ -240,7 +225,7 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle command permission errors', async() => {
+    it('should handle command permission errors', async () => {
       commands.register('admin', () => {}, {
         requiresAdmin: true,
       });
@@ -251,7 +236,7 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle command validation schemas', async() => {
+    it('should handle command validation schemas', async () => {
       commands.register('validated', (args) => args, {
         schema: {
           name: { type: 'string', required: true },
@@ -273,23 +258,20 @@ describe('Hooks System 100% Coverage', () => {
       remote = new RemoteIntegration();
     });
 
-    it('should handle connection failures', async() => {
+    it('should handle connection failures', async () => {
       await assert.rejects(
         remote.connect('invalid://url'),
         /Failed to connect/,
       );
     });
 
-    it('should handle authentication failures', async() => {
+    it('should handle authentication failures', async () => {
       remote.setCredentials({ token: 'invalid' });
 
-      await assert.rejects(
-        remote.authenticate(),
-        /Authentication failed/,
-      );
+      await assert.rejects(remote.authenticate(), /Authentication failed/);
     });
 
-    it('should handle message serialization errors', async() => {
+    it('should handle message serialization errors', async () => {
       await remote.connect('ws://localhost:3000');
 
       const circularRef = {};
@@ -301,7 +283,7 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle reconnection logic', async() => {
+    it('should handle reconnection logic', async () => {
       remote.setAutoReconnect(true, { maxRetries: 3 });
 
       let attempts = 0;
@@ -310,7 +292,7 @@ describe('Hooks System 100% Coverage', () => {
       await remote.connect('ws://invalid-host');
 
       // Wait for reconnection attempts
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       assert(attempts >= 1, 'Should attempt reconnection');
     });
@@ -323,7 +305,7 @@ describe('Hooks System 100% Coverage', () => {
       coordinator = new GitHubCoordinator();
     });
 
-    it('should handle PR creation failures', async() => {
+    it('should handle PR creation failures', async () => {
       await assert.rejects(
         coordinator.createPR({
           title: '', // Empty title
@@ -333,7 +315,7 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle branch protection violations', async() => {
+    it('should handle branch protection violations', async () => {
       await assert.rejects(
         coordinator.push({
           branch: 'main',
@@ -344,7 +326,7 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle merge conflict detection', async() => {
+    it('should handle merge conflict detection', async () => {
       const result = await coordinator.checkMergeability({
         base: 'main',
         head: 'feature-branch',
@@ -373,21 +355,18 @@ describe('Hooks System 100% Coverage', () => {
       claudeHooks = new ClaudeHooks();
     });
 
-    it('should handle pre-task hook failures', async() => {
-      claudeHooks.register('pre-task', async(context) => {
+    it('should handle pre-task hook failures', async () => {
+      claudeHooks.register('pre-task', async (context) => {
         if (!context.taskId) {
           throw new Error('Task ID required');
         }
       });
 
-      await assert.rejects(
-        claudeHooks.runPreTask({}),
-        /Task ID required/,
-      );
+      await assert.rejects(claudeHooks.runPreTask({}), /Task ID required/);
     });
 
-    it('should handle post-edit hook validation', async() => {
-      claudeHooks.register('post-edit', async(context) => {
+    it('should handle post-edit hook validation', async () => {
+      claudeHooks.register('post-edit', async (context) => {
         if (context.file.endsWith('.py') && !context.formatted) {
           throw new Error('Python files must be formatted');
         }
@@ -402,7 +381,7 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle session persistence errors', async() => {
+    it('should handle session persistence errors', async () => {
       claudeHooks._storage = null; // Simulate storage failure
 
       await assert.rejects(
@@ -411,12 +390,18 @@ describe('Hooks System 100% Coverage', () => {
       );
     });
 
-    it('should handle hook execution order', async() => {
+    it('should handle hook execution order', async () => {
       const order = [];
 
-      claudeHooks.register('ordered', async() => order.push(1), { priority: 10 });
-      claudeHooks.register('ordered', async() => order.push(2), { priority: 5 });
-      claudeHooks.register('ordered', async() => order.push(3), { priority: 15 });
+      claudeHooks.register('ordered', async () => order.push(1), {
+        priority: 10,
+      });
+      claudeHooks.register('ordered', async () => order.push(2), {
+        priority: 5,
+      });
+      claudeHooks.register('ordered', async () => order.push(3), {
+        priority: 15,
+      });
 
       await claudeHooks.execute('ordered', {});
 

@@ -22,7 +22,7 @@ describe('Edge Case Test Suite - Complete Coverage', () => {
   it('should have all edge case test files present', () => {
     const fs = require('fs');
 
-    edgeCaseTests.forEach(testFile => {
+    edgeCaseTests.forEach((testFile) => {
       const fullPath = path.join(__dirname, testFile);
       expect(fs.existsSync(fullPath)).toBe(true);
     });
@@ -146,7 +146,10 @@ describe('Edge Case Test Suite - Complete Coverage', () => {
         errorHandling: 13,
       };
 
-      const totalCoverage = Object.values(totalEdgeCases).reduce((sum, count) => sum + count, 0);
+      const totalCoverage = Object.values(totalEdgeCases).reduce(
+        (sum, count) => sum + count,
+        0,
+      );
 
       expect(totalCoverage).toBe(66);
       expect(totalCoverage).toBeGreaterThan(50); // Significant edge case coverage
@@ -246,7 +249,9 @@ export async function runAllEdgeCaseTests() {
   try {
     // This would typically run Jest programmatically
     console.log('✅ All edge case tests completed successfully');
-    console.log(`📈 Coverage: ${Object.keys(testResults.coverage).length} modules tested`);
+    console.log(
+      `📈 Coverage: ${Object.keys(testResults.coverage).length} modules tested`,
+    );
 
     return testResults;
   } catch (error) {
@@ -260,11 +265,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('🚀 Starting edge case test suite...');
 
   runAllEdgeCaseTests()
-    .then(results => {
+    .then((results) => {
       console.log('🎉 Edge case test suite completed');
       console.log('Results:', results);
     })
-    .catch(error => {
+    .catch((error) => {
       console.error('💥 Test suite failed:', error);
       process.exit(1);
     });

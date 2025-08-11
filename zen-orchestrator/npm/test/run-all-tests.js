@@ -111,25 +111,33 @@ class TestReport {
     console.log(`  ✅ Passed: ${this.summary.passedTests}`);
     console.log(`  ❌ Failed: ${this.summary.failedTests}`);
 
-    console.log(`\n⏱️  Total Duration: ${(this.summary.totalDuration / 1000).toFixed(2)}s`);
+    console.log(
+      `\n⏱️  Total Duration: ${(this.summary.totalDuration / 1000).toFixed(2)}s`,
+    );
 
     if (this.summary.failedSuites > 0) {
       console.log('\n❌ Failed Suites:');
-      this.suites.filter(s => !s.passed).forEach(suite => {
-        console.log(`  - ${suite.name}`);
-        if (suite.errors && suite.errors.length > 0) {
-          suite.errors.slice(0, 3).forEach(error => {
-            console.log(`    • ${error}`);
-          });
-          if (suite.errors.length > 3) {
-            console.log(`    ... and ${suite.errors.length - 3} more errors`);
+      this.suites
+        .filter((s) => !s.passed)
+        .forEach((suite) => {
+          console.log(`  - ${suite.name}`);
+          if (suite.errors && suite.errors.length > 0) {
+            suite.errors.slice(0, 3).forEach((error) => {
+              console.log(`    • ${error}`);
+            });
+            if (suite.errors.length > 3) {
+              console.log(`    ... and ${suite.errors.length - 3} more errors`);
+            }
           }
-        }
-      });
+        });
     }
 
-    console.log(`\n${ '═'.repeat(60)}`);
-    console.log(this.summary.failedSuites === 0 ? '✅ All tests passed!' : '❌ Some tests failed');
+    console.log(`\n${'═'.repeat(60)}`);
+    console.log(
+      this.summary.failedSuites === 0
+        ? '✅ All tests passed!'
+        : '❌ Some tests failed',
+    );
   }
 }
 
@@ -185,23 +193,30 @@ async function runTestSuite(suite, report) {
 
     const timeout = setTimeout(() => {
       testProcess.kill('SIGTERM');
-      suiteResult.errors.push(`Test suite timed out after ${suite.timeout / 1000}s`);
+      suiteResult.errors.push(
+        `Test suite timed out after ${suite.timeout / 1000}s`,
+      );
     }, suite.timeout);
 
     testProcess.on('close', (code) => {
       clearTimeout(timeout);
 
       suiteResult.duration = Date.now() - suiteStartTime;
-      suiteResult.totalTests = suiteResult.passedTests + suiteResult.failedTests;
+      suiteResult.totalTests =
+        suiteResult.passedTests + suiteResult.failedTests;
       suiteResult.passed = code === 0 && suiteResult.failedTests === 0;
       suiteResult.exitCode = code;
-      suiteResult.output = output.split('\n').filter(line => line.trim());
+      suiteResult.output = output.split('\n').filter((line) => line.trim());
 
       if (errorOutput) {
-        suiteResult.errors.push(...errorOutput.split('\n').filter(line => line.trim()));
+        suiteResult.errors.push(
+          ...errorOutput.split('\n').filter((line) => line.trim()),
+        );
       }
 
-      console.log(`\n${suiteResult.passed ? '✅' : '❌'} ${suite.name} completed in ${(suiteResult.duration / 1000).toFixed(2)}s`);
+      console.log(
+        `\n${suiteResult.passed ? '✅' : '❌'} ${suite.name} completed in ${(suiteResult.duration / 1000).toFixed(2)}s`,
+      );
 
       report.addSuite(suiteResult);
       resolve(suiteResult);
@@ -227,7 +242,10 @@ async function startMCPServer() {
       const output = data.toString();
       console.log(`MCP Server: ${output.trim()}`);
 
-      if (output.includes('Starting RUV-Swarm MCP server') || output.includes('listening')) {
+      if (
+        output.includes('Starting RUV-Swarm MCP server') ||
+        output.includes('listening')
+      ) {
         serverStarted = true;
         setTimeout(resolve, 2000); // Give server time to fully initialize
       }
@@ -304,10 +322,13 @@ class PerformanceMonitor {
   }
 
   getReport() {
-    const avgCpu = this.metrics.cpu.reduce((sum, m) => sum + m.user + m.system, 0) /
-                      (this.metrics.cpu.length || 1) / 1000000; // Convert to seconds
+    const avgCpu =
+      this.metrics.cpu.reduce((sum, m) => sum + m.user + m.system, 0) /
+      (this.metrics.cpu.length || 1) /
+      1000000; // Convert to seconds
 
-    const maxMemory = Math.max(...this.metrics.memory.map(m => m.heapUsed)) / 1024 / 1024; // MB
+    const maxMemory =
+      Math.max(...this.metrics.memory.map((m) => m.heapUsed)) / 1024 / 1024; // MB
 
     return {
       averageCpuSeconds: avgCpu.toFixed(2),
@@ -333,7 +354,7 @@ async function main() {
     perfMonitor.start();
 
     // Check if MCP server is needed
-    const requiresServer = TEST_SUITES.some(suite => suite.requiresServer);
+    const requiresServer = TEST_SUITES.some((suite) => suite.requiresServer);
 
     if (requiresServer) {
       try {
@@ -365,9 +386,8 @@ async function main() {
       await runTestSuite(suite, report);
 
       // Small delay between suites
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-
   } catch (error) {
     console.error('\n❌ Test runner error:', error);
     process.exitCode = 1;
@@ -401,20 +421,20 @@ async function main() {
 }
 
 // Handle interrupts
-process.on('SIGINT', async() => {
+process.on('SIGINT', async () => {
   console.log('\n⚠️  Test run interrupted');
   await stopMCPServer();
   process.exit(1);
 });
 
-process.on('unhandledRejection', async(error) => {
+process.on('unhandledRejection', async (error) => {
   console.error('\n❌ Unhandled rejection:', error);
   await stopMCPServer();
   process.exit(1);
 });
 
 // Run tests
-main().catch(error => {
+main().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });

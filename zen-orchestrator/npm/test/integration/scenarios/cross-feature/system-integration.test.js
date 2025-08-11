@@ -18,7 +18,7 @@ describe('Cross-Feature Integration Tests', () => {
     sandbox = sinon.createSandbox();
   });
 
-  afterEach(async() => {
+  afterEach(async () => {
     if (swarm) {
       await swarm.shutdown();
     }
@@ -26,7 +26,7 @@ describe('Cross-Feature Integration Tests', () => {
   });
 
   describe('Neural + Swarm Coordination', () => {
-    it('should coordinate neural agents with standard swarm operations', async() => {
+    it('should coordinate neural agents with standard swarm operations', async () => {
       // Initialize integrated system
       swarm = new RuvSwarm();
       neuralManager = new NeuralAgentManager();
@@ -71,13 +71,18 @@ describe('Cross-Feature Integration Tests', () => {
         task: 'Analyze codebase and suggest neural-guided optimizations',
         requiresBoth: ['traditional-analysis', 'neural-patterns'],
         coordination: 'mixed-team',
-        agents: [...standardAgents.map(a => a.id), ...neuralAgents.map(a => a.id)],
+        agents: [
+          ...standardAgents.map((a) => a.id),
+          ...neuralAgents.map((a) => a.id),
+        ],
       });
 
       // Monitor coordination
       const coordinationEvents = [];
       swarm.on('coordination', (event) => coordinationEvents.push(event));
-      neuralManager.on('insight', (insight) => coordinationEvents.push({ type: 'neural-insight', ...insight }));
+      neuralManager.on('insight', (insight) =>
+        coordinationEvents.push({ type: 'neural-insight', ...insight }),
+      );
 
       // Wait for task completion
       let taskStatus;
@@ -86,7 +91,7 @@ describe('Cross-Feature Integration Tests', () => {
         if (taskStatus.status === 'completed') {
           break;
         }
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // Verify neural-swarm coordination
@@ -95,8 +100,12 @@ describe('Cross-Feature Integration Tests', () => {
       expect(taskStatus.neuralContributions).to.have.lengthOf(3);
 
       // Verify knowledge sharing
-      expect(coordinationEvents.filter(e => e.type === 'knowledge-share')).to.have.length.at.least(3);
-      expect(coordinationEvents.filter(e => e.type === 'neural-insight')).to.have.length.at.least(2);
+      expect(
+        coordinationEvents.filter((e) => e.type === 'knowledge-share'),
+      ).to.have.length.at.least(3);
+      expect(
+        coordinationEvents.filter((e) => e.type === 'neural-insight'),
+      ).to.have.length.at.least(2);
 
       // Check neural learning from swarm interactions
       const neuralMetrics = await neuralManager.getSwarmLearningMetrics();
@@ -105,7 +114,7 @@ describe('Cross-Feature Integration Tests', () => {
       expect(neuralMetrics.accuracyImprovement).to.be.greaterThan(0);
     });
 
-    it('should enable neural agents to learn from swarm patterns', async() => {
+    it('should enable neural agents to learn from swarm patterns', async () => {
       swarm = new RuvSwarm();
       neuralManager = new NeuralAgentManager();
 
@@ -148,11 +157,13 @@ describe('Cross-Feature Integration Tests', () => {
         taskResults.push(task);
 
         // Wait for completion
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
 
       // Analyze learned patterns
-      const learnedPatterns = await neuralManager.getLearnedPatterns(learningAgent.id);
+      const learnedPatterns = await neuralManager.getLearnedPatterns(
+        learningAgent.id,
+      );
       expect(learnedPatterns).to.exist;
       expect(learnedPatterns.architecturalPatterns).to.have.length.at.least(3);
       expect(learnedPatterns.communicationPatterns).to.have.length.at.least(2);
@@ -170,7 +181,7 @@ describe('Cross-Feature Integration Tests', () => {
       expect(newTaskStatus.confidence).to.be.greaterThan(0.8);
     });
 
-    it('should optimize swarm topology using neural insights', async() => {
+    it('should optimize swarm topology using neural insights', async () => {
       swarm = new RuvSwarm();
       neuralManager = new NeuralAgentManager();
 
@@ -201,10 +212,12 @@ describe('Cross-Feature Integration Tests', () => {
         // Execute representative workload
         const workloadTasks = [];
         for (let i = 0; i < 20; i++) {
-          workloadTasks.push(swarm.orchestrateTask({
-            task: `Workload task ${cycle}-${i}`,
-            complexity: Math.random() > 0.5 ? 'high' : 'low',
-          }));
+          workloadTasks.push(
+            swarm.orchestrateTask({
+              task: `Workload task ${cycle}-${i}`,
+              complexity: Math.random() > 0.5 ? 'high' : 'low',
+            }),
+          );
         }
 
         await Promise.all(workloadTasks);
@@ -213,17 +226,20 @@ describe('Cross-Feature Integration Tests', () => {
         const performance = await swarm.getPerformanceMetrics();
 
         // Neural optimization
-        const optimization = await neuralManager.optimizeTopology(topologyOptimizer.id, {
-          currentTopology: await swarm.getTopology(),
-          performanceData: performance,
-          workloadPattern: workloadTasks.map(t => t.complexity),
-        });
+        const optimization = await neuralManager.optimizeTopology(
+          topologyOptimizer.id,
+          {
+            currentTopology: await swarm.getTopology(),
+            performanceData: performance,
+            workloadPattern: workloadTasks.map((t) => t.complexity),
+          },
+        );
 
         if (optimization.recommendations.length > 0) {
           await swarm.applyTopologyOptimization(optimization.recommendations);
         }
 
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // Verify optimization effectiveness
@@ -232,14 +248,16 @@ describe('Cross-Feature Integration Tests', () => {
 
       expect(finalEfficiency).to.be.greaterThan(initialEfficiency);
 
-      const optimizationHistory = await neuralManager.getOptimizationHistory(topologyOptimizer.id);
+      const optimizationHistory = await neuralManager.getOptimizationHistory(
+        topologyOptimizer.id,
+      );
       expect(optimizationHistory.improvements).to.have.length.at.least(1);
       expect(optimizationHistory.averageImprovement).to.be.greaterThan(0.05); // 5% improvement
     });
   });
 
   describe('Memory + Persistence Integration', () => {
-    it('should persist agent memories across sessions', async() => {
+    it('should persist agent memories across sessions', async () => {
       // First session
       swarm = new RuvSwarm();
       memoryManager = new MemoryManager();
@@ -309,8 +327,10 @@ describe('Cross-Feature Integration Tests', () => {
       const restoredAgents = await newSwarm.getAgents();
       expect(restoredAgents).to.have.lengthOf(2);
 
-      const restoredAgent1 = restoredAgents.find(a => a.type === 'researcher');
-      const restoredAgent2 = restoredAgents.find(a => a.type === 'coder');
+      const restoredAgent1 = restoredAgents.find(
+        (a) => a.type === 'researcher',
+      );
+      const restoredAgent2 = restoredAgents.find((a) => a.type === 'coder');
 
       const memory1 = await memoryManager.getAgentMemory(restoredAgent1.id);
       const memory2 = await memoryManager.getAgentMemory(restoredAgent2.id);
@@ -322,14 +342,15 @@ describe('Cross-Feature Integration Tests', () => {
       expect(memory2.semanticMemory.concepts).to.include('lazy loading');
 
       // Verify shared memory
-      const sharedMemory = await memoryManager.getSharedMemory('project-context');
+      const sharedMemory =
+        await memoryManager.getSharedMemory('project-context');
       expect(sharedMemory.project).to.equal('React Performance');
       expect(sharedMemory.insights).to.have.lengthOf(2);
 
       await newSwarm.shutdown();
     });
 
-    it('should enable memory-based agent coordination', async() => {
+    it('should enable memory-based agent coordination', async () => {
       swarm = new RuvSwarm();
       memoryManager = new MemoryManager();
 
@@ -382,14 +403,18 @@ describe('Cross-Feature Integration Tests', () => {
       for (const taskConfig of collaborativeTasks) {
         const task = await swarm.orchestrateTask(taskConfig);
         taskResults.push(task);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // Verify coordination memory
       const coordinationMemory = await memoryManager.getCoordinationMemory();
       expect(coordinationMemory.interactions).to.have.length.at.least(3);
-      expect(coordinationMemory.sharedKnowledge).to.have.property('api-patterns');
-      expect(coordinationMemory.sharedKnowledge).to.have.property('implementation-details');
+      expect(coordinationMemory.sharedKnowledge).to.have.property(
+        'api-patterns',
+      );
+      expect(coordinationMemory.sharedKnowledge).to.have.property(
+        'implementation-details',
+      );
 
       // Test memory-based future coordination
       const futureTask = await swarm.orchestrateTask({
@@ -400,13 +425,17 @@ describe('Cross-Feature Integration Tests', () => {
 
       const futureTaskStatus = await swarm.getTaskStatus(futureTask.id);
       expect(futureTaskStatus.memoryUtilization).to.exist;
-      expect(futureTaskStatus.memoryUtilization.pastInteractions).to.be.greaterThan(0);
-      expect(futureTaskStatus.memoryUtilization.appliedKnowledge).to.have.length.at.least(2);
+      expect(
+        futureTaskStatus.memoryUtilization.pastInteractions,
+      ).to.be.greaterThan(0);
+      expect(
+        futureTaskStatus.memoryUtilization.appliedKnowledge,
+      ).to.have.length.at.least(2);
     });
   });
 
   describe('MCP + Agent Lifecycle Integration', () => {
-    it('should manage agent lifecycle through MCP protocol', async() => {
+    it('should manage agent lifecycle through MCP protocol', async () => {
       swarm = new RuvSwarm();
       mcpIntegration = new MCPIntegration();
 
@@ -451,7 +480,11 @@ describe('Cross-Feature Integration Tests', () => {
       });
 
       expect(taskStatus.id).to.equal(mcpTask.taskId);
-      expect(taskStatus.status).to.be.oneOf(['pending', 'running', 'completed']);
+      expect(taskStatus.status).to.be.oneOf([
+        'pending',
+        'running',
+        'completed',
+      ]);
 
       // MCP metrics collection
       const mcpMetrics = await mcpIntegration.call('agent_metrics', {
@@ -474,7 +507,7 @@ describe('Cross-Feature Integration Tests', () => {
       expect(removedAgent).to.be.null;
     });
 
-    it('should synchronize MCP state with swarm state', async() => {
+    it('should synchronize MCP state with swarm state', async () => {
       swarm = new RuvSwarm();
       mcpIntegration = new MCPIntegration();
 
@@ -494,7 +527,9 @@ describe('Cross-Feature Integration Tests', () => {
 
       // Create agents through both interfaces
       const swarmAgent = await swarm.spawnAgent({ type: 'coder' });
-      const mcpAgent = await mcpIntegration.call('agent_spawn', { type: 'analyst' });
+      const mcpAgent = await mcpIntegration.call('agent_spawn', {
+        type: 'analyst',
+      });
 
       // Execute tasks through both interfaces
       const swarmTask = await swarm.orchestrateTask({
@@ -508,7 +543,7 @@ describe('Cross-Feature Integration Tests', () => {
       });
 
       // Wait for synchronization
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify state synchronization
       const swarmState = await swarm.getFullState();
@@ -518,8 +553,8 @@ describe('Cross-Feature Integration Tests', () => {
       expect(mcpState.agents).to.have.lengthOf(2);
 
       // Agent IDs should match
-      const swarmAgentIds = swarmState.agents.map(a => a.id).sort();
-      const mcpAgentIds = mcpState.agents.map(a => a.id).sort();
+      const swarmAgentIds = swarmState.agents.map((a) => a.id).sort();
+      const mcpAgentIds = mcpState.agents.map((a) => a.id).sort();
       expect(swarmAgentIds).to.deep.equal(mcpAgentIds);
 
       // Tasks should be visible in both
@@ -530,18 +565,20 @@ describe('Cross-Feature Integration Tests', () => {
       await swarm.updateAgent(swarmAgent.id, { status: 'busy' });
 
       // Wait for conflict resolution
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Verify conflict resolution
       const resolvedSwarmState = await swarm.getAgent(swarmAgent.id);
-      const resolvedMcpAgent = await mcpIntegration.call('agent_status', { agentId: swarmAgent.id });
+      const resolvedMcpAgent = await mcpIntegration.call('agent_status', {
+        agentId: swarmAgent.id,
+      });
 
       expect(resolvedSwarmState.status).to.equal(resolvedMcpAgent.status);
     });
   });
 
   describe('Hooks + Event System Integration', () => {
-    it('should trigger hooks throughout agent lifecycle', async() => {
+    it('should trigger hooks throughout agent lifecycle', async () => {
       swarm = new RuvSwarm();
       hookSystem = new HookSystem();
 
@@ -558,23 +595,27 @@ describe('Cross-Feature Integration Tests', () => {
       // Register lifecycle hooks
       const hookEvents = [];
 
-      hookSystem.register('pre-agent-spawn', async(context) => {
+      hookSystem.register('pre-agent-spawn', async (context) => {
         hookEvents.push({ type: 'pre-spawn', agentType: context.type });
         return { enhanced: true };
       });
 
-      hookSystem.register('post-agent-spawn', async(context) => {
+      hookSystem.register('post-agent-spawn', async (context) => {
         hookEvents.push({ type: 'post-spawn', agentId: context.agentId });
       });
 
-      hookSystem.register('pre-task-orchestrate', async(context) => {
+      hookSystem.register('pre-task-orchestrate', async (context) => {
         hookEvents.push({ type: 'pre-task', task: context.task });
         // Enhance task with hook data
         context.enhanced = { timestamp: Date.now() };
       });
 
-      hookSystem.register('post-task-complete', async(context) => {
-        hookEvents.push({ type: 'post-task', taskId: context.taskId, success: context.success });
+      hookSystem.register('post-task-complete', async (context) => {
+        hookEvents.push({
+          type: 'post-task',
+          taskId: context.taskId,
+          success: context.success,
+        });
       });
 
       // Execute operations that trigger hooks
@@ -586,13 +627,21 @@ describe('Cross-Feature Integration Tests', () => {
       });
 
       // Wait for task completion
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify hooks were triggered
-      expect(hookEvents.filter(e => e.type === 'pre-spawn')).to.have.lengthOf(1);
-      expect(hookEvents.filter(e => e.type === 'post-spawn')).to.have.lengthOf(1);
-      expect(hookEvents.filter(e => e.type === 'pre-task')).to.have.lengthOf(1);
-      expect(hookEvents.filter(e => e.type === 'post-task')).to.have.lengthOf(1);
+      expect(hookEvents.filter((e) => e.type === 'pre-spawn')).to.have.lengthOf(
+        1,
+      );
+      expect(
+        hookEvents.filter((e) => e.type === 'post-spawn'),
+      ).to.have.lengthOf(1);
+      expect(hookEvents.filter((e) => e.type === 'pre-task')).to.have.lengthOf(
+        1,
+      );
+      expect(hookEvents.filter((e) => e.type === 'post-task')).to.have.lengthOf(
+        1,
+      );
 
       // Verify hook data was applied
       const taskStatus = await swarm.getTaskStatus(task.id);
@@ -600,7 +649,7 @@ describe('Cross-Feature Integration Tests', () => {
       expect(taskStatus.enhanced.timestamp).to.be.a('number');
     });
 
-    it('should cascade hooks across system components', async() => {
+    it('should cascade hooks across system components', async () => {
       swarm = new RuvSwarm();
       hookSystem = new HookSystem();
       neuralManager = new NeuralAgentManager();
@@ -627,18 +676,30 @@ describe('Cross-Feature Integration Tests', () => {
 
       // Neural hooks
       hookSystem.register('neural:agent-available', (ctx) => {
-        cascadeEvents.push({ component: 'neural', event: 'available', data: ctx });
+        cascadeEvents.push({
+          component: 'neural',
+          event: 'available',
+          data: ctx,
+        });
         return hookSystem.cascade('memory:agent-initialize', ctx);
       });
 
       // Memory hooks
       hookSystem.register('memory:agent-initialize', (ctx) => {
-        cascadeEvents.push({ component: 'memory', event: 'initialize', data: ctx });
+        cascadeEvents.push({
+          component: 'memory',
+          event: 'initialize',
+          data: ctx,
+        });
       });
 
       // Task completion cascade
       hookSystem.register('swarm:task-complete', (ctx) => {
-        cascadeEvents.push({ component: 'swarm', event: 'complete', data: ctx });
+        cascadeEvents.push({
+          component: 'swarm',
+          event: 'complete',
+          data: ctx,
+        });
         hookSystem.cascade('neural:learn-from-task', ctx);
         hookSystem.cascade('memory:store-experience', ctx);
       });
@@ -660,23 +721,31 @@ describe('Cross-Feature Integration Tests', () => {
       });
 
       // Wait for cascades
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       // Verify cascade sequence
-      const spawnCascade = cascadeEvents.filter(e => e.event === 'spawn' || e.event === 'available' || e.event === 'initialize');
+      const spawnCascade = cascadeEvents.filter(
+        (e) =>
+          e.event === 'spawn' ||
+          e.event === 'available' ||
+          e.event === 'initialize',
+      );
       expect(spawnCascade).to.have.lengthOf(3);
       expect(spawnCascade[0].component).to.equal('swarm');
       expect(spawnCascade[1].component).to.equal('neural');
       expect(spawnCascade[2].component).to.equal('memory');
 
-      const completeCascade = cascadeEvents.filter(e => e.event === 'complete' || e.event === 'learn' || e.event === 'store');
+      const completeCascade = cascadeEvents.filter(
+        (e) =>
+          e.event === 'complete' || e.event === 'learn' || e.event === 'store',
+      );
       expect(completeCascade).to.have.lengthOf(3);
       expect(completeCascade[0].component).to.equal('swarm');
       expect(completeCascade[1].component).to.equal('neural');
       expect(completeCascade[2].component).to.equal('memory');
     });
 
-    it('should handle hook failures gracefully', async() => {
+    it('should handle hook failures gracefully', async () => {
       swarm = new RuvSwarm();
       hookSystem = new HookSystem();
 
@@ -697,12 +766,12 @@ describe('Cross-Feature Integration Tests', () => {
       // Register failing hooks
       const hookResults = [];
 
-      hookSystem.register('failing-hook', async(ctx) => {
+      hookSystem.register('failing-hook', async (ctx) => {
         hookResults.push({ type: 'attempt', timestamp: Date.now() });
         throw new Error('Hook intentionally failed');
       });
 
-      hookSystem.register('success-hook', async(ctx) => {
+      hookSystem.register('success-hook', async (ctx) => {
         hookResults.push({ type: 'success', timestamp: Date.now() });
       });
 
@@ -713,15 +782,15 @@ describe('Cross-Feature Integration Tests', () => {
       const agent = await swarm.spawnAgent({ type: 'coder' });
 
       // Wait for retries
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify agent still created despite hook failure
       expect(agent).to.exist;
       expect(agent.id).to.exist;
 
       // Verify hook failure handling
-      const attempts = hookResults.filter(r => r.type === 'attempt');
-      const successes = hookResults.filter(r => r.type === 'success');
+      const attempts = hookResults.filter((r) => r.type === 'attempt');
+      const successes = hookResults.filter((r) => r.type === 'success');
 
       expect(attempts).to.have.length.at.least(1); // Failed hook attempted
       expect(successes).to.have.lengthOf(1); // Success hook executed
@@ -734,7 +803,7 @@ describe('Cross-Feature Integration Tests', () => {
   });
 
   describe('Full System Integration', () => {
-    it('should demonstrate complete feature integration', async function() {
+    it('should demonstrate complete feature integration', async function () {
       this.timeout(45000);
 
       // Initialize complete system
@@ -819,13 +888,14 @@ describe('Cross-Feature Integration Tests', () => {
         if (workflowStatus.status === 'completed') {
           break;
         }
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // Verify comprehensive integration
       expect(workflowStatus.status).to.equal('completed');
       expect(workflowStatus.phases).to.have.lengthOf(3);
-      expect(workflowStatus.phases.every(p => p.status === 'completed')).to.be.true;
+      expect(workflowStatus.phases.every((p) => p.status === 'completed')).to.be
+        .true;
 
       // Verify feature utilization
       expect(integrationMetrics.neuralInsights).to.be.greaterThan(0);
@@ -843,7 +913,11 @@ describe('Cross-Feature Integration Tests', () => {
       // Test system resilience
       const resilienceTest = await swarm.executeResilienceTest({
         duration: 10000,
-        scenarios: ['component-failure', 'memory-pressure', 'network-partition'],
+        scenarios: [
+          'component-failure',
+          'memory-pressure',
+          'network-partition',
+        ],
       });
 
       expect(resilienceTest.overallSuccess).to.be.true;

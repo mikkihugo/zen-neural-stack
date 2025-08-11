@@ -30,7 +30,7 @@ const __dirname = path.dirname(__filename);
 describe('Index.js Edge Cases and E2E Tests', () => {
   let mockWasmPath;
 
-  beforeEach(async() => {
+  beforeEach(async () => {
     // Create mock WASM directory structure
     mockWasmPath = path.join(__dirname, '../../test-wasm-mock');
     await fs.mkdir(mockWasmPath, { recursive: true });
@@ -69,11 +69,17 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       `,
     );
 
-    await fs.writeFile(path.join(mockWasmPath, 'ruv_swarm_wasm_bg.wasm'), 'mock-wasm-binary');
-    await fs.writeFile(path.join(mockWasmPath, 'ruv_swarm_simd.wasm'), 'mock-simd-wasm-binary');
+    await fs.writeFile(
+      path.join(mockWasmPath, 'ruv_swarm_wasm_bg.wasm'),
+      'mock-wasm-binary',
+    );
+    await fs.writeFile(
+      path.join(mockWasmPath, 'ruv_swarm_simd.wasm'),
+      'mock-simd-wasm-binary',
+    );
   });
 
-  afterEach(async() => {
+  afterEach(async () => {
     // Cleanup mock files
     try {
       await fs.rm(mockWasmPath, { recursive: true, force: true });
@@ -83,7 +89,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
   });
 
   describe('WASM Loader Edge Cases', () => {
-    it('should handle SIMD detection failure gracefully', async() => {
+    it('should handle SIMD detection failure gracefully', async () => {
       // Mock WebAssembly.validate to throw
       const originalValidate = globalThis.WebAssembly?.validate;
       if (globalThis.WebAssembly) {
@@ -103,7 +109,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       }
     });
 
-    it('should handle missing WASM files gracefully', async() => {
+    it('should handle missing WASM files gracefully', async () => {
       const invalidPath = '/nonexistent/path';
 
       await expect(
@@ -114,7 +120,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       ).rejects.toThrow();
     });
 
-    it('should fallback to manual loading when ES module import fails', async() => {
+    it('should fallback to manual loading when ES module import fails', async () => {
       // Create invalid JS file that will fail to import
       await fs.writeFile(
         path.join(mockWasmPath, 'ruv_swarm_wasm.js'),
@@ -129,7 +135,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       ).rejects.toThrow();
     });
 
-    it('should handle WebAssembly instantiation failures', async() => {
+    it('should handle WebAssembly instantiation failures', async () => {
       // Create valid JS but with invalid WASM binary
       await fs.writeFile(
         path.join(mockWasmPath, 'ruv_swarm_wasm.js'),
@@ -141,7 +147,10 @@ describe('Index.js Edge Cases and E2E Tests', () => {
         `,
       );
 
-      await fs.writeFile(path.join(mockWasmPath, 'ruv_swarm_wasm_bg.wasm'), 'invalid-wasm');
+      await fs.writeFile(
+        path.join(mockWasmPath, 'ruv_swarm_wasm_bg.wasm'),
+        'invalid-wasm',
+      );
 
       await expect(
         RuvSwarm.initialize({
@@ -151,7 +160,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       ).rejects.toThrow();
     });
 
-    it('should handle browser environment detection', async() => {
+    it('should handle browser environment detection', async () => {
       // Mock browser environment
       const originalWindow = globalThis.window;
       const originalFetch = globalThis.fetch;
@@ -171,7 +180,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       }
     });
 
-    it('should handle memory allocation failures', async() => {
+    it('should handle memory allocation failures', async () => {
       // Test with extremely large memory requirements
       const originalMemory = globalThis.WebAssembly?.Memory;
 
@@ -200,7 +209,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
   });
 
   describe('Worker Pool Edge Cases', () => {
-    it('should handle worker creation failures in Node.js environment', async() => {
+    it('should handle worker creation failures in Node.js environment', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
         parallel: true,
@@ -211,7 +220,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       expect(ruvSwarm._workerPool).toBeDefined();
     });
 
-    it('should handle worker termination edge cases', async() => {
+    it('should handle worker termination edge cases', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
         parallel: true,
@@ -224,7 +233,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       expect(ruvSwarm._workerPool.initialized).toBe(false);
     });
 
-    it('should handle concurrent task execution', async() => {
+    it('should handle concurrent task execution', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
         parallel: true,
@@ -232,7 +241,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
 
       const tasks = Array.from({ length: 10 }, (_, i) => `task-${i}`);
       const results = await Promise.all(
-        tasks.map(task => ruvSwarm._workerPool.execute(task)),
+        tasks.map((task) => ruvSwarm._workerPool.execute(task)),
       );
 
       expect(results).toHaveLength(10);
@@ -243,21 +252,19 @@ describe('Index.js Edge Cases and E2E Tests', () => {
   });
 
   describe('RuvSwarm Class Edge Cases', () => {
-    it('should handle invalid swarm configuration', async() => {
+    it('should handle invalid swarm configuration', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
       });
 
-      await expect(
-        ruvSwarm.createSwarm(null),
-      ).rejects.toThrow();
+      await expect(ruvSwarm.createSwarm(null)).rejects.toThrow();
 
       await expect(
         ruvSwarm.createSwarm({ invalid: 'config' }),
       ).rejects.toThrow();
     });
 
-    it('should handle swarm creation with valid configuration', async() => {
+    it('should handle swarm creation with valid configuration', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
       });
@@ -271,7 +278,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       expect(swarm.name).toBeDefined();
     });
 
-    it('should handle retry operations with failures', async() => {
+    it('should handle retry operations with failures', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
       });
@@ -297,7 +304,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       expect(mockOperation).toHaveBeenCalledTimes(2);
     });
 
-    it('should handle retry operations that always fail', async() => {
+    it('should handle retry operations that always fail', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
       });
@@ -312,16 +319,16 @@ describe('Index.js Edge Cases and E2E Tests', () => {
         throw new Error('Persistent failure');
       });
 
-      await expect(
-        swarm._retryOperation(alwaysFailOperation),
-      ).rejects.toThrow('Persistent failure');
+      await expect(swarm._retryOperation(alwaysFailOperation)).rejects.toThrow(
+        'Persistent failure',
+      );
 
       expect(alwaysFailOperation).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('Agent Wrapper Edge Cases', () => {
-    it('should handle agent spawning and execution', async() => {
+    it('should handle agent spawning and execution', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
       });
@@ -340,7 +347,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       expect(agent.agentType).toBeDefined();
     });
 
-    it('should handle agent metrics and capabilities', async() => {
+    it('should handle agent metrics and capabilities', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
       });
@@ -360,7 +367,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       expect(capabilities).toBeDefined();
     });
 
-    it('should handle agent reset operations', async() => {
+    it('should handle agent reset operations', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
       });
@@ -499,7 +506,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
   });
 
   describe('End-to-End Workflow Tests', () => {
-    it('should complete full initialization and swarm creation workflow', async() => {
+    it('should complete full initialization and swarm creation workflow', async () => {
       // Step 1: Initialize RuvSwarm
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
@@ -535,7 +542,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
 
       // Step 4: Execute tasks with agents
       const taskResults = await Promise.all(
-        agents.map(async(agent, index) => {
+        agents.map(async (agent, index) => {
           try {
             return await agent.execute(`task-${index}`);
           } catch (error) {
@@ -558,7 +565,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       try {
         const orchestrationResult = await swarm.orchestrate({
           type: 'test-orchestration',
-          agents: agents.map(a => a.id),
+          agents: agents.map((a) => a.id),
         });
         expect(orchestrationResult).toBeDefined();
       } catch (error) {
@@ -567,7 +574,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       }
     });
 
-    it('should handle concurrent swarm operations', async() => {
+    it('should handle concurrent swarm operations', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
         parallel: true,
@@ -598,7 +605,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       expect(agents).toHaveLength(6);
     });
 
-    it('should handle error recovery in complex workflows', async() => {
+    it('should handle error recovery in complex workflows', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
       });
@@ -610,7 +617,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       });
 
       // Test agent spawning with some failures
-      const agentPromises = Array.from({ length: 5 }, async(_, i) => {
+      const agentPromises = Array.from({ length: 5 }, async (_, i) => {
         try {
           if (i === 2) {
             // Simulate a failure that should be retried
@@ -633,13 +640,13 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       const results = await Promise.allSettled(agentPromises);
 
       // Some should succeed, some should fail
-      const successful = results.filter(r => r.status === 'fulfilled').length;
-      const failed = results.filter(r => r.status === 'rejected').length;
+      const successful = results.filter((r) => r.status === 'fulfilled').length;
+      const failed = results.filter((r) => r.status === 'rejected').length;
 
       expect(successful + failed).toBe(5);
     });
 
-    it('should handle memory and resource cleanup', async() => {
+    it('should handle memory and resource cleanup', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
         parallel: true,
@@ -658,7 +665,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
         ]);
 
         // Reset agents to test cleanup
-        agents.forEach(agent => {
+        agents.forEach((agent) => {
           try {
             agent.reset();
           } catch (error) {
@@ -676,7 +683,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
   });
 
   describe('Integration with Neural Components', () => {
-    it('should integrate with neural agents properly', async() => {
+    it('should integrate with neural agents properly', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
         enableNeuralNetworks: true,
@@ -695,7 +702,7 @@ describe('Index.js Edge Cases and E2E Tests', () => {
       expect(swarm).toBeDefined();
     });
 
-    it('should integrate with DAA service properly', async() => {
+    it('should integrate with DAA service properly', async () => {
       const ruvSwarm = await RuvSwarm.initialize({
         wasmPath: mockWasmPath,
       });

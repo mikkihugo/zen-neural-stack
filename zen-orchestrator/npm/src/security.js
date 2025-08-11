@@ -11,7 +11,14 @@ import path from 'path';
  * WASM module integrity verification
  */
 export class WasmIntegrityVerifier {
-  constructor(hashesPath = path.join(new URL('.', import.meta.url).pathname, '..', 'wasm', 'checksums.json')) {
+  constructor(
+    hashesPath = path.join(
+      new URL('.', import.meta.url).pathname,
+      '..',
+      'wasm',
+      'checksums.json',
+    ),
+  ) {
     this.hashesPath = hashesPath;
     this.knownHashes = new Map();
     this.initialized = false;
@@ -74,7 +81,9 @@ export class WasmIntegrityVerifier {
       }
 
       if (hash !== knownHash) {
-        throw new SecurityError(`WASM module integrity check failed for ${filename}`);
+        throw new SecurityError(
+          `WASM module integrity check failed for ${filename}`,
+        );
       }
 
       return true;
@@ -112,7 +121,9 @@ export class CommandSanitizer {
     const safePattern = /^[a-zA-Z0-9\-_./=:\s]+$/;
 
     if (!safePattern.test(arg)) {
-      throw new SecurityError(`Invalid argument contains unsafe characters: ${arg}`);
+      throw new SecurityError(
+        `Invalid argument contains unsafe characters: ${arg}`,
+      );
     }
 
     // Check for command injection patterns
@@ -124,7 +135,9 @@ export class CommandSanitizer {
 
     for (const pattern of dangerousPatterns) {
       if (pattern.test(arg)) {
-        throw new SecurityError(`Potentially dangerous pattern detected in argument: ${arg}`);
+        throw new SecurityError(
+          `Potentially dangerous pattern detected in argument: ${arg}`,
+        );
       }
     }
 
@@ -140,7 +153,7 @@ export class CommandSanitizer {
     }
 
     // Validate all arguments
-    const sanitizedArgs = args.map(arg => this.validateArgument(arg));
+    const sanitizedArgs = args.map((arg) => this.validateArgument(arg));
 
     return { command, args: sanitizedArgs };
   }
@@ -160,7 +173,9 @@ export class DependencyVerifier {
         'package.json',
       );
 
-      const packageData = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
+      const packageData = JSON.parse(
+        await fs.readFile(packageJsonPath, 'utf8'),
+      );
 
       if (packageData.version !== expectedVersion) {
         throw new SecurityError(
@@ -173,7 +188,9 @@ export class DependencyVerifier {
       if (error instanceof SecurityError) {
         throw error;
       }
-      throw new SecurityError(`Failed to verify package ${packageName}: ${error.message}`);
+      throw new SecurityError(
+        `Failed to verify package ${packageName}: ${error.message}`,
+      );
     }
   }
 }

@@ -16,7 +16,7 @@ describe('Edge Cases for 100% Coverage', () => {
   let ruv;
   let swarm;
 
-  beforeEach(async() => {
+  beforeEach(async () => {
     ruv = await RuvSwarm.initialize();
     swarm = await ruv.createSwarm({
       topology: 'mesh',
@@ -25,15 +25,12 @@ describe('Edge Cases for 100% Coverage', () => {
   });
 
   describe('Neural Network Edge Cases', () => {
-    it('should handle null inputs gracefully', async() => {
+    it('should handle null inputs gracefully', async () => {
       const agent = await swarm.spawn({ type: 'researcher' });
-      await assert.rejects(
-        agent.execute(null),
-        /Invalid input/,
-      );
+      await assert.rejects(agent.execute(null), /Invalid input/);
     });
 
-    it('should handle invalid neural configurations', async() => {
+    it('should handle invalid neural configurations', async () => {
       const manager = new NeuralNetworkManager();
       await assert.rejects(
         manager.create({
@@ -44,17 +41,14 @@ describe('Edge Cases for 100% Coverage', () => {
       );
     });
 
-    it('should handle memory limit exceeded', async() => {
+    it('should handle memory limit exceeded', async () => {
       const agent = await swarm.spawn({ type: 'coder' });
       const hugeData = new Array(1000000).fill({ data: 'x'.repeat(1000) });
 
-      await assert.rejects(
-        agent.process(hugeData),
-        /Memory limit/,
-      );
+      await assert.rejects(agent.process(hugeData), /Memory limit/);
     });
 
-    it('should handle concurrent operations race conditions', async() => {
+    it('should handle concurrent operations race conditions', async () => {
       const agent = await swarm.spawn({ type: 'analyst' });
       const promises = [];
 
@@ -64,26 +58,23 @@ describe('Edge Cases for 100% Coverage', () => {
       }
 
       const results = await Promise.allSettled(promises);
-      const successful = results.filter(r => r.status === 'fulfilled');
+      const successful = results.filter((r) => r.status === 'fulfilled');
       assert(successful.length > 0, 'At least some operations should succeed');
     });
 
-    it('should handle model serialization failures', async() => {
+    it('should handle model serialization failures', async () => {
       const manager = new NeuralNetworkManager();
       const model = await manager.create({ type: 'gru' });
 
       // Corrupt the model state
       model._state = { invalid: Symbol('not-serializable') };
 
-      await assert.rejects(
-        manager.serialize(model),
-        /Serialization failed/,
-      );
+      await assert.rejects(manager.serialize(model), /Serialization failed/);
     });
   });
 
   describe('Error Handling Paths', () => {
-    it('should handle database connection failures', async() => {
+    it('should handle database connection failures', async () => {
       const persistence = new SwarmPersistence();
 
       // Force database error
@@ -95,7 +86,7 @@ describe('Edge Cases for 100% Coverage', () => {
       );
     });
 
-    it('should handle WASM loading failures', async() => {
+    it('should handle WASM loading failures', async () => {
       const loader = new WasmLoader();
 
       await assert.rejects(
@@ -104,7 +95,7 @@ describe('Edge Cases for 100% Coverage', () => {
       );
     });
 
-    it('should handle network timeouts', async() => {
+    it('should handle network timeouts', async () => {
       const agent = await swarm.spawn({ type: 'researcher' });
 
       // Set unrealistic timeout
@@ -116,7 +107,7 @@ describe('Edge Cases for 100% Coverage', () => {
       );
     });
 
-    it('should handle invalid configurations', async() => {
+    it('should handle invalid configurations', async () => {
       await assert.rejects(
         ruv.createSwarm({
           topology: 'invalid-topology',
@@ -128,7 +119,7 @@ describe('Edge Cases for 100% Coverage', () => {
   });
 
   describe('Async Operations', () => {
-    it('should handle promise rejections in batch operations', async() => {
+    it('should handle promise rejections in batch operations', async () => {
       const agents = await Promise.all([
         swarm.spawn({ type: 'coder' }),
         swarm.spawn({ type: 'tester' }),
@@ -147,7 +138,7 @@ describe('Edge Cases for 100% Coverage', () => {
       assert(results[1].status === 'rejected', 'Second task should fail');
     });
 
-    it('should timeout after specified duration', async() => {
+    it('should timeout after specified duration', async () => {
       const agent = await swarm.spawn({ type: 'optimizer' });
 
       const promise = agent.longRunningOperation();
@@ -162,7 +153,7 @@ describe('Edge Cases for 100% Coverage', () => {
       );
     });
 
-    it('should handle cleanup on failure', async() => {
+    it('should handle cleanup on failure', async () => {
       const agent = await swarm.spawn({ type: 'coordinator' });
       let cleanupCalled = false;
 
@@ -181,7 +172,7 @@ describe('Edge Cases for 100% Coverage', () => {
   });
 
   describe('Memory Management', () => {
-    it('should handle memory leak scenarios', async() => {
+    it('should handle memory leak scenarios', async () => {
       const agent = await swarm.spawn({ type: 'researcher' });
       const initialMemory = process.memoryUsage().heapUsed;
 
@@ -196,10 +187,13 @@ describe('Edge Cases for 100% Coverage', () => {
       }
 
       const finalMemory = process.memoryUsage().heapUsed;
-      assert(finalMemory < initialMemory + 50 * 1024 * 1024, 'Memory usage should be controlled');
+      assert(
+        finalMemory < initialMemory + 50 * 1024 * 1024,
+        'Memory usage should be controlled',
+      );
     });
 
-    it('should handle cache overflow', async() => {
+    it('should handle cache overflow', async () => {
       const agent = await swarm.spawn({ type: 'coder' });
       agent.setCacheLimit(10);
 
@@ -215,7 +209,7 @@ describe('Edge Cases for 100% Coverage', () => {
   });
 
   describe('Benchmark Edge Cases', () => {
-    it('should handle benchmark with zero iterations', async() => {
+    it('should handle benchmark with zero iterations', async () => {
       const benchmark = new Benchmark();
 
       await assert.rejects(
@@ -224,7 +218,7 @@ describe('Edge Cases for 100% Coverage', () => {
       );
     });
 
-    it('should handle performance analyzer with invalid metrics', async() => {
+    it('should handle performance analyzer with invalid metrics', async () => {
       const analyzer = new PerformanceAnalyzer();
 
       await assert.rejects(
@@ -235,7 +229,7 @@ describe('Edge Cases for 100% Coverage', () => {
   });
 
   describe('Neural Model Specific Edge Cases', () => {
-    it('should handle transformer attention mask errors', async() => {
+    it('should handle transformer attention mask errors', async () => {
       const manager = new NeuralNetworkManager();
       const transformer = await manager.create({ type: 'transformer' });
 
@@ -248,7 +242,7 @@ describe('Edge Cases for 100% Coverage', () => {
       );
     });
 
-    it('should handle CNN invalid kernel sizes', async() => {
+    it('should handle CNN invalid kernel sizes', async () => {
       const manager = new NeuralNetworkManager();
 
       await assert.rejects(
@@ -260,7 +254,7 @@ describe('Edge Cases for 100% Coverage', () => {
       );
     });
 
-    it('should handle GRU hidden state mismatch', async() => {
+    it('should handle GRU hidden state mismatch', async () => {
       const manager = new NeuralNetworkManager();
       const gru = await manager.create({ type: 'gru', hiddenSize: 128 });
 
@@ -273,7 +267,7 @@ describe('Edge Cases for 100% Coverage', () => {
       );
     });
 
-    it('should handle autoencoder reconstruction with corrupted data', async() => {
+    it('should handle autoencoder reconstruction with corrupted data', async () => {
       const manager = new NeuralNetworkManager();
       const autoencoder = await manager.create({ type: 'autoencoder' });
 
@@ -285,7 +279,7 @@ describe('Edge Cases for 100% Coverage', () => {
   });
 
   describe('Swarm Coordination Edge Cases', () => {
-    it('should handle agent communication failures', async() => {
+    it('should handle agent communication failures', async () => {
       const agent1 = await swarm.spawn({ type: 'coordinator' });
       const agent2 = await swarm.spawn({ type: 'researcher' });
 
@@ -298,7 +292,7 @@ describe('Edge Cases for 100% Coverage', () => {
       );
     });
 
-    it('should handle topology reconfiguration during operation', async() => {
+    it('should handle topology reconfiguration during operation', async () => {
       const task = swarm.orchestrate({
         task: 'complex-task',
         agents: 5,
@@ -314,7 +308,7 @@ describe('Edge Cases for 100% Coverage', () => {
     });
   });
 
-  afterEach(async() => {
+  afterEach(async () => {
     // Cleanup
     if (swarm) {
       await swarm.terminate();

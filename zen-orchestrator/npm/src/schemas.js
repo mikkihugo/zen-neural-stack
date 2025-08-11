@@ -126,7 +126,11 @@ class BaseValidator {
     if (schema.type === 'object' && schema.properties) {
       for (const [propName, propSchema] of Object.entries(schema.properties)) {
         if (value[propName] !== undefined) {
-          value[propName] = this.validateValue(value[propName], propSchema, `${fieldName}.${propName}`);
+          value[propName] = this.validateValue(
+            value[propName],
+            propSchema,
+            `${fieldName}.${propName}`,
+          );
         } else if (propSchema.required) {
           throw new ValidationError(
             `${fieldName}.${propName} is required`,
@@ -141,7 +145,11 @@ class BaseValidator {
     // Array item validation
     if (schema.type === 'array' && schema.items) {
       for (let i = 0; i < value.length; i++) {
-        value[i] = this.validateValue(value[i], schema.items, `${fieldName}[${i}]`);
+        value[i] = this.validateValue(
+          value[i],
+          schema.items,
+          `${fieldName}[${i}]`,
+        );
       }
     }
 
@@ -150,20 +158,22 @@ class BaseValidator {
 
   static validateType(value, expectedType) {
     switch (expectedType) {
-    case 'string':
-      return typeof value === 'string';
-    case 'number':
-      return typeof value === 'number' && !isNaN(value) && isFinite(value);
-    case 'boolean':
-      return typeof value === 'boolean';
-    case 'array':
-      return Array.isArray(value);
-    case 'object':
-      return typeof value === 'object' && value !== null && !Array.isArray(value);
-    case 'function':
-      return typeof value === 'function';
-    default:
-      return true;
+      case 'string':
+        return typeof value === 'string';
+      case 'number':
+        return typeof value === 'number' && !isNaN(value) && isFinite(value);
+      case 'boolean':
+        return typeof value === 'boolean';
+      case 'array':
+        return Array.isArray(value);
+      case 'object':
+        return (
+          typeof value === 'object' && value !== null && !Array.isArray(value)
+        );
+      case 'function':
+        return typeof value === 'function';
+      default:
+        return true;
     }
   }
 }
@@ -208,7 +218,16 @@ const MCPSchemas = {
   agent_spawn: {
     type: {
       type: 'string',
-      enum: ['researcher', 'coder', 'analyst', 'optimizer', 'coordinator', 'tester', 'reviewer', 'documenter'],
+      enum: [
+        'researcher',
+        'coder',
+        'analyst',
+        'optimizer',
+        'coordinator',
+        'tester',
+        'reviewer',
+        'documenter',
+      ],
       default: 'researcher',
     },
     name: {
@@ -227,7 +246,14 @@ const MCPSchemas = {
     },
     cognitivePattern: {
       type: 'string',
-      enum: ['convergent', 'divergent', 'lateral', 'systems', 'critical', 'adaptive'],
+      enum: [
+        'convergent',
+        'divergent',
+        'lateral',
+        'systems',
+        'critical',
+        'adaptive',
+      ],
       required: false,
     },
     swarmId: {
@@ -380,7 +406,15 @@ const MCPSchemas = {
   features_detect: {
     category: {
       type: 'string',
-      enum: ['all', 'wasm', 'simd', 'memory', 'platform', 'neural', 'forecasting'],
+      enum: [
+        'all',
+        'wasm',
+        'simd',
+        'memory',
+        'platform',
+        'neural',
+        'forecasting',
+      ],
       default: 'all',
     },
   },
@@ -423,7 +457,15 @@ const MCPSchemas = {
     },
     modelType: {
       type: 'string',
-      enum: ['feedforward', 'lstm', 'transformer', 'attention', 'cnn', 'rnn', 'gru'],
+      enum: [
+        'feedforward',
+        'lstm',
+        'transformer',
+        'attention',
+        'cnn',
+        'rnn',
+        'gru',
+      ],
       default: 'feedforward',
     },
     trainingData: {
@@ -435,7 +477,16 @@ const MCPSchemas = {
   neural_patterns: {
     pattern: {
       type: 'string',
-      enum: ['all', 'convergent', 'divergent', 'lateral', 'systems', 'critical', 'abstract', 'adaptive'],
+      enum: [
+        'all',
+        'convergent',
+        'divergent',
+        'lateral',
+        'systems',
+        'critical',
+        'abstract',
+        'adaptive',
+      ],
       default: 'all',
     },
   },
@@ -474,7 +525,14 @@ const MCPSchemas = {
     },
     cognitivePattern: {
       type: 'string',
-      enum: ['convergent', 'divergent', 'lateral', 'systems', 'critical', 'adaptive'],
+      enum: [
+        'convergent',
+        'divergent',
+        'lateral',
+        'systems',
+        'critical',
+        'adaptive',
+      ],
       required: false,
     },
     enableMemory: {
@@ -612,7 +670,14 @@ const MCPSchemas = {
     },
     pattern: {
       type: 'string',
-      enum: ['convergent', 'divergent', 'lateral', 'systems', 'critical', 'adaptive'],
+      enum: [
+        'convergent',
+        'divergent',
+        'lateral',
+        'systems',
+        'critical',
+        'adaptive',
+      ],
       required: false,
     },
     analyze: {
@@ -729,7 +794,11 @@ class ValidationUtils {
     for (const [fieldName, fieldSchema] of Object.entries(schema)) {
       try {
         const value = params[fieldName];
-        validatedParams[fieldName] = BaseValidator.validate(value, fieldSchema, fieldName);
+        validatedParams[fieldName] = BaseValidator.validate(
+          value,
+          fieldSchema,
+          fieldName,
+        );
       } catch (error) {
         // Add tool context to error
         if (error instanceof ValidationError) {
@@ -743,10 +812,14 @@ class ValidationUtils {
     // Check for unexpected parameters
     const allowedFields = Object.keys(schema);
     const providedFields = Object.keys(params);
-    const unexpectedFields = providedFields.filter(field => !allowedFields.includes(field));
+    const unexpectedFields = providedFields.filter(
+      (field) => !allowedFields.includes(field),
+    );
 
     if (unexpectedFields.length > 0) {
-      console.warn(`Unexpected parameters for ${toolName}: ${unexpectedFields.join(', ')}`);
+      console.warn(
+        `Unexpected parameters for ${toolName}: ${unexpectedFields.join(', ')}`,
+      );
       // Note: We don't throw here to maintain backward compatibility
     }
 
@@ -784,7 +857,10 @@ class ValidationUtils {
           max: fieldSchema.max,
         };
       }
-      if (fieldSchema.minLength !== undefined || fieldSchema.maxLength !== undefined) {
+      if (
+        fieldSchema.minLength !== undefined ||
+        fieldSchema.maxLength !== undefined
+      ) {
         doc.parameters[fieldName].length = {
           min: fieldSchema.minLength,
           max: fieldSchema.maxLength,
@@ -836,7 +912,8 @@ class ValidationUtils {
    * Validate a UUID string
    */
   static isValidUUID(str) {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(str);
   }
 
@@ -855,10 +932,6 @@ class ValidationUtils {
 /**
  * Export validation schemas and utilities
  */
-export {
-  MCPSchemas,
-  BaseValidator,
-  ValidationUtils,
-};
+export { MCPSchemas, BaseValidator, ValidationUtils };
 
 export default ValidationUtils;

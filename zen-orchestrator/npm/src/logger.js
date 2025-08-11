@@ -5,178 +5,181 @@
 import { randomUUID } from 'crypto';
 
 export class Logger {
-    constructor(options = {}) {
-        this.name = options.name || 'ruv-swarm';
-        this.level = options.level || 'INFO';
-        this.enableStderr = options.enableStderr !== false;
-        this.enableFile = options.enableFile || false;
-        this.formatJson = options.formatJson || false;
-        this.logDir = options.logDir || './logs';
-        this.metadata = options.metadata || {};
-        this.correlationId = null;
-        this.operations = new Map();
-    }
+  constructor(options = {}) {
+    this.name = options.name || 'ruv-swarm';
+    this.level = options.level || 'INFO';
+    this.enableStderr = options.enableStderr !== false;
+    this.enableFile = options.enableFile || false;
+    this.formatJson = options.formatJson || false;
+    this.logDir = options.logDir || './logs';
+    this.metadata = options.metadata || {};
+    this.correlationId = null;
+    this.operations = new Map();
+  }
 
-    setCorrelationId(id) {
-        this.correlationId = id || randomUUID();
-        return this.correlationId;
-    }
+  setCorrelationId(id) {
+    this.correlationId = id || randomUUID();
+    return this.correlationId;
+  }
 
-    getCorrelationId() {
-        return this.correlationId;
-    }
+  getCorrelationId() {
+    return this.correlationId;
+  }
 
-    _log(level, message, data = {}) {
-        const timestamp = new Date().toISOString();
-        const prefix = this.correlationId ? `[${this.correlationId}] ` : '';
-        
-        const logEntry = {
-            timestamp,
-            level,
-            name: this.name,
-            message,
-            correlationId: this.correlationId,
-            ...this.metadata,
-            ...data
-        };
+  _log(level, message, data = {}) {
+    const timestamp = new Date().toISOString();
+    const prefix = this.correlationId ? `[${this.correlationId}] ` : '';
 
-        if (this.formatJson) {
-            const output = JSON.stringify(logEntry);
-            if (this.enableStderr) {
-                console.error(output);
-            } else {
-                console.log(output);
-            }
-        } else {
-            const output = `${prefix}[${level}] ${message}`;
-            if (this.enableStderr) {
-                console.error(output, Object.keys(data).length > 0 ? data : '');
-            } else {
-                console.log(output, Object.keys(data).length > 0 ? data : '');
-            }
-        }
-    }
+    const logEntry = {
+      timestamp,
+      level,
+      name: this.name,
+      message,
+      correlationId: this.correlationId,
+      ...this.metadata,
+      ...data,
+    };
 
-    info(message, data = {}) {
-        this._log('INFO', message, data);
+    if (this.formatJson) {
+      const output = JSON.stringify(logEntry);
+      if (this.enableStderr) {
+        console.error(output);
+      } else {
+        console.log(output);
+      }
+    } else {
+      const output = `${prefix}[${level}] ${message}`;
+      if (this.enableStderr) {
+        console.error(output, Object.keys(data).length > 0 ? data : '');
+      } else {
+        console.log(output, Object.keys(data).length > 0 ? data : '');
+      }
     }
+  }
 
-    warn(message, data = {}) {
-        this._log('WARN', message, data);
-    }
+  info(message, data = {}) {
+    this._log('INFO', message, data);
+  }
 
-    error(message, data = {}) {
-        this._log('ERROR', message, data);
-    }
+  warn(message, data = {}) {
+    this._log('WARN', message, data);
+  }
 
-    debug(message, data = {}) {
-        if (this.level === 'DEBUG' || process.env.DEBUG) {
-            this._log('DEBUG', message, data);
-        }
-    }
+  error(message, data = {}) {
+    this._log('ERROR', message, data);
+  }
 
-    trace(message, data = {}) {
-        if (this.level === 'TRACE' || process.env.DEBUG) {
-            this._log('TRACE', message, data);
-        }
+  debug(message, data = {}) {
+    if (this.level === 'DEBUG' || process.env.DEBUG) {
+      this._log('DEBUG', message, data);
     }
+  }
 
-    success(message, data = {}) {
-        this._log('SUCCESS', message, data);
+  trace(message, data = {}) {
+    if (this.level === 'TRACE' || process.env.DEBUG) {
+      this._log('TRACE', message, data);
     }
+  }
 
-    fatal(message, data = {}) {
-        this._log('FATAL', message, data);
-    }
+  success(message, data = {}) {
+    this._log('SUCCESS', message, data);
+  }
 
-    startOperation(operationName) {
-        const operationId = randomUUID();
-        this.operations.set(operationId, {
-            name: operationName,
-            startTime: Date.now()
-        });
-        this.debug(`Starting operation: ${operationName}`, { operationId });
-        return operationId;
-    }
+  fatal(message, data = {}) {
+    this._log('FATAL', message, data);
+  }
 
-    endOperation(operationId, success = true, data = {}) {
-        const operation = this.operations.get(operationId);
-        if (operation) {
-            const duration = Date.now() - operation.startTime;
-            this.debug(`Operation ${success ? 'completed' : 'failed'}: ${operation.name}`, {
-                operationId,
-                duration,
-                success,
-                ...data
-            });
-            this.operations.delete(operationId);
-        }
-    }
+  startOperation(operationName) {
+    const operationId = randomUUID();
+    this.operations.set(operationId, {
+      name: operationName,
+      startTime: Date.now(),
+    });
+    this.debug(`Starting operation: ${operationName}`, { operationId });
+    return operationId;
+  }
 
-    logConnection(event, sessionId, data = {}) {
-        this.info(`Connection ${event}`, {
-            sessionId,
-            event,
-            ...data
-        });
+  endOperation(operationId, success = true, data = {}) {
+    const operation = this.operations.get(operationId);
+    if (operation) {
+      const duration = Date.now() - operation.startTime;
+      this.debug(
+        `Operation ${success ? 'completed' : 'failed'}: ${operation.name}`,
+        {
+          operationId,
+          duration,
+          success,
+          ...data,
+        },
+      );
+      this.operations.delete(operationId);
     }
+  }
 
-    logMcp(direction, method, data = {}) {
-        this.debug(`MCP ${direction}: ${method}`, {
-            direction,
-            method,
-            ...data
-        });
-    }
+  logConnection(event, sessionId, data = {}) {
+    this.info(`Connection ${event}`, {
+      sessionId,
+      event,
+      ...data,
+    });
+  }
 
-    logMemoryUsage(context) {
-        const memUsage = process.memoryUsage();
-        this.debug(`Memory usage - ${context}`, {
-            rss: Math.round(memUsage.rss / 1024 / 1024) + 'MB',
-            heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB',
-            heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + 'MB',
-            external: Math.round(memUsage.external / 1024 / 1024) + 'MB'
-        });
-    }
+  logMcp(direction, method, data = {}) {
+    this.debug(`MCP ${direction}: ${method}`, {
+      direction,
+      method,
+      ...data,
+    });
+  }
 
-    getConnectionMetrics() {
-        return {
-            correlationId: this.correlationId,
-            activeOperations: this.operations.size,
-            uptime: process.uptime()
-        };
-    }
+  logMemoryUsage(context) {
+    const memUsage = process.memoryUsage();
+    this.debug(`Memory usage - ${context}`, {
+      rss: Math.round(memUsage.rss / 1024 / 1024) + 'MB',
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB',
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + 'MB',
+      external: Math.round(memUsage.external / 1024 / 1024) + 'MB',
+    });
+  }
 
-    // Static methods for backward compatibility
-    static info(message, ...args) {
-        const logger = new Logger();
-        logger.info(message, ...args);
-    }
+  getConnectionMetrics() {
+    return {
+      correlationId: this.correlationId,
+      activeOperations: this.operations.size,
+      uptime: process.uptime(),
+    };
+  }
 
-    static warn(message, ...args) {
-        const logger = new Logger();
-        logger.warn(message, ...args);
-    }
+  // Static methods for backward compatibility
+  static info(message, ...args) {
+    const logger = new Logger();
+    logger.info(message, ...args);
+  }
 
-    static error(message, ...args) {
-        const logger = new Logger();
-        logger.error(message, ...args);
-    }
+  static warn(message, ...args) {
+    const logger = new Logger();
+    logger.warn(message, ...args);
+  }
 
-    static debug(message, ...args) {
-        const logger = new Logger();
-        logger.debug(message, ...args);
-    }
+  static error(message, ...args) {
+    const logger = new Logger();
+    logger.error(message, ...args);
+  }
 
-    static success(message, ...args) {
-        const logger = new Logger();
-        logger.success(message, ...args);
-    }
+  static debug(message, ...args) {
+    const logger = new Logger();
+    logger.debug(message, ...args);
+  }
 
-    static trace(message, ...args) {
-        const logger = new Logger();
-        logger.trace(message, ...args);
-    }
+  static success(message, ...args) {
+    const logger = new Logger();
+    logger.success(message, ...args);
+  }
+
+  static trace(message, ...args) {
+    const logger = new Logger();
+    logger.trace(message, ...args);
+  }
 }
 
 export default Logger;

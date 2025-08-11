@@ -97,35 +97,50 @@ class FinalCoverageReport {
 
     // Count test files created
     const testDir = path.join(__dirname);
-    const testFiles = fs.readdirSync(testDir).filter(file =>
-      file.endsWith('.test.js') && file.includes('comprehensive'),
-    );
+    const testFiles = fs
+      .readdirSync(testDir)
+      .filter(
+        (file) => file.endsWith('.test.js') && file.includes('comprehensive'),
+      );
 
     this.achievements.testSuitesCreated = testFiles.length;
 
     // Calculate total tests created
-    this.achievements.testsCreated = (
+    this.achievements.testsCreated =
       this.achievements.mcpToolsTested +
       this.achievements.daaFeaturesTested +
       this.achievements.errorHandlingScenarios +
       this.achievements.edgeCasesCovered +
-      this.achievements.protocolTestsCovered
-    );
+      this.achievements.protocolTestsCovered;
 
     // Calculate coverage improvement
-    this.achievements.coverageImprovement =
-      ((this.metrics.afterCoverage - this.metrics.beforeCoverage) / this.metrics.targetCoverage * 100).toFixed(2);
+    this.achievements.coverageImprovement = (
+      ((this.metrics.afterCoverage - this.metrics.beforeCoverage) /
+        this.metrics.targetCoverage) *
+      100
+    ).toFixed(2);
 
-    console.log(`   Test suites created: ${this.achievements.testSuitesCreated}`);
+    console.log(
+      `   Test suites created: ${this.achievements.testSuitesCreated}`,
+    );
     console.log(`   Total tests created: ${this.achievements.testsCreated}`);
-    console.log(`   Coverage improvement: ${this.achievements.coverageImprovement}%`);
+    console.log(
+      `   Coverage improvement: ${this.achievements.coverageImprovement}%`,
+    );
   }
 
   generateHTML() {
-    const passRate = this.metrics.actualTests > 0 ?
-      (this.metrics.passedTests / this.metrics.actualTests * 100).toFixed(1) : '0.0';
+    const passRate =
+      this.metrics.actualTests > 0
+        ? ((this.metrics.passedTests / this.metrics.actualTests) * 100).toFixed(
+            1,
+          )
+        : '0.0';
 
-    const coverageProgress = (this.metrics.afterCoverage / this.metrics.targetCoverage * 100).toFixed(1);
+    const coverageProgress = (
+      (this.metrics.afterCoverage / this.metrics.targetCoverage) *
+      100
+    ).toFixed(1);
 
     return `
 <!DOCTYPE html>
@@ -410,7 +425,7 @@ class FinalCoverageReport {
 
   async generateReport() {
     console.log('\n🏆 Generating Final Test Coverage Report');
-    console.log('=' .repeat(60));
+    console.log('='.repeat(60));
 
     await this.analyzeTestReports();
     await this.calculateAchievements();
@@ -427,32 +442,39 @@ class FinalCoverageReport {
         totalTestsCreated: this.achievements.testsCreated,
         coverageAchieved: this.metrics.afterCoverage,
         coverageTarget: this.metrics.targetCoverage,
-        progressTowardsTarget: (this.metrics.afterCoverage / this.metrics.targetCoverage * 100).toFixed(2),
+        progressTowardsTarget: (
+          (this.metrics.afterCoverage / this.metrics.targetCoverage) *
+          100
+        ).toFixed(2),
       },
       testSuites: [
         {
           name: 'MCP Tools Comprehensive Tests',
           file: 'mcp-tools-comprehensive.test.js',
           testsCount: 37,
-          description: 'Tests all 25 MCP tools with valid/invalid inputs and edge cases',
+          description:
+            'Tests all 25 MCP tools with valid/invalid inputs and edge cases',
         },
         {
           name: 'DAA Functionality Tests',
           file: 'daa-functionality-comprehensive.test.js',
           testsCount: 29,
-          description: 'Tests DAA initialization, agent management, workflows, and learning',
+          description:
+            'Tests DAA initialization, agent management, workflows, and learning',
         },
         {
           name: 'Error Handling Tests',
           file: 'error-handling-comprehensive.test.js',
           testsCount: 32,
-          description: 'Tests input validation, sanitization, error types, and recovery',
+          description:
+            'Tests input validation, sanitization, error types, and recovery',
         },
         {
           name: 'MCP Protocol Integration Tests',
           file: 'mcp-protocol-integration.test.js',
           testsCount: 22,
-          description: 'Tests MCP protocol compliance, serialization, and security',
+          description:
+            'Tests MCP protocol compliance, serialization, and security',
         },
         {
           name: 'Edge Case Coverage Tests',
@@ -464,7 +486,8 @@ class FinalCoverageReport {
           name: 'Master Test Coverage Runner',
           file: 'master-test-coverage-runner.test.js',
           testsCount: 0,
-          description: 'Orchestrates all test suites and generates coverage reports',
+          description:
+            'Orchestrates all test suites and generates coverage reports',
         },
       ],
       recommendations: [
@@ -490,17 +513,23 @@ class FinalCoverageReport {
 
     // Console summary
     console.log('🏅 FINAL ACHIEVEMENTS:');
-    console.log(`   🛠️  Test Suites Created: ${this.achievements.testSuitesCreated}`);
+    console.log(
+      `   🛠️  Test Suites Created: ${this.achievements.testSuitesCreated}`,
+    );
     console.log(`   🧪 Total Tests Created: ${this.achievements.testsCreated}`);
     console.log(`   📊 Code Coverage: ${this.metrics.afterCoverage}%`);
     console.log(`   ✅ Actual Tests Run: ${this.metrics.actualTests}`);
-    console.log(`   🎆 Pass Rate: ${(this.metrics.passedTests / Math.max(this.metrics.actualTests, 1) * 100).toFixed(1)}%`);
+    console.log(
+      `   🎆 Pass Rate: ${((this.metrics.passedTests / Math.max(this.metrics.actualTests, 1)) * 100).toFixed(1)}%`,
+    );
     console.log('');
 
     console.log('📊 COVERAGE ANALYSIS:');
     console.log(`   🎯 Target: ${this.metrics.targetCoverage}%`);
     console.log(`   📈 Achieved: ${this.metrics.afterCoverage}%`);
-    console.log(`   🚀 Progress: ${(this.metrics.afterCoverage / this.metrics.targetCoverage * 100).toFixed(1)}% of target`);
+    console.log(
+      `   🚀 Progress: ${((this.metrics.afterCoverage / this.metrics.targetCoverage) * 100).toFixed(1)}% of target`,
+    );
     console.log('');
 
     console.log('📄 REPORTS GENERATED:');

@@ -28,8 +28,8 @@ class ClaudeIntegrationOrchestrator {
   }
 
   /**
-     * Setup complete Claude Code integration
-     */
+   * Setup complete Claude Code integration
+   */
   async setupIntegration() {
     console.log('🚀 Setting up modular Claude Code integration...');
     console.log('   Working directory:', this.options.workingDir);
@@ -66,7 +66,9 @@ class ClaudeIntegrationOrchestrator {
         try {
           results.modules.core = await this.core.initialize();
         } catch (error) {
-          console.log('⚠️  Core integration setup failed (manual setup required)');
+          console.log(
+            '⚠️  Core integration setup failed (manual setup required)',
+          );
           console.log('   Error:', error.message);
           results.modules.core = {
             success: false,
@@ -106,7 +108,6 @@ class ClaudeIntegrationOrchestrator {
       console.log('   4. Use wrapper scripts for remote execution');
 
       return results;
-
     } catch (error) {
       console.error('❌ Integration setup failed:', error.message);
       throw error;
@@ -114,15 +115,15 @@ class ClaudeIntegrationOrchestrator {
   }
 
   /**
-     * Invoke Claude with a prompt using the core module
-     */
+   * Invoke Claude with a prompt using the core module
+   */
   async invokeClaudeWithPrompt(prompt) {
     return await this.core.invokeClaudeWithPrompt(prompt);
   }
 
   /**
-     * Check integration status
-     */
+   * Check integration status
+   */
   async checkStatus() {
     console.log('🔍 Checking Claude Code integration status...');
 
@@ -134,7 +135,10 @@ class ClaudeIntegrationOrchestrator {
         timestamp: new Date().toISOString(),
       };
 
-      console.log('Claude CLI available:', status.claudeAvailable ? '✅' : '❌');
+      console.log(
+        'Claude CLI available:',
+        status.claudeAvailable ? '✅' : '❌',
+      );
       console.log('Integration files exist:', status.filesExist ? '✅' : '❌');
 
       return status;
@@ -145,8 +149,8 @@ class ClaudeIntegrationOrchestrator {
   }
 
   /**
-     * Clean up integration files
-     */
+   * Clean up integration files
+   */
   async cleanup() {
     console.log('🧹 Cleaning up Claude Code integration files...');
 
@@ -158,8 +162,8 @@ class ClaudeIntegrationOrchestrator {
         'claude.md',
         '.claude',
         this.options.packageName,
-        `${this.options.packageName }.bat`,
-        `${this.options.packageName }.ps1`,
+        `${this.options.packageName}.bat`,
+        `${this.options.packageName}.ps1`,
         'claude-swarm.sh',
         'claude-swarm.bat',
       ];
@@ -178,7 +182,6 @@ class ClaudeIntegrationOrchestrator {
 
       console.log('✅ Cleanup complete. Removed:', removedFiles.join(', '));
       return { success: true, removedFiles };
-
     } catch (error) {
       console.error('❌ Cleanup failed:', error.message);
       throw error;

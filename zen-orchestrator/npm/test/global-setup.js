@@ -15,12 +15,7 @@ export default async function globalSetup() {
   console.log('🔧 Setting up global test environment...\n');
 
   // Create test directories
-  const testDirs = [
-    'test-outputs',
-    'test-reports',
-    'coverage',
-    'test-data',
-  ];
+  const testDirs = ['test-outputs', 'test-reports', 'coverage', 'test-data'];
 
   for (const dir of testDirs) {
     const dirPath = path.join(__dirname, '..', dir);
@@ -48,12 +43,7 @@ export default async function globalSetup() {
 
   // Check for required dependencies
   console.log('\n🔍 Checking dependencies...');
-  const requiredDeps = [
-    'vitest',
-    'playwright',
-    'better-sqlite3',
-    'ws',
-  ];
+  const requiredDeps = ['vitest', 'playwright', 'better-sqlite3', 'ws'];
 
   const packageJson = JSON.parse(
     await fs.readFile(path.join(__dirname, '../package.json'), 'utf-8'),
@@ -89,7 +79,7 @@ export default async function globalSetup() {
   );
 
   // Wait for MCP server to start
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   // Initialize test database
   console.log('\n💾 Initializing test database...');
@@ -122,7 +112,7 @@ export default async function globalSetup() {
   console.log('\n✅ Global setup complete!\n');
 
   // Return cleanup function
-  return async() => {
+  return async () => {
     console.log('\n🧹 Cleaning up test environment...');
 
     // Stop MCP server

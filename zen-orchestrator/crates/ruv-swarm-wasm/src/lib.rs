@@ -12,11 +12,8 @@ pub use simd_tests::{
 };
 pub use utils::{set_panic_hook, RuntimeFeatures};
 
-// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
-// allocator.
-#[cfg(feature = "wee_alloc")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+// wee_alloc removed due to security vulnerability GHSA-rc23-xxgq-x27g
+// Using system allocator instead for WASM
 
 #[wasm_bindgen(start)]
 pub fn init() {

@@ -4,23 +4,18 @@ module.exports = {
     es2021: true,
     node: true,
   },
-  extends: [
-    'eslint:recommended',
-    '@typescript-eslint/recommended',
-  ],
+  extends: ['eslint:recommended', '@typescript-eslint/recommended'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 12,
     sourceType: 'module',
   },
-  plugins: [
-    '@typescript-eslint',
-  ],
+  plugins: ['@typescript-eslint'],
   rules: {
-    'indent': ['error', 2],
+    indent: ['error', 2],
     'linebreak-style': ['error', 'unix'],
-    'quotes': ['error', 'single'],
-    'semi': ['error', 'always'],
+    quotes: ['error', 'single'],
+    semi: ['error', 'always'],
     'no-unused-vars': 'warn',
     'no-console': 'off',
     '@typescript-eslint/no-unused-vars': 'warn',
@@ -35,6 +30,6 @@ module.exports = {
     'pkg/',
     'node_modules/',
     '*.wasm',
-    '*.node'
-  ]
+    '*.node',
+  ],
 };

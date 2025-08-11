@@ -72,7 +72,7 @@ class TestRunner {
     this.displaySummary();
 
     // Exit with appropriate code
-    const failedCritical = this.results.some(r => r.critical && !r.success);
+    const failedCritical = this.results.some((r) => r.critical && !r.success);
     process.exit(failedCritical ? 1 : 0);
   }
 
@@ -80,9 +80,10 @@ class TestRunner {
     console.log(chalk.yellow('\n🔍 Checking prerequisites...'));
 
     // Check WASM files
-    const wasmExists = await fs.access(
-      path.join(process.cwd(), 'wasm/ruv_swarm_wasm_bg.wasm'),
-    ).then(() => true).catch(() => false);
+    const wasmExists = await fs
+      .access(path.join(process.cwd(), 'wasm/ruv_swarm_wasm_bg.wasm'))
+      .then(() => true)
+      .catch(() => false);
 
     if (!wasmExists) {
       console.log(chalk.red('❌ WASM files not found. Building...'));
@@ -93,7 +94,9 @@ class TestRunner {
     const nodeVersion = process.version;
     const majorVersion = parseInt(nodeVersion.split('.')[0].substring(1), 10);
     if (majorVersion < 14) {
-      console.error(chalk.red(`❌ Node.js ${nodeVersion} is too old. Required: >= 14.0.0`));
+      console.error(
+        chalk.red(`❌ Node.js ${nodeVersion} is too old. Required: >= 14.0.0`),
+      );
       process.exit(1);
     }
 
@@ -137,9 +140,17 @@ class TestRunner {
       });
 
       if (result.code === 0) {
-        console.log(chalk.green(`✅ ${suite.name} passed (${(duration / 1000).toFixed(2)}s)`));
+        console.log(
+          chalk.green(
+            `✅ ${suite.name} passed (${(duration / 1000).toFixed(2)}s)`,
+          ),
+        );
       } else {
-        console.log(chalk.red(`❌ ${suite.name} failed (${(duration / 1000).toFixed(2)}s)`));
+        console.log(
+          chalk.red(
+            `❌ ${suite.name} failed (${(duration / 1000).toFixed(2)}s)`,
+          ),
+        );
       }
     } catch (error) {
       const duration = performance.now() - suiteStart;
@@ -193,9 +204,9 @@ class TestRunner {
       suites: this.results,
       summary: {
         total: this.results.length,
-        passed: this.results.filter(r => r.success).length,
-        failed: this.results.filter(r => !r.success && !r.skipped).length,
-        skipped: this.results.filter(r => r.skipped).length,
+        passed: this.results.filter((r) => r.success).length,
+        failed: this.results.filter((r) => !r.success && !r.skipped).length,
+        skipped: this.results.filter((r) => r.skipped).length,
       },
     };
 
@@ -206,17 +217,26 @@ class TestRunner {
 
     // Coverage report
     try {
-      const coverageFile = path.join(process.cwd(), 'coverage/coverage-summary.json');
+      const coverageFile = path.join(
+        process.cwd(),
+        'coverage/coverage-summary.json',
+      );
       const coverageData = JSON.parse(await fs.readFile(coverageFile, 'utf-8'));
 
       this.coverageData = coverageData.total;
 
       // Generate coverage badge
       const coveragePercent = coverageData.total.lines.pct;
-      const badgeColor = coveragePercent >= 90 ? 'green' :
-        coveragePercent >= 80 ? 'yellow' : 'red';
+      const badgeColor =
+        coveragePercent >= 90
+          ? 'green'
+          : coveragePercent >= 80
+            ? 'yellow'
+            : 'red';
 
-      console.log(chalk.bold(`\n📈 Coverage: ${coveragePercent}% (${badgeColor})`));
+      console.log(
+        chalk.bold(`\n📈 Coverage: ${coveragePercent}% (${badgeColor})`),
+      );
     } catch (error) {
       console.log(chalk.yellow('⚠️  Coverage data not available'));
     }
@@ -241,11 +261,11 @@ class TestRunner {
     };
 
     // Parse performance test output
-    const perfTest = this.results.find(r => r.name.includes('Performance'));
+    const perfTest = this.results.find((r) => r.name.includes('Performance'));
     if (perfTest && perfTest.output) {
       // Extract metrics from output (simplified)
       const lines = perfTest.output.split('\n');
-      lines.forEach(line => {
+      lines.forEach((line) => {
         if (line.includes('initialization:')) {
           const match = line.match(/avg=(\d+\.?\d*)/);
           if (match) {
@@ -259,8 +279,8 @@ class TestRunner {
     return {
       timestamp: new Date().toISOString(),
       metrics,
-      meetsTargets: Object.values(metrics).every(m =>
-        m.actual === null || m.actual <= m.target,
+      meetsTargets: Object.values(metrics).every(
+        (m) => m.actual === null || m.actual <= m.target,
       ),
     };
   }
@@ -273,9 +293,11 @@ class TestRunner {
 
     // Test results
     console.log(chalk.bold('\nTest Results:'));
-    this.results.forEach(result => {
+    this.results.forEach((result) => {
       const icon = result.skipped ? '⚪' : result.success ? '✅' : '❌';
-      const time = result.duration ? ` (${(result.duration / 1000).toFixed(2)}s)` : '';
+      const time = result.duration
+        ? ` (${(result.duration / 1000).toFixed(2)}s)`
+        : '';
       console.log(`  ${icon} ${result.name}${time}`);
     });
 
@@ -289,9 +311,9 @@ class TestRunner {
     }
 
     // Overall summary
-    const passed = this.results.filter(r => r.success).length;
-    const failed = this.results.filter(r => !r.success && !r.skipped).length;
-    const skipped = this.results.filter(r => r.skipped).length;
+    const passed = this.results.filter((r) => r.success).length;
+    const failed = this.results.filter((r) => !r.success && !r.skipped).length;
+    const skipped = this.results.filter((r) => r.skipped).length;
 
     console.log(chalk.bold('\nOverall Summary:'));
     console.log(`  Total:    ${this.results.length} suites`);
@@ -312,7 +334,7 @@ class TestRunner {
 
 // Run tests
 const runner = new TestRunner();
-runner.run().catch(error => {
+runner.run().catch((error) => {
   console.error(chalk.red('Fatal error:', error));
   process.exit(1);
 });

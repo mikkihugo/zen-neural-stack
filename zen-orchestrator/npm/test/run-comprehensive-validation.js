@@ -5,7 +5,9 @@
  * Main entry point for complete test suite validation
  */
 
-const { ComprehensiveTestOrchestrator } = require('./comprehensive-test-orchestrator.js');
+const {
+  ComprehensiveTestOrchestrator,
+} = require('./comprehensive-test-orchestrator.js');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -45,7 +47,9 @@ async function main() {
           speed: {
             target: '2.8-4.4x improvement',
             actual: results.metrics.performance?.speedOptimization || 'N/A',
-            met: checkSpeedTarget(results.metrics.performance?.speedOptimization),
+            met: checkSpeedTarget(
+              results.metrics.performance?.speedOptimization,
+            ),
           },
           loadTesting: {
             target: '50+ concurrent agents',
@@ -78,8 +82,15 @@ async function main() {
           },
           claudeFlowIntegration: {
             target: 'Full integration',
-            actual: results.testSuites.find(s => s.name === 'Claude Code Flow Integration')?.passed ? 'Verified' : 'Failed',
-            met: results.testSuites.find(s => s.name === 'Claude Code Flow Integration')?.passed || false,
+            actual: results.testSuites.find(
+              (s) => s.name === 'Claude Code Flow Integration',
+            )?.passed
+              ? 'Verified'
+              : 'Failed',
+            met:
+              results.testSuites.find(
+                (s) => s.name === 'Claude Code Flow Integration',
+              )?.passed || false,
           },
         },
       },
@@ -91,9 +102,14 @@ async function main() {
     const validationScore = (targetsMet / totalTargets) * 100;
 
     finalReport.validation.overallScore = validationScore;
-    finalReport.validation.status = validationScore >= 90 ? 'EXCELLENT' :
-      validationScore >= 80 ? 'GOOD' :
-        validationScore >= 70 ? 'ACCEPTABLE' : 'NEEDS_IMPROVEMENT';
+    finalReport.validation.status =
+      validationScore >= 90
+        ? 'EXCELLENT'
+        : validationScore >= 80
+          ? 'GOOD'
+          : validationScore >= 70
+            ? 'ACCEPTABLE'
+            : 'NEEDS_IMPROVEMENT';
 
     // Save final report
     const reportPath = path.join(__dirname, 'FINAL_VALIDATION_REPORT.json');
@@ -106,23 +122,33 @@ async function main() {
     console.log('\n🎯 FINAL VALIDATION SUMMARY');
     console.log('===========================');
     console.log(`Overall Status: ${finalReport.status}`);
-    console.log(`Validation Score: ${validationScore.toFixed(1)}% (${finalReport.validation.status})`);
+    console.log(
+      `Validation Score: ${validationScore.toFixed(1)}% (${finalReport.validation.status})`,
+    );
     console.log(`Targets Met: ${targetsMet}/${totalTargets}`);
     console.log(`Total Duration: ${Math.round(totalDuration / 1000)}s`);
     console.log(`CI/CD Ready: ${finalReport.cicdReadiness ? 'YES' : 'NO'}`);
 
     console.log('\n📊 Performance Target Validation:');
-    Object.entries(finalReport.validation.performanceTargets).forEach(([key, target]) => {
-      console.log(`   ${target.met ? '✅' : '❌'} ${key}: ${target.actual} (Target: ${target.target})`);
-    });
+    Object.entries(finalReport.validation.performanceTargets).forEach(
+      ([key, target]) => {
+        console.log(
+          `   ${target.met ? '✅' : '❌'} ${key}: ${target.actual} (Target: ${target.target})`,
+        );
+      },
+    );
 
     console.log('\n🔒 Security & Quality:');
-    console.log(`   ${finalReport.validation.performanceTargets.security.met ? '✅' : '❌'} Security Score: ${finalReport.validation.performanceTargets.security.actual}/100`);
+    console.log(
+      `   ${finalReport.validation.performanceTargets.security.met ? '✅' : '❌'} Security Score: ${finalReport.validation.performanceTargets.security.actual}/100`,
+    );
 
     console.log('\n🔗 Integration Validation:');
-    Object.entries(finalReport.validation.integrationTargets).forEach(([key, target]) => {
-      console.log(`   ${target.met ? '✅' : '❌'} ${key}: ${target.actual}`);
-    });
+    Object.entries(finalReport.validation.integrationTargets).forEach(
+      ([key, target]) => {
+        console.log(`   ${target.met ? '✅' : '❌'} ${key}: ${target.actual}`);
+      },
+    );
 
     if (finalReport.recommendations.length > 0) {
       console.log('\n💡 Final Recommendations:');
@@ -132,11 +158,14 @@ async function main() {
     }
 
     console.log(`\n📄 Final report saved to: ${reportPath}`);
-    console.log(`📋 Summary report saved to: ${path.join(__dirname, 'VALIDATION_SUMMARY.md')}`);
+    console.log(
+      `📋 Summary report saved to: ${path.join(__dirname, 'VALIDATION_SUMMARY.md')}`,
+    );
 
     // Exit with appropriate code
-    process.exit(finalReport.status === 'PASSED' && validationScore >= 90 ? 0 : 1);
-
+    process.exit(
+      finalReport.status === 'PASSED' && validationScore >= 90 ? 0 : 1,
+    );
   } catch (error) {
     console.error('💥 Comprehensive validation failed:', error);
     process.exit(1);
@@ -162,19 +191,19 @@ function checkSpeedTarget(actual) {
 function countTargetsMet(validation) {
   let count = 0;
 
-  Object.values(validation.performanceTargets).forEach(target => {
+  Object.values(validation.performanceTargets).forEach((target) => {
     if (target.met) {
       count++;
     }
   });
 
-  Object.values(validation.coverageTargets).forEach(target => {
+  Object.values(validation.coverageTargets).forEach((target) => {
     if (target.met) {
       count++;
     }
   });
 
-  Object.values(validation.integrationTargets).forEach(target => {
+  Object.values(validation.integrationTargets).forEach((target) => {
     if (target.met) {
       count++;
     }
@@ -184,9 +213,11 @@ function countTargetsMet(validation) {
 }
 
 function countTotalTargets(validation) {
-  return Object.keys(validation.performanceTargets).length +
-           Object.keys(validation.coverageTargets).length +
-           Object.keys(validation.integrationTargets).length;
+  return (
+    Object.keys(validation.performanceTargets).length +
+    Object.keys(validation.coverageTargets).length +
+    Object.keys(validation.integrationTargets).length
+  );
 }
 
 async function generateSummaryReport(finalReport) {
@@ -222,9 +253,12 @@ async function generateSummaryReport(finalReport) {
 | Claude Code Flow | Full integration | ${finalReport.validation.integrationTargets.claudeFlowIntegration.met ? '✅ Verified' : '❌ Failed'} |
 
 ## Test Suite Results
-${finalReport.testSuites.map(suite =>
-    `- ${suite.passed ? '✅' : '❌'} **${suite.name}**: ${suite.passed ? 'PASSED' : 'FAILED'} (${Math.round(suite.duration / 1000)}s)`,
-  ).join('\n')}
+${finalReport.testSuites
+  .map(
+    (suite) =>
+      `- ${suite.passed ? '✅' : '❌'} **${suite.name}**: ${suite.passed ? 'PASSED' : 'FAILED'} (${Math.round(suite.duration / 1000)}s)`,
+  )
+  .join('\n')}
 
 ## Key Metrics Summary
 - **Max Concurrent Agents**: ${finalReport.metrics.reliability?.maxConcurrentAgents || 'N/A'}
@@ -234,16 +268,22 @@ ${finalReport.testSuites.map(suite =>
 - **Security Level**: ${finalReport.metrics.security?.securityLevel || 'N/A'}
 
 ## Validation Results
-${finalReport.validation.status === 'EXCELLENT' ? '🏆 **EXCELLENT**: All performance targets met with exceptional results' :
-    finalReport.validation.status === 'GOOD' ? '✅ **GOOD**: Most performance targets met, minor improvements needed' :
-      finalReport.validation.status === 'ACCEPTABLE' ? '⚠️ **ACCEPTABLE**: Basic requirements met, several improvements recommended' :
-        '❌ **NEEDS IMPROVEMENT**: Multiple targets not met, significant work required'}
+${
+  finalReport.validation.status === 'EXCELLENT'
+    ? '🏆 **EXCELLENT**: All performance targets met with exceptional results'
+    : finalReport.validation.status === 'GOOD'
+      ? '✅ **GOOD**: Most performance targets met, minor improvements needed'
+      : finalReport.validation.status === 'ACCEPTABLE'
+        ? '⚠️ **ACCEPTABLE**: Basic requirements met, several improvements recommended'
+        : '❌ **NEEDS IMPROVEMENT**: Multiple targets not met, significant work required'
+}
 
 ## Recommendations
 ${finalReport.recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n')}
 
 ## Next Steps
-${finalReport.cicdReadiness && finalReport.validation.overallScore >= 90
+${
+  finalReport.cicdReadiness && finalReport.validation.overallScore >= 90
     ? `### 🚀 Ready for Production Deployment
 - All critical tests passed
 - Performance targets exceeded
@@ -256,7 +296,10 @@ ${finalReport.cicdReadiness && finalReport.validation.overallScore >= 90
 - Schedule regular regression testing
 - Document performance baselines`
     : `### 🔧 Additional Work Required
-- Address failing test suites: ${finalReport.testSuites.filter(s => !s.passed).map(s => s.name).join(', ')}
+- Address failing test suites: ${finalReport.testSuites
+        .filter((s) => !s.passed)
+        .map((s) => s.name)
+        .join(', ')}
 - Fix performance regressions
 - Meet security requirements
 - Complete integration testing

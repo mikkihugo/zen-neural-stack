@@ -28,7 +28,12 @@ class MemoryIntegrationTest {
     };
 
     // Use test database to avoid affecting production data
-    this.testDbPath = path.join(process.cwd(), 'test', 'data', 'test-memory-integration.db');
+    this.testDbPath = path.join(
+      process.cwd(),
+      'test',
+      'data',
+      'test-memory-integration.db',
+    );
   }
 
   async initialize() {
@@ -79,7 +84,11 @@ class MemoryIntegrationTest {
       { id: 'coder-1', name: 'Coder 1', type: 'coder' },
       { id: 'coordinator', name: 'Coordinator', type: 'coordinator' },
       { id: 'tester', name: 'Tester', type: 'tester' },
-      { id: 'test-completion-agent', name: 'Completion Tester', type: 'tester' },
+      {
+        id: 'test-completion-agent',
+        name: 'Completion Tester',
+        type: 'tester',
+      },
       { id: 'resilience-agent', name: 'Resilience Tester', type: 'tester' },
       { id: 'hook-system', name: 'Hook System', type: 'coordinator' },
       { id: 'shared-memory', name: 'Shared Memory Agent', type: 'coordinator' },
@@ -152,8 +161,8 @@ class MemoryIntegrationTest {
 
     // Verify it's in runtime memory
     const runtimeNotifications = this.hooks.sessionData.notifications;
-    const foundInRuntime = runtimeNotifications.some(n =>
-      n.type === notification.type && n.message === notification.message,
+    const foundInRuntime = runtimeNotifications.some(
+      (n) => n.type === notification.type && n.message === notification.message,
     );
 
     if (!foundInRuntime) {
@@ -161,9 +170,10 @@ class MemoryIntegrationTest {
     }
 
     // Verify it's in persistent database
-    const dbNotifications = await this.hooks.getNotificationsFromDatabase('test-agent');
-    const foundInDb = dbNotifications.some(n =>
-      n.type === notification.type && n.message === notification.message,
+    const dbNotifications =
+      await this.hooks.getNotificationsFromDatabase('test-agent');
+    const foundInDb = dbNotifications.some(
+      (n) => n.type === notification.type && n.message === notification.message,
     );
 
     if (!foundInDb) {
@@ -173,7 +183,8 @@ class MemoryIntegrationTest {
     return {
       runtimeCount: runtimeNotifications.length,
       dbCount: dbNotifications.length,
-      message: 'Notification successfully stored in both runtime memory and database',
+      message:
+        'Notification successfully stored in both runtime memory and database',
     };
   }
 
@@ -183,21 +194,31 @@ class MemoryIntegrationTest {
     const agent2Id = 'agent-2';
 
     // Agent 1 stores some shared memory
-    await this.hooks.setSharedMemory('shared-task-status', {
-      currentTask: 'building-api',
-      progress: 0.75,
-      dependencies: ['database-setup', 'auth-implementation'],
-    }, agent1Id);
+    await this.hooks.setSharedMemory(
+      'shared-task-status',
+      {
+        currentTask: 'building-api',
+        progress: 0.75,
+        dependencies: ['database-setup', 'auth-implementation'],
+      },
+      agent1Id,
+    );
 
     // Agent 2 retrieves the shared memory
-    const sharedMemory = await this.hooks.getSharedMemory('shared-task-status', agent1Id);
+    const sharedMemory = await this.hooks.getSharedMemory(
+      'shared-task-status',
+      agent1Id,
+    );
 
     if (!sharedMemory || sharedMemory.currentTask !== 'building-api') {
       throw new Error('Cross-agent memory access failed');
     }
 
     // Verify it's actually in the database
-    const dbMemory = await this.persistence.getAgentMemory(agent1Id, 'shared-task-status');
+    const dbMemory = await this.persistence.getAgentMemory(
+      agent1Id,
+      'shared-task-status',
+    );
 
     if (!dbMemory || dbMemory.value.currentTask !== 'building-api') {
       throw new Error('Shared memory not properly persisted in database');
@@ -216,8 +237,16 @@ class MemoryIntegrationTest {
     // First, create some notifications through hooks
     const notifications = [
       { type: 'file-edit', message: 'Edited src/api.js', agentId: 'coder-1' },
-      { type: 'task-start', message: 'Started database migration', agentId: 'coordinator' },
-      { type: 'error', message: 'Test failed in unit tests', agentId: 'tester' },
+      {
+        type: 'task-start',
+        message: 'Started database migration',
+        agentId: 'coordinator',
+      },
+      {
+        type: 'error',
+        message: 'Test failed in unit tests',
+        agentId: 'tester',
+      },
     ];
 
     for (const notif of notifications) {
@@ -225,29 +254,41 @@ class MemoryIntegrationTest {
     }
 
     // Now test MCP tools integration
-    const integrated = await this.mcpTools.integrateHookNotifications(this.hooks);
+    const integrated = await this.mcpTools.integrateHookNotifications(
+      this.hooks,
+    );
 
     if (!integrated) {
       throw new Error('MCP tools failed to integrate hook notifications');
     }
 
     // Verify cross-agent notifications can be retrieved
-    const crossAgentNotifications = await this.mcpTools.getCrossAgentNotifications();
+    const crossAgentNotifications =
+      await this.mcpTools.getCrossAgentNotifications();
 
-    console.log(`🔍 Debug: Found ${crossAgentNotifications.length} cross-agent notifications`);
+    console.log(
+      `🔍 Debug: Found ${crossAgentNotifications.length} cross-agent notifications`,
+    );
 
     if (crossAgentNotifications.length === 0) {
       // Let's debug what's in the database
       const allMemories = await this.persistence.getAllMemory('coder-1');
       console.log(`🔍 Debug: Agent coder-1 has ${allMemories.length} memories`);
-      allMemories.forEach(m => console.log(`  - ${m.key}: ${JSON.stringify(m.value).substring(0, 100)}`));
+      allMemories.forEach((m) =>
+        console.log(
+          `  - ${m.key}: ${JSON.stringify(m.value).substring(0, 100)}`,
+        ),
+      );
 
       throw new Error('No cross-agent notifications found after integration');
     }
 
     // Verify we can filter by type
-    const errorNotifications = await this.mcpTools.getCrossAgentNotifications(null, 'error');
-    const errorFound = errorNotifications.some(n => n.type === 'error');
+    const errorNotifications = await this.mcpTools.getCrossAgentNotifications(
+      null,
+      'error',
+    );
+    const errorFound = errorNotifications.some((n) => n.type === 'error');
 
     if (!errorFound) {
       throw new Error('Filtering by notification type failed');
@@ -282,9 +323,16 @@ class MemoryIntegrationTest {
     // Verify completion is in runtime memory
     const agent = this.hooks.sessionData.agents.get(completionData.agentId);
     console.log('🔍 Debug: Agent in runtime memory:', agent);
-    console.log('🔍 Debug: All runtime agents:', Array.from(this.hooks.sessionData.agents.keys()));
+    console.log(
+      '🔍 Debug: All runtime agents:',
+      Array.from(this.hooks.sessionData.agents.keys()),
+    );
 
-    if (!agent || !agent.lastCompletion || agent.lastCompletion.taskId !== completionData.taskId) {
+    if (
+      !agent ||
+      !agent.lastCompletion ||
+      agent.lastCompletion.taskId !== completionData.taskId
+    ) {
       // Let's manually ensure the agent exists in runtime
       if (!agent) {
         this.hooks.sessionData.agents.set(completionData.agentId, {
@@ -297,9 +345,13 @@ class MemoryIntegrationTest {
         // Re-run the completion hook
         await this.hooks.agentCompleteHook(completionData);
 
-        const retryAgent = this.hooks.sessionData.agents.get(completionData.agentId);
+        const retryAgent = this.hooks.sessionData.agents.get(
+          completionData.agentId,
+        );
         if (!retryAgent || !retryAgent.lastCompletion) {
-          throw new Error('Agent completion not found in runtime memory after retry');
+          throw new Error(
+            'Agent completion not found in runtime memory after retry',
+          );
         }
       } else {
         throw new Error('Agent completion not found in runtime memory');
@@ -323,7 +375,9 @@ class MemoryIntegrationTest {
     }
 
     // Get the final agent state for validation
-    const finalAgent = this.hooks.sessionData.agents.get(completionData.agentId);
+    const finalAgent = this.hooks.sessionData.agents.get(
+      completionData.agentId,
+    );
 
     return {
       runtimeStatus: finalAgent?.status || 'unknown',
@@ -349,7 +403,9 @@ class MemoryIntegrationTest {
 
     // Verify it's still in runtime memory
     const runtimeNotifications = this.hooks.sessionData.notifications;
-    const found = runtimeNotifications.some(n => n.type === 'resilience-test');
+    const found = runtimeNotifications.some(
+      (n) => n.type === 'resilience-test',
+    );
 
     if (!found) {
       throw new Error('System failed when database unavailable');
@@ -382,13 +438,18 @@ class MemoryIntegrationTest {
     const report = {
       ...this.testResults,
       passingRate: `${((this.testResults.summary.passed / this.testResults.summary.total) * 100).toFixed(1)}%`,
-      conclusion: this.testResults.summary.failed === 0 ?
-        '🎉 ALL TESTS PASSED - Memory system integration is working correctly' :
-        `⚠️ ${this.testResults.summary.failed} tests failed - Memory system needs attention`,
+      conclusion:
+        this.testResults.summary.failed === 0
+          ? '🎉 ALL TESTS PASSED - Memory system integration is working correctly'
+          : `⚠️ ${this.testResults.summary.failed} tests failed - Memory system needs attention`,
     };
 
     // Write detailed report
-    const reportPath = path.join(process.cwd(), 'test', 'memory-integration-report.json');
+    const reportPath = path.join(
+      process.cwd(),
+      'test',
+      'memory-integration-report.json',
+    );
     await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
 
     console.log(`\n📊 Test Report written to: ${reportPath}`);
@@ -402,22 +463,32 @@ class MemoryIntegrationTest {
     await this.initialize();
 
     // Run all tests
-    await this.runTest('Basic Notification Storage', () => this.testBasicNotificationStorage());
-    await this.runTest('Cross-Agent Memory Access', () => this.testCrossAgentMemoryAccess());
-    await this.runTest('MCP-Hook Integration', () => this.testMCPHookIntegration());
-    await this.runTest('Agent Completion Coordination', () => this.testAgentCompletion());
-    await this.runTest('Memory System Resilience', () => this.testMemorySystemResilience());
+    await this.runTest('Basic Notification Storage', () =>
+      this.testBasicNotificationStorage(),
+    );
+    await this.runTest('Cross-Agent Memory Access', () =>
+      this.testCrossAgentMemoryAccess(),
+    );
+    await this.runTest('MCP-Hook Integration', () =>
+      this.testMCPHookIntegration(),
+    );
+    await this.runTest('Agent Completion Coordination', () =>
+      this.testAgentCompletion(),
+    );
+    await this.runTest('Memory System Resilience', () =>
+      this.testMemorySystemResilience(),
+    );
 
     const report = await this.generateReport();
 
-    console.log(`\n${ '='.repeat(60)}`);
+    console.log(`\n${'='.repeat(60)}`);
     console.log('📊 FINAL RESULTS');
     console.log('='.repeat(60));
     console.log(`Total Tests: ${report.summary.total}`);
     console.log(`Passed: ${report.summary.passed}`);
     console.log(`Failed: ${report.summary.failed}`);
     console.log(`Pass Rate: ${report.passingRate}`);
-    console.log(`\n${ report.conclusion}`);
+    console.log(`\n${report.conclusion}`);
 
     await this.cleanup();
 
@@ -429,7 +500,7 @@ class MemoryIntegrationTest {
 // Run test if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const test = new MemoryIntegrationTest();
-  test.run().catch(error => {
+  test.run().catch((error) => {
     console.error('❌ Test execution failed:', error);
     process.exit(1);
   });

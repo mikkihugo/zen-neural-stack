@@ -21,14 +21,18 @@ async function validateAllPresets() {
 
     try {
       // Test with the preset
-      const { stdout: testOutput } = await execAsync(`npm test -- --preset=${preset}`);
+      const { stdout: testOutput } = await execAsync(
+        `npm test -- --preset=${preset}`,
+      );
 
       // Extract test results
       const passed = testOutput.match(/(\d+) passed/)?.[1] || 0;
       const failed = testOutput.match(/(\d+) failed/)?.[1] || 0;
 
       // Run coverage for this preset
-      const { stdout: coverageOutput } = await execAsync(`npx nyc --reporter=json-summary npm test -- --preset=${preset}`);
+      const { stdout: coverageOutput } = await execAsync(
+        `npx nyc --reporter=json-summary npm test -- --preset=${preset}`,
+      );
 
       // Read coverage data
       const coverageData = JSON.parse(
@@ -51,8 +55,9 @@ async function validateAllPresets() {
       };
 
       console.log(`  ✅ Tests: ${passed} passed, ${failed} failed`);
-      console.log(`  📊 Coverage: ${coverageData.total.lines.pct.toFixed(2)}% lines`);
-
+      console.log(
+        `  📊 Coverage: ${coverageData.total.lines.pct.toFixed(2)}% lines`,
+      );
     } catch (error) {
       console.log(`  ❌ Error: ${error.message}`);
       results.presets[preset] = {
@@ -76,7 +81,9 @@ async function validateAllPresets() {
 
 async function testPresetPerformance(preset) {
   try {
-    const { stdout } = await execAsync(`node test/benchmarks/benchmark-neural-models.js --preset=${preset} --iterations=3`);
+    const { stdout } = await execAsync(
+      `node test/benchmarks/benchmark-neural-models.js --preset=${preset} --iterations=3`,
+    );
 
     // Extract performance metrics
     const metrics = {
@@ -100,17 +107,20 @@ async function generatePresetReport(results) {
 
 | Preset | Tests | Coverage | Performance | Status |
 |--------|-------|----------|-------------|---------|
-${presets.map(preset => {
+${presets
+  .map((preset) => {
     const data = results.presets[preset];
     if (!data.success) {
       return `| ${preset} | ❌ Error | - | - | Failed |`;
     }
     return `| ${preset} | ✅ ${data.tests.passed}/${data.tests.passed + data.tests.failed} | ${data.coverage.lines.toFixed(1)}% | ${data.performance.avgTime?.toFixed(2) || 'N/A'}ms | ${data.success ? 'Pass' : 'Fail'} |`;
-  }).join('\n')}
+  })
+  .join('\n')}
 
 ## 📈 Detailed Results
 
-${presets.map(preset => {
+${presets
+  .map((preset) => {
     const data = results.presets[preset];
     if (!data.success) {
       return `### ❌ ${preset}
@@ -128,7 +138,8 @@ ${presets.map(preset => {
   - Avg Time: ${data.performance.avgTime?.toFixed(2) || 'N/A'}ms
   - Memory: ${data.performance.memory || 'N/A'}
   - Status: ${data.performance.initialized ? 'Initialized' : 'Failed'}`;
-  }).join('\n\n')}
+  })
+  .join('\n\n')}
 
 ## 🎯 Recommendations
 

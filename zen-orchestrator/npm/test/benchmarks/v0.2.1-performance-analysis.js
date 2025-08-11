@@ -31,8 +31,8 @@ class PerformanceAnalyzer {
       let output = '';
       let error = '';
 
-      child.stdout.on('data', (data) => output += data.toString());
-      child.stderr.on('data', (data) => error += data.toString());
+      child.stdout.on('data', (data) => (output += data.toString()));
+      child.stderr.on('data', (data) => (error += data.toString()));
 
       child.on('close', (code) => {
         resolve({ code, output, error });
@@ -42,14 +42,24 @@ class PerformanceAnalyzer {
 
   async testModuleWarnings() {
     console.log('🔍 Testing Module Warning Fixes...');
-    const result = await this.runCommand('npx', ['ruv-swarm', 'neural', 'status']);
+    const result = await this.runCommand('npx', [
+      'ruv-swarm',
+      'neural',
+      'status',
+    ]);
 
-    const hasModuleWarning = result.error.includes('MODULE_TYPELESS_PACKAGE_JSON');
+    const hasModuleWarning = result.error.includes(
+      'MODULE_TYPELESS_PACKAGE_JSON',
+    );
     this.results.fixes.push({
       issue: 'Module type warnings',
       fixed: !hasModuleWarning,
-      impact: hasModuleWarning ? 'Performance overhead still present' : 'Eliminated performance overhead',
-      recommendation: hasModuleWarning ? 'Add "type": "module" to wasm/package.json' : 'Successfully fixed',
+      impact: hasModuleWarning
+        ? 'Performance overhead still present'
+        : 'Eliminated performance overhead',
+      recommendation: hasModuleWarning
+        ? 'Add "type": "module" to wasm/package.json'
+        : 'Successfully fixed',
     });
 
     return !hasModuleWarning;
@@ -60,7 +70,13 @@ class PerformanceAnalyzer {
 
     // Test training performance
     const trainStart = Date.now();
-    const trainResult = await this.runCommand('npx', ['ruv-swarm', 'neural', 'train', '--iterations', '10']);
+    const trainResult = await this.runCommand('npx', [
+      'ruv-swarm',
+      'neural',
+      'train',
+      '--iterations',
+      '10',
+    ]);
     const trainTime = Date.now() - trainStart;
 
     // Extract metrics from output
@@ -75,8 +91,15 @@ class PerformanceAnalyzer {
     };
 
     // Test pattern recognition
-    const patternResult = await this.runCommand('npx', ['ruv-swarm', 'neural', 'patterns', '--pattern', 'all']);
-    const hasPatternErrors = patternResult.output.includes('Error') || patternResult.error.length > 0;
+    const patternResult = await this.runCommand('npx', [
+      'ruv-swarm',
+      'neural',
+      'patterns',
+      '--pattern',
+      'all',
+    ]);
+    const hasPatternErrors =
+      patternResult.output.includes('Error') || patternResult.error.length > 0;
 
     this.results.metrics.patternRecognition = {
       functional: !hasPatternErrors,
@@ -89,14 +112,28 @@ class PerformanceAnalyzer {
   async testBenchmarks() {
     console.log('📊 Running Comprehensive Benchmarks...');
 
-    const benchResult = await this.runCommand('npx', ['ruv-swarm', 'benchmark', 'run', '--type', 'neural', '--iterations', '20']);
+    const benchResult = await this.runCommand('npx', [
+      'ruv-swarm',
+      'benchmark',
+      'run',
+      '--type',
+      'neural',
+      '--iterations',
+      '20',
+    ]);
 
     // Extract benchmark metrics
     const scoreMatch = benchResult.output.match(/Overall Score: (\d+)%/);
     const wasmMatch = benchResult.output.match(/WASM Module Loading.*?(\d+)ms/);
-    const swarmMatch = benchResult.output.match(/Swarm Init.*?Average: ([\d.]+)ms/);
-    const agentMatch = benchResult.output.match(/Agent Spawn.*?Average: ([\d.]+)ms/);
-    const neuralMatch = benchResult.output.match(/Neural Processing.*?(\d+) ops\/sec/);
+    const swarmMatch = benchResult.output.match(
+      /Swarm Init.*?Average: ([\d.]+)ms/,
+    );
+    const agentMatch = benchResult.output.match(
+      /Agent Spawn.*?Average: ([\d.]+)ms/,
+    );
+    const neuralMatch = benchResult.output.match(
+      /Neural Processing.*?(\d+) ops\/sec/,
+    );
 
     this.results.metrics.benchmarks = {
       overallScore: scoreMatch ? parseInt(scoreMatch[1], 10) : 0,
@@ -114,10 +151,26 @@ class PerformanceAnalyzer {
 
     // Test session save
     const sessionId = `test-${Date.now()}`;
-    const saveResult = await this.runCommand('npx', ['ruv-swarm', 'hook', 'session-end', '--session-id', sessionId, '--export-metrics', 'true']);
+    const saveResult = await this.runCommand('npx', [
+      'ruv-swarm',
+      'hook',
+      'session-end',
+      '--session-id',
+      sessionId,
+      '--export-metrics',
+      'true',
+    ]);
 
     // Test session restore
-    const restoreResult = await this.runCommand('npx', ['ruv-swarm', 'hook', 'session-restore', '--session-id', sessionId, '--load-memory', 'true']);
+    const restoreResult = await this.runCommand('npx', [
+      'ruv-swarm',
+      'hook',
+      'session-restore',
+      '--session-id',
+      sessionId,
+      '--load-memory',
+      'true',
+    ]);
 
     const saveSuccess = saveResult.output.includes('"continue": true');
     const restoreSuccess = restoreResult.output.includes('"restored"');
@@ -132,7 +185,8 @@ class PerformanceAnalyzer {
       issue: 'Cross-session persistence',
       fixed: saveSuccess && restoreSuccess,
       impact: 'Enables continuous learning across sessions',
-      functionality: saveSuccess && restoreSuccess ? 'Fully operational' : 'Requires fixes',
+      functionality:
+        saveSuccess && restoreSuccess ? 'Fully operational' : 'Requires fixes',
     });
 
     return true;
@@ -144,14 +198,21 @@ class PerformanceAnalyzer {
     // Test with invalid inputs
     const invalidTests = [
       { cmd: 'npx ruv-swarm neural train --iterations -5', expectError: true },
-      { cmd: 'npx ruv-swarm benchmark run --iterations 1000', expectError: true },
-      { cmd: 'npx ruv-swarm neural patterns --pattern invalid', expectError: false },
+      {
+        cmd: 'npx ruv-swarm benchmark run --iterations 1000',
+        expectError: true,
+      },
+      {
+        cmd: 'npx ruv-swarm neural patterns --pattern invalid',
+        expectError: false,
+      },
     ];
 
     let validationScore = 0;
     for (const test of invalidTests) {
       const result = await this.runCommand('sh', ['-c', test.cmd]);
-      const hasError = result.error.length > 0 || result.output.includes('Error');
+      const hasError =
+        result.error.length > 0 || result.output.includes('Error');
       if ((test.expectError && hasError) || (!test.expectError && !hasError)) {
         validationScore++;
       }
@@ -197,11 +258,15 @@ class PerformanceAnalyzer {
       moduleWarnings: {
         before: 'Present',
         after: this.results.fixes[0]?.fixed ? 'Fixed' : 'Still Present',
-        impact: this.results.fixes[0]?.fixed ? 'Eliminated performance overhead' : 'Performance overhead remains',
+        impact: this.results.fixes[0]?.fixed
+          ? 'Eliminated performance overhead'
+          : 'Performance overhead remains',
       },
       persistence: {
         before: 'Non-functional',
-        after: this.results.metrics.persistence?.crossSessionMemory ? 'Fully operational' : 'Partially working',
+        after: this.results.metrics.persistence?.crossSessionMemory
+          ? 'Fully operational'
+          : 'Partially working',
         impact: 'Enables continuous learning and state management',
       },
     };
@@ -219,10 +284,16 @@ Generated: ${this.results.timestamp}
 Version 0.2.1 introduces critical fixes and performance improvements to the neural engine.
 
 ### Key Achievements:
-${this.results.fixes.filter(f => f.fixed).map(f => `- ✅ ${f.issue}: ${f.impact}`).join('\n')}
+${this.results.fixes
+  .filter((f) => f.fixed)
+  .map((f) => `- ✅ ${f.issue}: ${f.impact}`)
+  .join('\n')}
 
 ### Outstanding Issues:
-${this.results.fixes.filter(f => !f.fixed).map(f => `- ⚠️ ${f.issue}: ${f.recommendation}`).join('\n')}
+${this.results.fixes
+  .filter((f) => !f.fixed)
+  .map((f) => `- ⚠️ ${f.issue}: ${f.recommendation}`)
+  .join('\n')}
 
 ## Performance Metrics
 
@@ -277,7 +348,10 @@ ${this.results.fixes.filter(f => !f.fixed).map(f => `- ⚠️ ${f.issue}: ${f.re
 ## Recommendations
 
 ### Immediate Actions:
-${this.results.fixes.filter(f => !f.fixed).map(f => `1. ${f.recommendation}`).join('\n')}
+${this.results.fixes
+  .filter((f) => !f.fixed)
+  .map((f) => `1. ${f.recommendation}`)
+  .join('\n')}
 
 ### Future Enhancements:
 1. Implement SIMD support for additional performance gains
@@ -329,10 +403,15 @@ The system is now more robust, with ${(this.results.metrics.inputValidation?.sco
 
       console.log('\n✅ Analysis Complete!');
       console.log('\n📊 Summary:');
-      console.log(`- Neural Accuracy: ${this.results.metrics.neuralTraining?.accuracy}%`);
-      console.log(`- Benchmark Score: ${this.results.metrics.benchmarks?.overallScore}%`);
-      console.log(`- Fixes Applied: ${this.results.fixes.filter(f => f.fixed).length}/${this.results.fixes.length}`);
-
+      console.log(
+        `- Neural Accuracy: ${this.results.metrics.neuralTraining?.accuracy}%`,
+      );
+      console.log(
+        `- Benchmark Score: ${this.results.metrics.benchmarks?.overallScore}%`,
+      );
+      console.log(
+        `- Fixes Applied: ${this.results.fixes.filter((f) => f.fixed).length}/${this.results.fixes.length}`,
+      );
     } catch (error) {
       console.error('❌ Analysis failed:', error);
       process.exit(1);

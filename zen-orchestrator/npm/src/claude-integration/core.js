@@ -15,8 +15,8 @@ class ClaudeIntegrationCore {
   }
 
   /**
-     * Check if Claude CLI is available
-     */
+   * Check if Claude CLI is available
+   */
   async isClaudeAvailable() {
     try {
       execSync('claude --version', { stdio: 'ignore' });
@@ -27,26 +27,31 @@ class ClaudeIntegrationCore {
   }
 
   /**
-     * Add ruv-swarm MCP server to Claude Code
-     */
+   * Add ruv-swarm MCP server to Claude Code
+   */
   async addMcpServer() {
-    if (!await this.isClaudeAvailable()) {
-      throw new Error('Claude Code CLI not found. Install with: npm install -g @anthropic-ai/claude-code');
+    if (!(await this.isClaudeAvailable())) {
+      throw new Error(
+        'Claude Code CLI not found. Install with: npm install -g @anthropic-ai/claude-code',
+      );
     }
 
     try {
       // Add ruv-swarm MCP server using stdio (no port needed)
       const mcpCommand = 'claude mcp add ruv-swarm npx ruv-swarm mcp start';
       execSync(mcpCommand, { stdio: 'inherit', cwd: this.workingDir });
-      return { success: true, message: 'Added ruv-swarm MCP server to Claude Code (stdio)' };
+      return {
+        success: true,
+        message: 'Added ruv-swarm MCP server to Claude Code (stdio)',
+      };
     } catch (error) {
       throw new Error(`Failed to add MCP server: ${error.message}`);
     }
   }
 
   /**
-     * Check if integration files already exist
-     */
+   * Check if integration files already exist
+   */
   async checkExistingFiles() {
     try {
       await fs.access(path.join(this.workingDir, 'claude.md'));
@@ -58,14 +63,16 @@ class ClaudeIntegrationCore {
   }
 
   /**
-     * Initialize Claude integration
-     */
+   * Initialize Claude integration
+   */
   async initialize() {
     console.log('🔧 Initializing Claude Code integration...');
 
     // Check if files exist (unless force setup)
-    if (!this.forceSetup && await this.checkExistingFiles()) {
-      console.log('   ℹ️  Claude integration files already exist (use --force to regenerate)');
+    if (!this.forceSetup && (await this.checkExistingFiles())) {
+      console.log(
+        '   ℹ️  Claude integration files already exist (use --force to regenerate)',
+      );
       return { success: true, message: 'Integration files already exist' };
     }
 
@@ -78,20 +85,23 @@ class ClaudeIntegrationCore {
       console.log('✅ Claude integration initialized successfully');
       return results;
     } catch (error) {
-      console.error('❌ Failed to initialize Claude integration:', error.message);
+      console.error(
+        '❌ Failed to initialize Claude integration:',
+        error.message,
+      );
       throw error;
     }
   }
 
   /**
-     * Invoke Claude with a prompt (supports both secure and legacy modes)
-     */
+   * Invoke Claude with a prompt (supports both secure and legacy modes)
+   */
   async invokeClaudeWithPrompt(prompt, options = {}) {
     if (!prompt || !prompt.trim()) {
       throw new Error('No prompt provided');
     }
 
-    if (!await this.isClaudeAvailable()) {
+    if (!(await this.isClaudeAvailable())) {
       throw new Error('Claude Code CLI not found');
     }
 

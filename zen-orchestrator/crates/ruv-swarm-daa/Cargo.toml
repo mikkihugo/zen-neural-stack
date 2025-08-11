@@ -44,12 +44,12 @@ chrono = { version = "0.4", features = ["serde"] }
 # WASM-specific dependencies
 wasm-bindgen-futures = { version = "0.4", optional = true }
 console_error_panic_hook = { version = "0.1", optional = true }
-wee_alloc = { version = "0.4", optional = true }
+# wee_alloc removed due to security vulnerability GHSA-rc23-xxgq-x27g
 thiserror = "1.0"
 
 [features]
 default = ["autonomous-learning", "std"]
-wasm = ["wasm-bindgen", "js-sys", "web-sys", "wasm-bindgen-futures", "console_error_panic_hook", "dep:wee_alloc"]
+wasm = ["wasm-bindgen", "js-sys", "web-sys", "wasm-bindgen-futures", "console_error_panic_hook"]
 neural-networks = ["dep:tch", "dep:candle-core", "dep:candle-nn"]
 autonomous-learning = []
 performance = ["dep:rayon", "dep:crossbeam"]

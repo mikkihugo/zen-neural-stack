@@ -17,25 +17,26 @@ const logger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
     winston.format.printf(({ timestamp, level, message, ...meta }) => {
-      const color = {
-        error: chalk.red,
-        warn: chalk.yellow,
-        info: chalk.blue,
-        debug: chalk.gray
-      }[level] || chalk.white;
-      
+      const color =
+        {
+          error: chalk.red,
+          warn: chalk.yellow,
+          info: chalk.blue,
+          debug: chalk.gray,
+        }[level] || chalk.white;
+
       return `${chalk.gray(timestamp)} ${color(level.toUpperCase())} ${message} ${
         Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''
       }`;
-    })
+    }),
   ),
   transports: [
     new winston.transports.Console(),
-    new winston.transports.File({ 
+    new winston.transports.File({
       filename: '/app/test-results/test-runner.log',
-      format: winston.format.json()
-    })
-  ]
+      format: winston.format.json(),
+    }),
+  ],
 });
 
 // Test Runner Class
@@ -46,9 +47,9 @@ class MCPTestRunner {
       duration: options.duration || 3600,
       collectMetrics: options.collectMetrics !== false,
       generateReport: options.generateReport !== false,
-      ...options
+      ...options,
     };
-    
+
     this.results = {
       suite: this.options.suite,
       startTime: new Date().toISOString(),
@@ -59,8 +60,8 @@ class MCPTestRunner {
         total: 0,
         passed: 0,
         failed: 0,
-        skipped: 0
-      }
+        skipped: 0,
+      },
     };
   }
 
@@ -95,25 +96,25 @@ class MCPTestRunner {
         service,
         healthy: response.status === 200,
         status: response.status,
-        responseTime: response.headers['x-response-time'] || 'N/A'
+        responseTime: response.headers['x-response-time'] || 'N/A',
       };
     } catch (error) {
       return {
         service,
         healthy: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
 
   async waitForServices() {
     logger.info('Waiting for services to be ready...');
-    
+
     const services = [
       { name: 'mcp-server', url: 'http://mcp-server:3000/health' },
       { name: 'prometheus', url: 'http://prometheus:9090/-/ready' },
       { name: 'grafana', url: 'http://grafana:3000/api/health' },
-      { name: 'loki', url: 'http://loki:3100/ready' }
+      { name: 'loki', url: 'http://loki:3100/ready' },
     ];
 
     const maxAttempts = 30;
@@ -121,18 +122,20 @@ class MCPTestRunner {
 
     while (attempts < maxAttempts) {
       const checks = await Promise.all(
-        services.map(s => this.checkServiceHealth(s.name, s.url))
+        services.map((s) => this.checkServiceHealth(s.name, s.url)),
       );
 
-      const unhealthy = checks.filter(c => !c.healthy);
-      
+      const unhealthy = checks.filter((c) => !c.healthy);
+
       if (unhealthy.length === 0) {
         logger.info(chalk.green('All services are ready!'));
         return true;
       }
 
-      logger.warn(`Waiting for ${unhealthy.length} services: ${unhealthy.map(s => s.name).join(', ')}`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      logger.warn(
+        `Waiting for ${unhealthy.length} services: ${unhealthy.map((s) => s.name).join(', ')}`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       attempts++;
     }
 
@@ -149,7 +152,7 @@ class MCPTestRunner {
       duration: 0,
       status: 'running',
       steps: [],
-      errors: []
+      errors: [],
     };
 
     const startTime = Date.now();
@@ -158,7 +161,7 @@ class MCPTestRunner {
       for (const step of test.steps) {
         const stepResult = await this.executeStep(step);
         testResult.steps.push(stepResult);
-        
+
         if (!stepResult.success) {
           throw new Error(`Step failed: ${step.name || step.action}`);
         }
@@ -188,7 +191,7 @@ class MCPTestRunner {
       startTime: new Date().toISOString(),
       success: false,
       result: null,
-      error: null
+      error: null,
     };
 
     try {
@@ -199,25 +202,27 @@ class MCPTestRunner {
             url: step.url,
             data: step.data,
             headers: step.headers,
-            timeout: step.timeout || 30000
+            timeout: step.timeout || 30000,
           });
           stepResult.result = {
             status: response.status,
-            data: response.data
+            data: response.data,
           };
           stepResult.success = true;
           break;
 
         case 'docker-exec':
           const execResult = await this.runCommand(
-            `docker exec ${step.container} ${step.command}`
+            `docker exec ${step.container} ${step.command}`,
           );
           stepResult.result = execResult;
           stepResult.success = true;
           break;
 
         case 'wait':
-          await new Promise(resolve => setTimeout(resolve, step.duration || 1000));
+          await new Promise((resolve) =>
+            setTimeout(resolve, step.duration || 1000),
+          );
           stepResult.success = true;
           break;
 
@@ -252,9 +257,9 @@ class MCPTestRunner {
   async collectMetrics(query) {
     try {
       const response = await axios.get('http://prometheus:9090/api/v1/query', {
-        params: { query }
+        params: { query },
       });
-      
+
       return response.data.data.result;
     } catch (error) {
       logger.error('Failed to collect metrics:', error);
@@ -265,28 +270,32 @@ class MCPTestRunner {
   evaluateMetrics(metrics, expected) {
     // Simple evaluation logic - can be extended
     if (!expected) return true;
-    
+
     for (const expectation of expected) {
-      const metric = metrics.find(m => m.metric.__name__ === expectation.metric);
+      const metric = metrics.find(
+        (m) => m.metric.__name__ === expectation.metric,
+      );
       if (!metric) return false;
-      
+
       const value = parseFloat(metric.value[1]);
-      if (expectation.min !== undefined && value < expectation.min) return false;
-      if (expectation.max !== undefined && value > expectation.max) return false;
+      if (expectation.min !== undefined && value < expectation.min)
+        return false;
+      if (expectation.max !== undefined && value > expectation.max)
+        return false;
     }
-    
+
     return true;
   }
 
   async injectChaos(type, target, duration) {
     logger.info(`Injecting chaos: ${type} on ${target} for ${duration}ms`);
-    
+
     const chaosCommands = {
       'network-delay': `pumba netem --duration ${duration}ms delay --time 100 ${target}`,
       'network-loss': `pumba netem --duration ${duration}ms loss --percent 10 ${target}`,
       'container-pause': `pumba pause --duration ${duration}ms ${target}`,
       'container-kill': `pumba kill ${target}`,
-      'container-stop': `pumba stop --duration ${duration}ms ${target}`
+      'container-stop': `pumba stop --duration ${duration}ms ${target}`,
     };
 
     const command = chaosCommands[type];
@@ -305,10 +314,10 @@ class MCPTestRunner {
   async fetchLogs(container, filter) {
     try {
       const { stdout } = await this.runCommand(
-        `docker logs ${container} --since 5m ${filter ? `2>&1 | grep "${filter}"` : ''}`
+        `docker logs ${container} --since 5m ${filter ? `2>&1 | grep "${filter}"` : ''}`,
       );
-      
-      return stdout.split('\n').filter(line => line.trim());
+
+      return stdout.split('\n').filter((line) => line.trim());
     } catch (error) {
       logger.error('Failed to fetch logs:', error);
       return [];
@@ -317,32 +326,32 @@ class MCPTestRunner {
 
   verifyLogs(logs, expected) {
     if (!expected) return true;
-    
+
     for (const expectation of expected) {
       if (expectation.contains) {
-        const found = logs.some(log => log.includes(expectation.contains));
+        const found = logs.some((log) => log.includes(expectation.contains));
         if (!found) return false;
       }
-      
+
       if (expectation.notContains) {
-        const found = logs.some(log => log.includes(expectation.notContains));
+        const found = logs.some((log) => log.includes(expectation.notContains));
         if (found) return false;
       }
-      
+
       if (expectation.count !== undefined) {
-        const matches = logs.filter(log => 
-          log.includes(expectation.pattern || expectation.contains)
+        const matches = logs.filter((log) =>
+          log.includes(expectation.pattern || expectation.contains),
         );
         if (matches.length !== expectation.count) return false;
       }
     }
-    
+
     return true;
   }
 
   async loadTestSuite() {
     const suitePath = path.join('/app/scenarios', `${this.options.suite}.yaml`);
-    
+
     try {
       const content = await fs.readFile(suitePath, 'utf8');
       return yaml.load(content);
@@ -362,28 +371,28 @@ class MCPTestRunner {
             {
               action: 'http-request',
               url: 'http://mcp-server:3000/health',
-              expected: { status: 200 }
-            }
-          ]
+              expected: { status: 200 },
+            },
+          ],
         },
         {
           name: 'Connection Stability',
           steps: [
             {
               action: 'http-request',
-              url: 'http://mcp-server:3000/health'
+              url: 'http://mcp-server:3000/health',
             },
             { action: 'wait', duration: 5000 },
             {
               action: 'http-request',
-              url: 'http://mcp-server:3000/health'
+              url: 'http://mcp-server:3000/health',
             },
             {
               action: 'check-metrics',
               query: 'mcp_connections_total',
-              expected: [{ metric: 'mcp_connections_total', min: 1 }]
-            }
-          ]
+              expected: [{ metric: 'mcp_connections_total', min: 1 }],
+            },
+          ],
         },
         {
           name: 'Reconnection After Network Issues',
@@ -392,15 +401,15 @@ class MCPTestRunner {
               action: 'chaos-inject',
               type: 'network-delay',
               target: 'ruv-swarm-mcp-server',
-              duration: 10000
+              duration: 10000,
             },
             { action: 'wait', duration: 15000 },
             {
               action: 'check-metrics',
               query: 'mcp_reconnect_attempts_total',
-              expected: [{ metric: 'mcp_reconnect_attempts_total', min: 1 }]
-            }
-          ]
+              expected: [{ metric: 'mcp_reconnect_attempts_total', min: 1 }],
+            },
+          ],
         },
         {
           name: 'Container Restart Recovery',
@@ -408,15 +417,15 @@ class MCPTestRunner {
             {
               action: 'docker-exec',
               container: 'ruv-swarm-mcp-server',
-              command: 'kill 1'
+              command: 'kill 1',
             },
             { action: 'wait', duration: 10000 },
             {
               action: 'http-request',
               url: 'http://mcp-server:3000/health',
-              expected: { status: 200 }
-            }
-          ]
+              expected: { status: 200 },
+            },
+          ],
         },
         {
           name: 'High Load Performance',
@@ -424,23 +433,23 @@ class MCPTestRunner {
             {
               action: 'check-metrics',
               query: 'rate(mcp_requests_total[5m])',
-              expected: [{ metric: 'mcp_requests_total', min: 10 }]
+              expected: [{ metric: 'mcp_requests_total', min: 10 }],
             },
             {
               action: 'verify-logs',
               container: 'ruv-swarm-mcp-server',
               filter: 'error',
-              expected: [{ notContains: 'OOM' }, { notContains: 'panic' }]
-            }
-          ]
-        }
-      ]
+              expected: [{ notContains: 'OOM' }, { notContains: 'panic' }],
+            },
+          ],
+        },
+      ],
     };
   }
 
   async generateReport() {
     logger.info('Generating test report...');
-    
+
     const report = {
       ...this.results,
       endTime: new Date().toISOString(),
@@ -448,8 +457,8 @@ class MCPTestRunner {
       environment: {
         suite: this.options.suite,
         docker: await this.getDockerInfo(),
-        services: await this.getServiceVersions()
-      }
+        services: await this.getServiceVersions(),
+      },
     };
 
     // Create summary table
@@ -459,26 +468,30 @@ class MCPTestRunner {
       ['Passed', chalk.green(report.summary.passed)],
       ['Failed', chalk.red(report.summary.failed)],
       ['Skipped', chalk.yellow(report.summary.skipped)],
-      ['Success Rate', `${((report.summary.passed / report.summary.total) * 100).toFixed(2)}%`],
-      ['Duration', `${(report.duration / 1000).toFixed(2)}s`]
+      [
+        'Success Rate',
+        `${((report.summary.passed / report.summary.total) * 100).toFixed(2)}%`,
+      ],
+      ['Duration', `${(report.duration / 1000).toFixed(2)}s`],
     ]);
 
     // Create detailed results table
     const resultsData = [['Test Name', 'Status', 'Duration', 'Errors']];
-    
+
     for (const test of report.tests) {
-      const status = test.status === 'passed' 
-        ? chalk.green('✓ PASSED') 
-        : chalk.red('✗ FAILED');
-      
+      const status =
+        test.status === 'passed'
+          ? chalk.green('✓ PASSED')
+          : chalk.red('✗ FAILED');
+
       resultsData.push([
         test.name,
         status,
         `${(test.duration / 1000).toFixed(2)}s`,
-        test.errors.join(', ') || '-'
+        test.errors.join(', ') || '-',
       ]);
     }
-    
+
     const resultsTable = table(resultsData);
 
     // Print report to console
@@ -514,23 +527,27 @@ class MCPTestRunner {
 
   async getServiceVersions() {
     const services = {};
-    
+
     try {
       // Get MCP server version
-      const mcpResponse = await axios.get('http://mcp-server:3000/version').catch(() => null);
+      const mcpResponse = await axios
+        .get('http://mcp-server:3000/version')
+        .catch(() => null);
       if (mcpResponse) {
         services.mcpServer = mcpResponse.data;
       }
 
       // Get other service info
-      services.prometheus = await this.runCommand('docker exec ruv-swarm-prometheus prometheus --version')
-        .then(r => r.stdout.trim())
+      services.prometheus = await this.runCommand(
+        'docker exec ruv-swarm-prometheus prometheus --version',
+      )
+        .then((r) => r.stdout.trim())
         .catch(() => 'unknown');
-      
-      services.grafana = await axios.get('http://grafana:3000/api/health')
-        .then(r => r.data)
+
+      services.grafana = await axios
+        .get('http://grafana:3000/api/health')
+        .then((r) => r.data)
         .catch(() => 'unknown');
-      
     } catch (error) {
       logger.error('Failed to get service versions:', error);
     }
@@ -539,8 +556,11 @@ class MCPTestRunner {
   }
 
   generateMarkdownReport(report) {
-    const successRate = ((report.summary.passed / report.summary.total) * 100).toFixed(2);
-    
+    const successRate = (
+      (report.summary.passed / report.summary.total) *
+      100
+    ).toFixed(2);
+
     return `# MCP Reliability Test Report
 
 ## Summary
@@ -554,9 +574,12 @@ class MCPTestRunner {
 
 | Test | Status | Duration | Errors |
 |------|--------|----------|--------|
-${report.tests.map(test => 
-  `| ${test.name} | ${test.status.toUpperCase()} | ${(test.duration / 1000).toFixed(2)}s | ${test.errors.join(', ') || '-'} |`
-).join('\n')}
+${report.tests
+  .map(
+    (test) =>
+      `| ${test.name} | ${test.status.toUpperCase()} | ${(test.duration / 1000).toFixed(2)}s | ${test.errors.join(', ') || '-'} |`,
+  )
+  .join('\n')}
 
 ## Environment
 
@@ -572,22 +595,33 @@ ${JSON.stringify(report.environment.services, null, 2)}
 
 ## Detailed Test Results
 
-${report.tests.map(test => `
+${report.tests
+  .map(
+    (test) => `
 ### ${test.name}
 - **Status**: ${test.status}
 - **Duration**: ${(test.duration / 1000).toFixed(2)}s
 - **Steps**: ${test.steps.length}
 
-${test.errors.length > 0 ? `
+${
+  test.errors.length > 0
+    ? `
 #### Errors
-${test.errors.map(e => `- ${e}`).join('\n')}
-` : ''}
+${test.errors.map((e) => `- ${e}`).join('\n')}
+`
+    : ''
+}
 
 #### Steps
-${test.steps.map((step, i) => 
-  `${i + 1}. **${step.action}**: ${step.success ? '✓' : '✗'} ${step.error || ''}`
-).join('\n')}
-`).join('\n')}
+${test.steps
+  .map(
+    (step, i) =>
+      `${i + 1}. **${step.action}**: ${step.success ? '✓' : '✗'} ${step.error || ''}`,
+  )
+  .join('\n')}
+`,
+  )
+  .join('\n')}
 `;
   }
 
@@ -608,7 +642,7 @@ ${test.steps.map((step, i) =>
     logger.info(`Loaded test suite: ${suite.name}`);
 
     // Run tests
-    const endTime = Date.now() + (this.options.duration * 1000);
+    const endTime = Date.now() + this.options.duration * 1000;
     let iteration = 0;
 
     while (Date.now() < endTime) {
@@ -617,18 +651,18 @@ ${test.steps.map((step, i) =>
 
       for (const test of suite.tests) {
         await this.runTest(test);
-        
+
         // Check if we've exceeded duration
         if (Date.now() >= endTime) break;
-        
+
         // Wait between tests
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 5000));
       }
 
       // Wait between iterations
       if (Date.now() < endTime) {
         logger.info('Waiting before next iteration...');
-        await new Promise(resolve => setTimeout(resolve, 30000));
+        await new Promise((resolve) => setTimeout(resolve, 30000));
       }
     }
 
@@ -649,28 +683,27 @@ const argv = yargs
   .option('suite', {
     alias: 's',
     description: 'Test suite to run',
-    default: 'mcp-reliability'
+    default: 'mcp-reliability',
   })
   .option('duration', {
     alias: 'd',
     description: 'Test duration in seconds',
     type: 'number',
-    default: 3600
+    default: 3600,
   })
   .option('collect-metrics', {
     alias: 'm',
     description: 'Collect metrics during test',
     type: 'boolean',
-    default: true
+    default: true,
   })
   .option('generate-report', {
     alias: 'r',
     description: 'Generate test report',
     type: 'boolean',
-    default: true
+    default: true,
   })
-  .help()
-  .argv;
+  .help().argv;
 
 // Main execution
 async function main() {
@@ -679,7 +712,7 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     logger.error('Fatal error:', error);
     process.exit(1);
   });

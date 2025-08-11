@@ -1,0 +1,53 @@
+[workspace]
+resolver = "2"
+members = [
+    "zen-neural",
+    "zen-forecasting", 
+    "zen-compute",
+    "zen-orchestrator",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+authors = ["mikkihugo"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/mikkihugo/zen-neural-stack"
+
+[workspace.dependencies]
+# Shared dependencies across all zen-* crates
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+anyhow = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+rayon = "1.10"
+num-traits = "0.2"
+ndarray = "0.16"
+
+# Neural network specific
+nalgebra = "0.34"
+rand = "0.9"
+rand_distr = "0.4"
+
+# GPU acceleration (optional)
+wgpu = { version = "0.19", optional = true }
+candle-core = { version = "0.9", optional = true }
+candle-nn = { version = "0.9", optional = true }
+
+[workspace.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+opt-level = 3
+panic = "abort"
+overflow-checks = false
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"  # Optimize for size
+strip = true

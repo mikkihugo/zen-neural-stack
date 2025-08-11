@@ -1,0 +1,31 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Neural model artifacts
+*.onnx
+*.pt
+*.pth
+*.safetensors
+*.bin
+
+# WASM artifacts
+*.wasm
+pkg/
+
+# Benchmarks
+benchmarks/results/

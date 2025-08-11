@@ -168,7 +168,7 @@
     "jest-html-reporters": "^3.1.7",
     "nodemon": "^3.0.0",
     "nyc": "^17.1.0",
-    "rollup": "^3.29.0",
+    "rollup": "^4.46.2",
     "sqlite3": "^5.1.6",
     "typescript": "^5.2.0",
     "vitest": "^2.0.0",

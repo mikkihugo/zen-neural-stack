@@ -11,10 +11,13 @@
 //! - Multi-threading support with rayon
 
 use num_traits::Float;
-use std::sync::Arc;
+// use std::sync::Arc; // Unused - for future enhancements
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
+
+#[cfg(target_arch = "aarch64")]
+use std::arch::aarch64::*;
 
 /// Configuration for SIMD operations
 #[derive(Debug, Clone)]
@@ -23,10 +26,18 @@ pub struct SimdConfig {
     pub use_avx2: bool,
     /// Use AVX-512 instructions if available
     pub use_avx512: bool,
+    /// Use ARM NEON instructions if available
+    pub use_neon: bool,
     /// Block size for cache-friendly matrix operations
     pub block_size: usize,
     /// Number of threads for parallel operations
     pub num_threads: usize,
+    /// Enable memory prefetching
+    pub enable_prefetch: bool,
+    /// Cache line size in bytes
+    pub cache_line_size: usize,
+    /// L1 cache size for blocking optimization
+    pub l1_cache_size: usize,
 }
 
 impl Default for SimdConfig {
@@ -52,8 +63,58 @@ impl Default for SimdConfig {
                     false
                 }
             },
-            block_size: 64, // Good balance for most L1 cache sizes
+            use_neon: {
+                #[cfg(target_arch = "aarch64")]
+                {
+                    true // NEON is mandatory on AArch64
+                }
+                #[cfg(not(target_arch = "aarch64"))]
+                {
+                    false
+                }
+            },
+            block_size: Self::optimal_block_size(),
             num_threads: num_cpus::get(),
+            enable_prefetch: true,
+            cache_line_size: 64,
+            l1_cache_size: 32 * 1024, // 32KB typical L1 cache
+        }
+    }
+}
+
+impl SimdConfig {
+    /// Calculate optimal block size based on cache hierarchy
+    fn optimal_block_size() -> usize {
+        // Target L1 cache usage: matrix blocks should fit in L1
+        // Assume f32 (4 bytes), want 3 blocks (A, B, C) to fit in L1
+        let l1_size = 32 * 1024; // 32KB
+        let target_usage = l1_size / 3 / 4; // Divide by 3 blocks, 4 bytes per f32
+        let block_size = (target_usage as f64).sqrt() as usize;
+        
+        // Round to nearest multiple of SIMD width for alignment
+        let simd_width = if cfg!(target_arch = "x86_64") { 16 } else { 8 }; // AVX-512 : AVX2/NEON
+        (block_size + simd_width - 1) / simd_width * simd_width
+    }
+    
+    /// Get optimal kernel dimensions for current architecture
+    pub fn get_kernel_dims(&self) -> (usize, usize) {
+        #[cfg(target_arch = "x86_64")]
+        {
+            if self.use_avx512 {
+                (6, 16) // 6x16 kernel for AVX-512
+            } else if self.use_avx2 {
+                (6, 8)  // 6x8 kernel for AVX2
+            } else {
+                (4, 4)  // Fallback
+            }
+        }
+        #[cfg(target_arch = "aarch64")]
+        {
+            (4, 8) // 4x8 kernel for NEON
+        }
+        #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+        {
+            (4, 4) // Conservative fallback
         }
     }
 }
@@ -620,6 +681,73 @@ impl Default for ParallelTraining {
     }
 }
 
+// High-performance modules
+pub mod matrix_ops;
+pub mod vector_ops;
+pub mod memory_layout;
+pub mod benchmarks;
+pub mod training_integration;
+
+// Re-export high-performance implementations
+pub use matrix_ops::HighPerfSimdOps;
+pub use vector_ops::VectorSimdOps;
+pub use memory_layout::{SimdAllocator, SimdBuffer, SoAMatrix, SimdMemoryPool, PrefetchManager, PrefetchStrategy, BlockingParams};
+pub use benchmarks::{SimdBenchmarkSuite, BenchmarkConfig, BenchmarkResults, quick_performance_test};
+pub use training_integration::{SimdTrainingCoordinator, SimdOptimizedNetwork, SimdTrainingAlgorithm, SimdTrainingExt};
+
+/// Factory for creating optimal SIMD operations based on current hardware
+pub struct SimdOpsFactory;
+
+impl SimdOpsFactory {
+    /// Create the best available SIMD matrix operations implementation
+    pub fn create_matrix_ops() -> Box<dyn SimdMatrixOps<f32> + Send + Sync> {
+        Box::new(HighPerfSimdOps::new_with_defaults())
+    }
+    
+    /// Create vector operations
+    pub fn create_vector_ops() -> VectorSimdOps {
+        VectorSimdOps::new_with_defaults()
+    }
+    
+    /// Create SIMD allocator
+    pub fn create_allocator() -> SimdAllocator {
+        SimdAllocator::optimal()
+    }
+    
+    /// Create memory pool
+    pub fn create_memory_pool<T: Copy + Default>() -> SimdMemoryPool<T> {
+        SimdMemoryPool::new()
+    }
+    
+    /// Run quick performance benchmark
+    pub fn benchmark_performance() -> Vec<BenchmarkResults> {
+        quick_performance_test()
+    }
+    
+    /// Get optimal configuration for current system
+    pub fn optimal_config() -> SimdConfig {
+        SimdConfig::default()
+    }
+}
+
+/// Convenience trait for easy SIMD integration
+pub trait SimdExt {
+    /// Apply SIMD operations to this data
+    fn with_simd<F, R>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut dyn SimdMatrixOps<f32>) -> R;
+}
+
+impl SimdExt for Vec<f32> {
+    fn with_simd<F, R>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut dyn SimdMatrixOps<f32>) -> R,
+    {
+        let mut ops = HighPerfSimdOps::new_with_defaults();
+        f(&mut ops)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -629,12 +757,26 @@ mod tests {
         let config = SimdConfig::default();
         assert!(config.block_size > 0);
         assert!(config.num_threads > 0);
+        assert!(config.cache_line_size > 0);
+        assert!(config.l1_cache_size > 0);
     }
 
     #[test]
     fn test_cpu_simd_ops_creation() {
         let ops = CpuSimdOps::new_with_defaults();
         assert!(ops.config.block_size > 0);
+    }
+
+    #[test]
+    fn test_high_perf_simd_ops_creation() {
+        let ops = HighPerfSimdOps::new_with_defaults();
+        // Should not panic and should have reasonable config
+    }
+
+    #[test]
+    fn test_vector_ops_creation() {
+        let ops = VectorSimdOps::new_with_defaults();
+        // Should not panic
     }
 
     #[test]
@@ -652,6 +794,35 @@ mod tests {
         assert!((c[1] - 22.0).abs() < 1e-6);
         assert!((c[2] - 43.0).abs() < 1e-6);
         assert!((c[3] - 50.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_high_perf_matrix_multiplication() {
+        let ops = HighPerfSimdOps::new_with_defaults();
+
+        let a = vec![1.0, 2.0, 3.0, 4.0]; // 2x2 matrix
+        let b = vec![5.0, 6.0, 7.0, 8.0]; // 2x2 matrix
+        let mut c = vec![0.0; 4]; // 2x2 result
+
+        ops.matmul(&a, &b, &mut c, 2, 2, 2);
+
+        // Expected result: [19, 22, 43, 50]
+        assert!((c[0] - 19.0).abs() < 1e-4);
+        assert!((c[1] - 22.0).abs() < 1e-4);
+        assert!((c[2] - 43.0).abs() < 1e-4);
+        assert!((c[3] - 50.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_vector_dot_product() {
+        let ops = VectorSimdOps::new_with_defaults();
+        let a = vec![1.0, 2.0, 3.0, 4.0];
+        let b = vec![5.0, 6.0, 7.0, 8.0];
+        
+        let result = ops.dot_product(&a, &b);
+        let expected = 1.0*5.0 + 2.0*6.0 + 3.0*7.0 + 4.0*8.0; // 70.0
+        
+        assert!((result - expected).abs() < 1e-6);
     }
 
     #[test]
@@ -673,5 +844,38 @@ mod tests {
         ops.activation_derivatives(&data, &mut derivatives, ActivationFunction::Relu);
 
         assert_eq!(derivatives, vec![0.0, 0.0, 1.0, 0.0, 1.0]);
+    }
+
+    #[test]
+    fn test_factory_pattern() {
+        let matrix_ops = SimdOpsFactory::create_matrix_ops();
+        let vector_ops = SimdOpsFactory::create_vector_ops();
+        let allocator = SimdOpsFactory::create_allocator();
+        let config = SimdOpsFactory::optimal_config();
+        
+        // Should create valid instances
+        assert!(config.block_size > 0);
+    }
+
+    #[test]
+    fn test_simd_ext_trait() {
+        let mut data = vec![1.0f32, 2.0, 3.0, 4.0];
+        
+        // This should compile and run without panicking
+        data.with_simd(|_ops| {
+            // Could perform SIMD operations here
+            42
+        });
+    }
+
+    #[test]
+    fn test_optimal_config() {
+        let config = SimdConfig::default();
+        let (mr, nr) = config.get_kernel_dims();
+        
+        assert!(mr > 0);
+        assert!(nr > 0);
+        assert!(mr <= 8); // Reasonable micro-kernel size
+        assert!(nr <= 16); // Reasonable micro-kernel size
     }
 }

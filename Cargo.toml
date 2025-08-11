@@ -4,6 +4,7 @@ members = [
     "zen-neural",
     "zen-forecasting", 
     "zen-compute",
+    "zen-orchestrator",
 ]
 
 [workspace.package]
@@ -18,26 +19,30 @@ repository = "https://github.com/mikkihugo/zen-neural-stack"
 # Shared dependencies across all zen-* crates
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-thiserror = "2.0"
+thiserror = "1.0"
 anyhow = "1.0"
 tokio = { version = "1.0", features = ["full"] }
 rayon = "1.10"
 num-traits = "0.2"
-ndarray = "0.16"
+ndarray = "0.15"
 
 # Neural network specific
 nalgebra = "0.34"
-rand = "0.9"
+rand = { version = "0.8", features = ["small_rng"] }
 rand_distr = "0.4"
 
 # GPU acceleration 
 wgpu = "0.19"
-candle-core = "0.9"
-candle-nn = "0.9"
+candle-core = "0.3"
+candle-nn = "0.3"
 
 [workspace.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[profile.dev]
+opt-level = 0
+debug = true
 
 [profile.release]
 lto = "fat"
@@ -50,3 +55,33 @@ overflow-checks = false
 inherits = "release"
 opt-level = "z"  # Optimize for size
 strip = true
+
+[profile.wasm-size]
+inherits = "release"
+opt-level = "z"        # Optimize for size
+lto = "fat"           # Full LTO for dead code elimination
+codegen-units = 1     # Single codegen unit for better optimization
+strip = true          # Strip symbols for size
+panic = "abort"       # Smaller panic handler
+overflow-checks = false
+
+[profile.wasm-perf]
+inherits = "release"
+opt-level = 3         # Maximum performance
+lto = "fat"          # Full LTO for inlining
+codegen-units = 1    # Single codegen unit
+debug = false        # No debug info
+panic = "abort"      # Smaller panic handler
+strip = true
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+lto = "thin"
+panic = "abort"
+
+[profile.bench]
+inherits = "release"
+lto = true
+codegen-units = 1
+debug = true

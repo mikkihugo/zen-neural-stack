@@ -564,7 +564,7 @@ impl GNNModel {
         let scale = 1.0 / keep_prob; // Inverted dropout scaling
         
         let dropout_mask: Vec<f32> = (0..input.len())
-            .map(|_| if rng.gen::<f32>() < keep_prob { scale } else { 0.0 })
+            .map(|_| if rng.r#gen::<f32>() < keep_prob { scale } else { 0.0 })
             .collect();
         
         Ok(input * ndarray::Array1::from(dropout_mask).into_shape(input.dim())?)
@@ -934,42 +934,3 @@ mod tests {
     }
 }
 
-/**
- * ## Migration Plan from JavaScript to Rust
- * 
- * This module represents the comprehensive port of the 758-line JavaScript GNN
- * implementation to high-performance Rust. The migration maintains API compatibility
- * while adding significant improvements:
- * 
- * ### Completed Components:
- * 1. ✅ **Core Model Structure**: `GNNModel` with configuration system
- * 2. ✅ **Builder Pattern**: Type-safe model construction
- * 3. ✅ **Configuration System**: Comprehensive hyperparameter management
- * 4. ✅ **Error Handling**: Detailed error types with context
- * 5. ✅ **Module Structure**: Organized into logical sub-modules
- * 6. ✅ **Integration Hooks**: WebGPU, Storage, and Distributed backends
- * 
- * ### Next Steps (Implementation in Sub-modules):
- * 
- * 1. **data/mod.rs**: Graph data structures and tensor operations
- * 2. **layers/mod.rs**: Message passing layer implementations  
- * 3. **updates/mod.rs**: Node update mechanisms (GRU, Residual)
- * 4. **aggregation/mod.rs**: Message aggregation strategies
- * 5. **training/mod.rs**: Training algorithms and optimization
- * 6. **gpu/mod.rs**: WebGPU acceleration implementation
- * 7. **storage/mod.rs**: SurrealDB integration for graphs
- * 8. **distributed/mod.rs**: THE COLLECTIVE distributed processing
- * 9. **utils/mod.rs**: Utility functions and helpers
- * 
- * ### Performance Expectations:
- * - **10-100x speedup** from SIMD and GPU acceleration
- * - **Zero-copy operations** through Rust ownership system  
- * - **Memory safety** without garbage collection overhead
- * - **Distributed scaling** for graphs with millions of nodes
- * - **Type safety** preventing runtime errors common in JavaScript
- * 
- * ### JavaScript Compatibility:
- * The public API maintains familiarity with the original JavaScript while
- * leveraging Rust's strengths. Users familiar with the JS version can easily
- * adopt the Rust implementation with minimal learning curve.
- */

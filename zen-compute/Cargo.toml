@@ -166,39 +166,6 @@ required-features = ["regression-tests"]
 name = "cuda2rust"
 path = "src/bin/cuda2rust.rs"
 
-[profile.release]
-lto = true
-opt-level = 3
-codegen-units = 1
-
-[profile.wasm-size]
-inherits = "release"
-opt-level = "z"        # Optimize for size
-lto = "fat"           # Full LTO for dead code elimination
-codegen-units = 1     # Single codegen unit for better optimization
-strip = true          # Strip symbols for size
-panic = "abort"       # Smaller panic handler
-overflow-checks = false
-
-[profile.wasm-perf]
-inherits = "release"
-opt-level = 3         # Maximum performance
-lto = "fat"          # Full LTO for inlining
-codegen-units = 1    # Single codegen unit
-debug = false        # No debug info
-panic = "abort"      # Smaller panic handler
-strip = true
-
-[profile.wasm-dev]
-inherits = "dev"
-opt-level = 1
-lto = "thin"
-panic = "abort"
-
-[profile.bench]
-inherits = "release"
-lto = true
-codegen-units = 1
-debug = true
+# Profile configurations moved to workspace root
 
 # Part of zen-neural-stack workspace

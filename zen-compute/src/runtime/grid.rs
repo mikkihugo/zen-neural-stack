@@ -1,9 +1,11 @@
 //! Grid and block dimension types
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 /// 3D dimension type (similar to CUDA's dim3)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Dim3 {
     pub x: u32,
     pub y: u32,

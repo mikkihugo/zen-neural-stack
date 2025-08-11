@@ -2,20 +2,18 @@
 
 [package]
 name = "zen-orchestrator"
-version = "0.1.0"
-edition = "2024"
-rust-version = "1.88"
-authors = ["mikkihugo"]
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/mikkihugo/zen-neural-stack"
-homepage = "https://github.com/mikkihugo/zen-neural-stack"
-documentation = "https://docs.rs/zen-orchestrator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 description = "Decentralized Autonomous Agent orchestration with THE COLLECTIVE coordination for zen-neural-stack"
 readme = "README.md"
 keywords = ["neural-network", "wasm", "swarm", "ai", "mcp", "zen-orchestrator", "collective", "daa"]
 categories = ["algorithms", "science", "wasm", "web-programming"]
 
-[workspace.dependencies]
+[dependencies]
 # Async runtime (WASM-compatible subset)
 tokio = { version = "1.40", features = ["sync", "macros", "time", "rt", "rt-multi-thread"], default-features = false }
 async-trait = "0.1"
@@ -30,7 +28,7 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 # Random number generation  
 getrandom = { version = "0.2", default-features = false }
-rand = { version = "0.8", features = ["small_rng"] }
+rand = { workspace = true, features = ["small_rng"] }
 
 # Logging
 tracing = "0.1"
@@ -45,10 +43,6 @@ parking_lot = "0.12"
 # No-std support
 no-std-compat = { version = "0.4", features = ["alloc"] }
 heapless = "0.8"
-
-# Development dependencies
-criterion = "0.5"
-proptest = "1.0"
 
 # CLI dependencies
 clap = { version = "4.5", features = ["derive"] }
@@ -76,20 +70,11 @@ rusqlite = { version = "0.29", features = ["bundled"] }
 r2d2 = "0.8"
 r2d2_sqlite = "0.22"
 
-[profile.dev]
-opt-level = 0
-debug = true
+[dev-dependencies]
+# Development dependencies
+criterion = "0.5"
+proptest = "1.0"
 
-[profile.release]
-opt-level = "z"  # Optimize for size
-lto = "fat"      # Full LTO for maximum optimization
-codegen-units = 1
-strip = true
-panic = "abort"  # Reduce binary size by removing panic handling
-overflow-checks = false  # Disable overflow checks in release mode
-
-[profile.bench]
-inherits = "release"
-debug = true
+# Profile configurations moved to workspace root
 
 

@@ -472,7 +472,7 @@ impl<T: Float + std::fmt::Debug + Send + Sync + 'static> MemoryManager<T> for Si
         // Return a placeholder handle since we don't need explicit buffer management
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        Ok(super::memory::BufferHandle::new(rng.gen()))
+        Ok(super::memory::BufferHandle::new(rng.r#gen()))
     }
 
     fn upload_data(
@@ -704,7 +704,7 @@ impl<T: Float + std::fmt::Debug + Send + Sync + 'static> MemoryManager<T> for Cp
     fn allocate_buffer(&self, _size: usize) -> Result<super::memory::BufferHandle, ComputeError> {
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        Ok(super::memory::BufferHandle::new(rng.gen()))
+        Ok(super::memory::BufferHandle::new(rng.r#gen()))
     }
 
     fn upload_data(

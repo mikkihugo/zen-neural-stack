@@ -30,7 +30,7 @@ ndarray-rand = "0.15.0"
 
 # Random number generation for test data
 rand = { version = "0.8.5", features = ["small_rng"] }
-rand_distr = "0.4.3"
+rand_distr = "0.5.1"
 
 # Async runtime for async tests
 tokio = { version = "1.47.1", features = ["rt", "rt-multi-thread", "time", "macros", "fs", "sync"] }

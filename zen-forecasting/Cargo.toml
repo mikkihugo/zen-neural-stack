@@ -25,7 +25,7 @@ num-traits = "0.2.19"
 num-complex = "0.4.6"
 
 # Data structures and manipulation
-polars = { version = "0.45.1", features = ["lazy", "temporal", "csv", "parquet", "json"] }
+polars = { version = "0.50.0", features = ["lazy", "temporal", "csv", "parquet", "json"] }
 ndarray = "0.16.1"
 
 # Serialization and configuration

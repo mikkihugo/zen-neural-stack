@@ -63,3 +63,206 @@ mod tests;
 
 // Mock types for testing
 pub mod mock_types;
+
+// Source modules for additional functionality
+mod src {
+    #[cfg(feature = "gnn")]
+    pub mod gnn;
+    
+    #[cfg(feature = "zen-storage")]
+    pub mod storage;
+    
+    #[cfg(feature = "zen-distributed")]
+    pub mod distributed;
+}
+
+// Re-export GNN functionality
+#[cfg(feature = "gnn")]
+pub use src::gnn;
+
+// Comprehensive GNN re-exports for convenient access
+#[cfg(feature = "gnn")]
+pub mod gnn_api {
+    //! Comprehensive Graph Neural Network API
+    //! 
+    //! This module provides complete access to all GNN functionality including:
+    //! - Core graph data structures and types
+    //! - Training infrastructure with multiple optimizers
+    //! - Storage and persistence with SurrealDB integration
+    //! - GPU acceleration support
+    //! - Distributed training coordination
+    //! - Message aggregation strategies
+    //! - Node update mechanisms
+    //! - Data loading and batch processing
+    //! 
+    //! # Examples
+    //! 
+    //! ```rust,no_run
+    //! use zen_neural::gnn_api::*;
+    //! 
+    //! # async fn example() -> GNNResult<()> {
+    //! // Create graph data
+    //! let graph = GraphDataBuilder::new(10, 20)
+    //!     .with_node_features(64)
+    //!     .with_edge_features(32)
+    //!     .build()?;
+    //! 
+    //! // Initialize storage
+    //! let storage = GraphStorage::new("surreal://localhost:8000").await?;
+    //! 
+    //! // Configure training
+    //! let config = TrainingConfig::new()
+    //!     .with_epochs(100)
+    //!     .with_batch_size(32)
+    //!     .with_adam_optimizer(0.001);
+    //! 
+    //! // Train model
+    //! let trainer = GNNTrainer::new(config, storage).await?;
+    //! let metrics = trainer.train(graph).await?;
+    //! # Ok(())
+    //! # }
+    //! ```
+
+    // Core types and error handling
+    pub use crate::src::gnn::{
+        GNNError, GNNResult, 
+        NodeFeatures, EdgeFeatures, GraphData, AdjacencyList
+    };
+
+    // Storage and persistence
+    #[cfg(feature = "zen-storage")]
+    pub use crate::src::gnn::storage::{
+        GraphStorage, GNNStorageConfig, ModelCheckpoint,
+        CheckpointMetadata, TrainingHistory, StorageBackend
+    };
+
+    // Training infrastructure
+    pub use crate::src::gnn::training::{
+        GNNTrainer, TrainingConfig, TrainingMetrics,
+        OptimizerType, LRSchedulerType,
+        ValidationConfig, EarlyStoppingConfig, CheckpointConfig,
+        DistributedConfig, TrainingState
+    };
+
+    // Message aggregation strategies
+    pub use crate::src::gnn::aggregation::{
+        AggregationStrategy, 
+        MeanAggregation, MaxAggregation, SumAggregation,
+        AttentionAggregation, PoolingAggregation,
+        AggregationConfig
+    };
+
+    // Node update mechanisms
+    pub use crate::src::gnn::updates::{
+        NodeUpdate,
+        GRUNodeUpdate, ResidualNodeUpdate, SimpleNodeUpdate,
+        UpdateConfig, ActivationFunction as GNNActivation
+    };
+
+    // Data loading and processing
+    pub use crate::src::gnn::data::{
+        GraphDataLoader, DataLoaderConfig, BatchConfig,
+        GraphDatasetBuilder, GraphTransform
+    };
+
+    // GPU acceleration
+    #[cfg(feature = "gpu")]
+    pub use crate::src::gnn::gpu::{
+        GPUManager, GPUConfig, DeviceType, MemoryInfo,
+        gpu_aggregate, gpu_node_update, gpu_forward_pass
+    };
+
+    // Layer definitions and architecture
+    pub use crate::src::gnn::layers::{
+        GCNLayer, GATLayer, SAGELayer, GINLayer,
+        LayerConfig, MessagePassingLayer
+    };
+
+    // Test utilities (for integration testing)
+    #[cfg(test)]
+    pub use crate::src::gnn::tests::{
+        GNNTestFixture, TestConfiguration,
+        create_minimal_test_fixture, run_performance_benchmarks
+    };
+
+    /// Convenient builder pattern for creating graph data
+    pub struct GraphDataBuilder {
+        num_nodes: usize,
+        num_edges: usize,
+        node_feature_dim: Option<usize>,
+        edge_feature_dim: Option<usize>,
+    }
+
+    impl GraphDataBuilder {
+        /// Create a new graph builder
+        pub fn new(num_nodes: usize, num_edges: usize) -> Self {
+            Self {
+                num_nodes,
+                num_edges,
+                node_feature_dim: None,
+                edge_feature_dim: None,
+            }
+        }
+
+        /// Set node feature dimensionality
+        pub fn with_node_features(mut self, dim: usize) -> Self {
+            self.node_feature_dim = Some(dim);
+            self
+        }
+
+        /// Set edge feature dimensionality
+        pub fn with_edge_features(mut self, dim: usize) -> Self {
+            self.edge_feature_dim = Some(dim);
+            self
+        }
+
+        /// Build the graph data structure
+        pub fn build(self) -> GNNResult<GraphData> {
+            use ndarray::{Array2, Array1};
+            use std::collections::HashMap;
+            use serde_json::json;
+
+            // Create node features
+            let node_feature_dim = self.node_feature_dim.unwrap_or(64);
+            let node_features = Array2::zeros((self.num_nodes, node_feature_dim));
+
+            // Create edge features if specified
+            let edge_features = self.edge_feature_dim.map(|dim| {
+                EdgeFeatures(Array2::zeros((self.num_edges, dim)))
+            });
+
+            // Create random adjacency list
+            let mut adjacency_list = vec![Vec::new(); self.num_nodes];
+            let edges_per_node = std::cmp::max(1, self.num_edges / self.num_nodes);
+
+            for i in 0..self.num_nodes {
+                for j in 0..edges_per_node.min(self.num_nodes - 1) {
+                    let target = (i + j + 1) % self.num_nodes;
+                    adjacency_list[i].push(target);
+                }
+            }
+
+            Ok(GraphData {
+                node_features: NodeFeatures(node_features),
+                edge_features,
+                adjacency_list,
+                node_labels: None,
+                edge_labels: None,
+                graph_labels: None,
+                metadata: HashMap::from([
+                    ("builder_created".to_string(), json!(true)),
+                    ("num_nodes".to_string(), json!(self.num_nodes)),
+                    ("num_edges".to_string(), json!(self.num_edges)),
+                ]),
+            })
+        }
+    }
+}
+
+// Storage integration (if enabled)
+#[cfg(all(feature = "gnn", feature = "zen-storage"))]
+pub use src::storage;
+
+// Distributed functionality (if enabled)
+#[cfg(all(feature = "gnn", feature = "zen-distributed"))]
+pub use src::distributed;

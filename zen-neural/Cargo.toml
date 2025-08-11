@@ -83,6 +83,16 @@ bytemuck = { version = "1.14", features = ["derive"], optional = true }
 tokio = { version = "1.0", features = ["rt", "sync", "time"], optional = true }
 async-trait = { version = "0.1", optional = true }
 
+# Additional dependencies for ndarray operations
+ndarray = { version = "0.15", features = ["serde"] }
+ndarray-rand = "0.14"
+
+# Zen Neural Stack storage integration
+surrealdb = { version = "2.0", features = ["kv-rocksdb", "protocol-ws", "protocol-http"], optional = true }
+async-stream = { version = "0.3", optional = true }
+bincode = { version = "1.3", optional = true }
+uuid = { version = "1.0", features = ["v4"], optional = true }
+
 # WASM dependencies
 wasm-bindgen = { version = "0.2", optional = true }
 js-sys = { version = "0.3", optional = true }
@@ -110,7 +120,7 @@ anyhow = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 
 [features]
-default = ["std", "serde", "parallel", "binary", "compression", "logging", "io"]
+default = ["std", "serde", "parallel", "binary", "compression", "logging", "io", "gnn"]
 std = []
 serde = ["dep:serde", "dep:serde_json"]
 parallel = ["dep:rayon", "dep:num_cpus", "std"]
@@ -131,18 +141,17 @@ gpu = ["dep:wgpu", "dep:futures", "dep:pollster", "dep:bytemuck", "dep:tokio", "
 webgpu = ["dep:wgpu", "dep:futures", "dep:bytemuck", "wasm", "logging"]
 wasm-gpu = ["webgpu", "wasm"]
 
-[dependencies.surrealdb]
-version = "2.0"
-features = ["kv-rocksdb", "protocol-ws", "protocol-http"]
-optional = true
+# GNN features
+gnn = ["dep:async-trait", "std"]
+gnn-gpu = ["gnn", "gpu"]
 
 # Zen Neural Stack integrations
-zen-storage = ["dep:surrealdb"]
-zen-distributed = ["zen-storage", "tokio", "async-trait"]
+zen-storage = ["dep:surrealdb", "dep:async-stream", "dep:bincode", "dep:uuid"]
+zen-distributed = ["zen-storage", "dep:tokio", "dep:async-trait"]
 zen-collective = ["zen-distributed"]
 
 # Test configurations
-test-all = ["gpu", "ruv-swarm", "ruv-swarm-daa", "benchmarking"]
+test-all = ["gpu", "gnn"]
 test-core = ["std", "parallel"]
 test-gpu = ["gpu", "webgpu"]
 test-no-external = []  # For tests that don't require external crates

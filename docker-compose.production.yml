@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  zen-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.zen-orchestrator
+    ports:
+      - "4000:4000"
+      - "4001:4001"
+    environment:
+      - RUST_LOG=info
+      - ZEN_ORCHESTRATOR_HOST=0.0.0.0
+      - ZEN_ORCHESTRATOR_PORT=4000
+      - ZEN_ORCHESTRATOR_MCP_PORT=4001
+    volumes:
+      - orchestrator_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "zen-orchestrator status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  zen-compute:
+    build:
+      context: .
+      dockerfile: Dockerfile.zen-compute
+    ports:
+      - "4002:4002"
+    environment:
+      - RUST_LOG=info
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - compute_cache:/cache
+    restart: unless-stopped
+    depends_on:
+      - zen-orchestrator
+
+  zen-forecasting:
+    build:
+      context: .
+      dockerfile: Dockerfile.zen-forecasting
+    ports:
+      - "4003:4003"
+    environment:
+      - RUST_LOG=info
+      - ZEN_FORECASTING_DATA_PATH=/data
+      - ZEN_FORECASTING_CACHE_PATH=/cache
+    volumes:
+      - forecasting_data:/data
+      - forecasting_cache:/cache
+    restart: unless-stopped
+    depends_on:
+      - zen-orchestrator
+
+  # Load balancer for high availability
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - zen-orchestrator
+      - zen-compute
+      - zen-forecasting
+    restart: unless-stopped
+
+volumes:
+  orchestrator_data:
+    driver: local
+  compute_cache:
+    driver: local
+  forecasting_data:
+    driver: local
+  forecasting_cache:
+    driver: local
+
+networks:
+  default:
+    name: zen-neural-stack
+    driver: bridge

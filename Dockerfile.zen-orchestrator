@@ -1,0 +1,60 @@
+# Production Docker Image for zen-orchestrator v1.0
+FROM rust:1.88-slim as builder
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    clang \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /usr/src/zen-neural-stack
+
+# Copy workspace configuration
+COPY Cargo.toml Cargo.lock ./
+COPY zen-orchestrator/Cargo.toml ./zen-orchestrator/
+
+# Pre-build dependencies for faster subsequent builds
+RUN mkdir -p zen-orchestrator/src \
+    && echo "fn main() {}" > zen-orchestrator/src/main.rs \
+    && echo "pub fn dummy() {}" > zen-orchestrator/src/lib.rs \
+    && cargo build --release --package zen-orchestrator \
+    && rm -rf zen-orchestrator/src
+
+# Copy source code
+COPY zen-orchestrator/ ./zen-orchestrator/
+
+# Build production binary
+RUN cargo build --release --package zen-orchestrator
+
+# Runtime image
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app user
+RUN useradd -r -s /bin/false -m zen-orchestrator
+
+# Copy binary
+COPY --from=builder /usr/src/zen-neural-stack/target/release/zen-orchestrator /usr/local/bin/
+
+# Set permissions
+RUN chmod +x /usr/local/bin/zen-orchestrator
+
+# Switch to app user
+USER zen-orchestrator
+
+# Expose ports
+EXPOSE 4000 4001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD zen-orchestrator status || exit 1
+
+# Run application
+CMD ["zen-orchestrator", "serve"]

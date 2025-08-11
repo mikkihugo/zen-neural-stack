@@ -13,15 +13,7 @@ keywords = ["forecasting", "time-series", "zen-neural", "collective", "borg"]
 categories = ["science", "algorithms", "mathematics"]
 readme = "README.md"
 
-[workspace]
-members = [
-    ".",
-    "neuro-divergent-core",
-    "neuro-divergent-data",
-    "neuro-divergent-models",
-    "neuro-divergent-registry", 
-    "neuro-divergent-training"
-]
+# Part of zen-neural-stack workspace
 
 [lib]
 name = "neuro_divergent"
@@ -109,7 +101,7 @@ python-compat = []  # Enable Python-specific compatibility features
 # plotting = ["plotly"]  # Enable plotting support for examples (dev-dependency only)
 
 # WASM support
-wasm = ["dep:ruv-fann/wasm"]
+wasm = ["zen-neural/wasm"]
 no_std = []
 
 

@@ -1,25 +1,7 @@
-[workspace]
-members = [
-    "crates/zen-swarm-core",
-    "crates/claude-parser",
-    "crates/zen-swarm-transport",   # Fixed dependency conflicts
-    "crates/zen-swarm-persistence", # Fixed dependency conflicts
-    "crates/zen-swarm-agents",
-    "crates/zen-swarm-ml",
-    "crates/zen-swarm-mcp",
-    "crates/zen-swarm-wasm",
-    "crates/zen-swarm-wasm-unified", # Unified WASM module for all features
-    "crates/zen-swarm-daa",          # DAA integration for autonomous agents
-    "crates/swe-bench-adapter",      # SWE-Bench adapter for evaluation
-    "crates/zen-swarm-cli",
-    "ml-training",
-    "benchmarking",                   # Comprehensive benchmarking framework
-]
+# Part of zen-neural-stack workspace
 
-resolver = "2"
-exclude = []  # No exclusions
-
-[workspace.package]
+[package]
+name = "zen-orchestrator"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.88"

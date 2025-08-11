@@ -46,9 +46,7 @@ exclude = [
     "ruv-swarm/**"
 ]
 
-[workspace]
-# This makes this package a standalone workspace, not part of the parent workspace
-exclude = ["neuro-divergent"]
+# Part of zen-neural-stack workspace
 
 [dependencies]
 # Core dependencies
@@ -133,8 +131,10 @@ gpu = ["dep:wgpu", "dep:futures", "dep:pollster", "dep:bytemuck", "dep:tokio", "
 webgpu = ["dep:wgpu", "dep:futures", "dep:bytemuck", "wasm", "logging"]
 wasm-gpu = ["webgpu", "wasm"]
 
-# Storage and distribution
-surrealdb = { version = "2.0", features = ["kv-rocksdb", "protocol-ws", "protocol-http"], optional = true }
+[dependencies.surrealdb]
+version = "2.0"
+features = ["kv-rocksdb", "protocol-ws", "protocol-http"]
+optional = true
 
 # Zen Neural Stack integrations
 zen-storage = ["dep:surrealdb"]

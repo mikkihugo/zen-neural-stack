@@ -62,7 +62,7 @@ schemars = "0.8"
 uuid = { version = "1.0", features = ["v4", "serde"] }
 
 # Transport dependencies
-tungstenite = "0.23"
+tungstenite = "0.27"
 shared_memory = "0.12"
 
 # Persistence dependencies

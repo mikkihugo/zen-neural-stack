@@ -43,7 +43,7 @@ tokio-tungstenite = "0.26"
 tungstenite = "0.26"
 
 # JSON Schema
-schemars = { version = "0.8", features = ["derive"] }
+schemars = { version = "1.0", features = ["derive"] }
 jsonschema = "0.26"
 
 # Security utilities

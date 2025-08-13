@@ -79,7 +79,7 @@ parking_lot = "0.12.4"
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
 uuid = { version = "1.11.0", features = ["v4", "serde"] }
-dashmap = "5.5.3"
+dashmap = "6.1.0"
 chrono = { version = "0.4.39", features = ["serde"] }  # Pin compatible version
 
 # Web server and networking - using compatible versions

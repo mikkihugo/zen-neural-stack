@@ -1,0 +1,1 @@
+cargo:rustc-env=MIME_TYPES_GENERATED_PATH=/home/mhugo/code/claude-code-zen/zen-neural-stack/zen-swarm-provider/target/debug/build/mime_guess-6a4ed5f6660f60c1/out/mime_types_generated.rs

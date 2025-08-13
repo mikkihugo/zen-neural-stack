@@ -1,0 +1,23 @@
+[package]
+name = "zen-swarm-provider"
+version = "1.0.0"
+edition = "2021"
+description = "Zen-swarm Provider implementation for code-mesh integration"
+license = "MIT"
+keywords = ["ai", "llm", "code-mesh", "zen-swarm", "provider"]
+
+[workspace]
+# This is a standalone package, not part of the parent workspace
+
+[dependencies]
+code-mesh-core = { path = "../code-mesh/crates/code-mesh-core" }
+async-trait = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+uuid = { version = "1.0", features = ["v4"] }
+anyhow = "1.0"
+tracing = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+url = "2.5"

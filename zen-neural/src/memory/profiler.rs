@@ -41,6 +41,26 @@ use serde::{Deserialize, Serialize};
 
 use super::{MemoryError, MemoryResult, TensorType};
 
+// === PERFORMANCE STATISTICS ===
+
+/// Performance statistics for allocation tracking
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
+pub struct AllocationPerformanceStats {
+    /// Total bytes allocated over time
+    pub total_allocated: u64,
+    /// Total bytes deallocated over time
+    pub total_deallocated: u64,
+    /// Peak memory usage in bytes
+    pub peak_usage: u64,
+    /// Current memory usage in bytes
+    pub current_usage: u64,
+    /// Number of active allocations
+    pub active_allocations: usize,
+    /// Net allocated memory (allocated - deallocated)
+    pub net_allocated: u64,
+}
+
 // === MEMORY STATISTICS ===
 
 /// Comprehensive memory usage statistics
@@ -120,6 +140,12 @@ pub struct AllocationTracker {
     total_tracked: AtomicUsize,
     /// Total memory currently tracked
     total_memory_tracked: AtomicUsize,
+    /// Total bytes allocated over time (may exceed usize on 32-bit systems)
+    total_bytes_allocated: AtomicU64,
+    /// Total bytes deallocated over time
+    total_bytes_deallocated: AtomicU64,
+    /// Peak memory usage in bytes
+    peak_memory_usage: AtomicU64,
 }
 
 impl AllocationTracker {
@@ -131,6 +157,9 @@ impl AllocationTracker {
             max_recent_deallocations,
             total_tracked: AtomicUsize::new(0),
             total_memory_tracked: AtomicUsize::new(0),
+            total_bytes_allocated: AtomicU64::new(0),
+            total_bytes_deallocated: AtomicU64::new(0),
+            peak_memory_usage: AtomicU64::new(0),
         }
     }
     
@@ -164,6 +193,9 @@ impl AllocationTracker {
         
         self.total_tracked.fetch_add(1, Ordering::SeqCst);
         self.total_memory_tracked.fetch_add(size, Ordering::SeqCst);
+        
+        // Update AtomicU64 performance counters
+        self.update_allocation_counters(size);
         
         Ok(())
     }
@@ -254,6 +286,72 @@ impl AllocationTracker {
         stats
     }
     
+    /// Get total bytes allocated across all time (AtomicU64 for large values)
+    pub fn total_bytes_allocated(&self) -> u64 {
+        self.total_bytes_allocated.load(Ordering::SeqCst)
+    }
+    
+    /// Get total bytes deallocated across all time
+    pub fn total_bytes_deallocated(&self) -> u64 {
+        self.total_bytes_deallocated.load(Ordering::SeqCst)
+    }
+    
+    /// Get peak memory usage in bytes
+    pub fn peak_memory_usage(&self) -> u64 {
+        self.peak_memory_usage.load(Ordering::SeqCst)
+    }
+    
+    /// Update allocation counters (called internally)
+    fn update_allocation_counters(&self, size: usize) {
+        let size_u64 = size as u64;
+        self.total_bytes_allocated.fetch_add(size_u64, Ordering::SeqCst);
+        
+        // Update peak memory usage
+        let current_usage = self.total_memory_tracked.load(Ordering::SeqCst) as u64;
+        let mut peak = self.peak_memory_usage.load(Ordering::SeqCst);
+        while current_usage > peak {
+            match self.peak_memory_usage.compare_exchange_weak(
+                peak, 
+                current_usage, 
+                Ordering::SeqCst, 
+                Ordering::SeqCst
+            ) {
+                Ok(_) => break,
+                Err(x) => peak = x,
+            }
+        }
+    }
+    
+    /// Update deallocation counters (called internally)
+    fn update_deallocation_counters(&self, size: usize) {
+        let size_u64 = size as u64;
+        self.total_bytes_deallocated.fetch_add(size_u64, Ordering::SeqCst);
+    }
+    
+    /// Get allocation rate statistics (bytes per second)
+    pub fn get_allocation_rate(&self, duration: Duration) -> f64 {
+        let total_bytes = self.total_bytes_allocated();
+        let seconds = duration.as_secs_f64();
+        
+        if seconds > 0.0 {
+            total_bytes as f64 / seconds
+        } else {
+            0.0
+        }
+    }
+    
+    /// Get comprehensive performance statistics
+    pub fn get_performance_stats(&self) -> AllocationPerformanceStats {
+        AllocationPerformanceStats {
+            total_allocated: self.total_bytes_allocated(),
+            total_deallocated: self.total_bytes_deallocated(),
+            peak_usage: self.peak_memory_usage(),
+            current_usage: self.total_memory_tracked.load(Ordering::SeqCst) as u64,
+            active_allocations: self.total_tracked.load(Ordering::SeqCst),
+            net_allocated: self.total_bytes_allocated() - self.total_bytes_deallocated(),
+        }
+    }
+
     #[cfg(feature = "backtrace")]
     fn capture_backtrace(&self) -> Vec<String> {
         // In a real implementation, this would capture and format a backtrace

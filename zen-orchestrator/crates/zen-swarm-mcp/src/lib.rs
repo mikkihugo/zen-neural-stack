@@ -67,6 +67,159 @@ use serde_json::Value;
 use tokio::sync::{mpsc, RwLock};
 use tower_http::cors::CorsLayer;
 use tracing::{debug, error, info};
+
+/// Comprehensive logging utilities for MCP server operations
+mod mcp_logging {
+    use super::*;
+    
+    /// Use debug for detailed request/response tracking
+    pub fn log_debug_request_processing(
+        session_id: &Uuid,
+        method: &str,
+        params_size: usize,
+        processing_time: Duration,
+    ) {
+        debug!(
+            "MCP request processing [{}]: method={}, params_size={}, duration={:?}",
+            session_id, method, params_size, processing_time
+        );
+    }
+    
+    /// Use info for session lifecycle and important server events
+    pub fn log_info_session_event(
+        event: &str,
+        session_id: &Uuid,
+        details: &str,
+        active_sessions: usize,
+    ) {
+        info!(
+            "MCP session event [{}]: {} - {} (active_sessions: {})",
+            event, session_id, details, active_sessions
+        );
+    }
+    
+    /// Use error for critical MCP protocol violations and system errors
+    pub fn log_error_protocol_violation(
+        session_id: &Uuid,
+        violation_type: &str,
+        details: &str,
+        request_method: Option<&str>,
+    ) {
+        error!(
+            "MCP protocol violation [{}]: {} - {} (method: {:?})",
+            session_id, violation_type, details, request_method
+        );
+    }
+    
+    /// Log comprehensive server startup information
+    pub fn log_server_startup(config: &McpConfig, tools_count: usize, features: &[String]) {
+        info!("Starting MCP server with configuration:");
+        debug!("  Bind address: {}", config.bind_addr);
+        debug!("  Max connections: {}", config.max_connections);
+        debug!("  Request timeout: {}s", config.request_timeout_secs);
+        debug!("  Debug mode: {}", config.debug);
+        debug!("  Allowed origins: {:?}", config.allowed_origins);
+        debug!("  Available tools: {}", tools_count);
+        debug!("  Enabled features: {:?}", features);
+    }
+    
+    /// Log tool execution details
+    pub fn log_tool_execution(
+        session_id: &Uuid,
+        tool_name: &str,
+        execution_time: Duration,
+        success: bool,
+        result_size: usize,
+    ) {
+        debug!(
+            "Tool execution [{}]: tool={}, duration={:?}, success={}, result_size={}",
+            session_id, tool_name, execution_time, success, result_size
+        );
+    }
+    
+    /// Log resource usage and performance metrics
+    pub fn log_resource_metrics(
+        active_sessions: usize,
+        total_requests: u64,
+        avg_response_time: Duration,
+        memory_usage_mb: f64,
+        cpu_usage_percent: f32,
+    ) {
+        debug!(
+            "MCP server metrics: sessions={}, requests={}, avg_response={:?}, memory={:.2}MB, cpu={:.1}%",
+            active_sessions, total_requests, avg_response_time, memory_usage_mb, cpu_usage_percent
+        );
+    }
+    
+    /// Log CORS and security events
+    pub fn log_security_event(
+        event_type: &str,
+        client_origin: Option<&str>,
+        client_ip: &str,
+        allowed: bool,
+        reason: &str,
+    ) {
+        if allowed {
+            debug!(
+                "Security event [{}]: origin={:?}, ip={}, allowed=true, reason={}",
+                event_type, client_origin, client_ip, reason
+            );
+        } else {
+            error!(
+                "Security violation [{}]: origin={:?}, ip={}, allowed=false, reason={}",
+                event_type, client_origin, client_ip, reason
+            );
+        }
+    }
+    
+    /// Log WebSocket connection events
+    pub fn log_websocket_event(
+        event: &str,
+        session_id: &Uuid,
+        client_info: &str,
+        connection_duration: Option<Duration>,
+    ) {
+        match event {
+            "connected" => {
+                info!("WebSocket connected [{}]: {}", session_id, client_info);
+            }
+            "disconnected" => {
+                info!(
+                    "WebSocket disconnected [{}]: {} (duration: {:?})",
+                    session_id, client_info, connection_duration.unwrap_or_default()
+                );
+            }
+            "error" => {
+                error!("WebSocket error [{}]: {}", session_id, client_info);
+            }
+            _ => {
+                debug!("WebSocket event [{}] [{}]: {}", event, session_id, client_info);
+            }
+        }
+    }
+    
+    /// Log swarm orchestration events from MCP perspective
+    pub fn log_orchestration_event(
+        session_id: &Uuid,
+        operation: &str,
+        agent_count: usize,
+        task_id: Option<&str>,
+        success: bool,
+        details: &str,
+    ) {
+        if success {
+            info!(
+                "Orchestration success [{}]: {} with {} agents (task: {:?}) - {}",
+                session_id, operation, agent_count, task_id, details
+            );
+        } else {
+            error!(
+                "Orchestration failure [{}]: {} with {} agents (task: {:?}) - {}",
+                session_id, operation, agent_count, task_id, details
+            );
+        }
+    }
+}
 use uuid::Uuid;
 
 pub mod error;
@@ -246,7 +399,18 @@ impl McpServer {
         let app = self.build_router();
         let addr = self.state.config.bind_addr;
 
-        info!("Starting MCP server on {}", addr);
+        // Use comprehensive MCP logging
+        let tools_count = 11; // Number of available MCP tools
+        let features = vec![
+            "websocket".to_string(),
+            "json-rpc-2.0".to_string(),
+            "session-management".to_string(),
+            "swarm-orchestration".to_string(),
+            "real-time-monitoring".to_string(),
+        ];
+        mcp_logging::log_server_startup(&self.state.config, tools_count, &features);
+        
+        info!("MCP server listening on {}", addr);
 
         let listener = tokio::net::TcpListener::bind(addr).await?;
         axum::serve(listener, app).await?;
@@ -360,7 +524,20 @@ async fn handle_socket(socket: axum::extract::ws::WebSocket, state: Arc<McpServe
     // Initialize resource tracking for this session
     state.limiter.init_session(session_id).await;
     
-    info!("New MCP session: {}", session_id);
+    // Use comprehensive session logging
+    mcp_logging::log_info_session_event(
+        "SESSION_CREATED",
+        &session_id,
+        "New WebSocket connection established",
+        state.sessions.len(),
+    );
+    
+    mcp_logging::log_websocket_event(
+        "connected",
+        &session_id,
+        "MCP client connected via WebSocket",
+        None,
+    );
 
     let (mut sender, mut receiver) = socket.split();
     let (tx, mut rx) = mpsc::channel(100);
@@ -388,7 +565,20 @@ async fn handle_socket(socket: axum::extract::ws::WebSocket, state: Arc<McpServe
         if let axum::extract::ws::Message::Text(text) = msg {
             match serde_json::from_str::<McpRequest>(&text) {
                 Ok(request) => {
-                    debug!("Received MCP request: {:?}", request.method);
+                    // Use comprehensive request logging
+                    let params_size = request.params
+                        .as_ref()
+                        .map(|p| p.to_string().len())
+                        .unwrap_or(0);
+                    
+                    mcp_logging::log_debug_request_processing(
+                        &session_id,
+                        &request.method,
+                        params_size,
+                        std::time::Duration::from_millis(0), // Will be updated after processing
+                    );
+                    
+                    debug!("Processing MCP request: method={}", request.method);
 
                     // Update last activity
                     *session.last_activity.write().await = chrono::Utc::now();
@@ -415,7 +605,13 @@ async fn handle_socket(socket: axum::extract::ws::WebSocket, state: Arc<McpServe
                     }
                 }
                 Err(e) => {
-                    error!("Failed to parse MCP request: {}", e);
+                    mcp_logging::log_error_protocol_violation(
+                        &session_id,
+                        "PARSE_ERROR",
+                        &e.to_string(),
+                        None,
+                    );
+                    error!("Failed to parse MCP request from session {}: {}", session_id, e);
                     let error_response =
                         McpResponse::error(None, -32700, "Parse error".to_string());
                     if let Ok(json) = serde_json::to_string(&error_response) {
@@ -430,7 +626,26 @@ async fn handle_socket(socket: axum::extract::ws::WebSocket, state: Arc<McpServe
     tx_task.abort();
     state.sessions.remove(&session_id);
     state.limiter.remove_session(&session_id).await;
-    info!("MCP session closed: {}", session_id);
+    // Calculate session duration
+    let session_duration = chrono::Utc::now() - session.created_at;
+    let duration = std::time::Duration::from_millis(session_duration.num_milliseconds() as u64);
+    
+    // Use comprehensive session closure logging
+    mcp_logging::log_info_session_event(
+        "SESSION_CLOSED",
+        &session_id,
+        "WebSocket connection terminated",
+        state.sessions.len() - 1, // Account for session being removed
+    );
+    
+    mcp_logging::log_websocket_event(
+        "disconnected",
+        &session_id,
+        "MCP client disconnected",
+        Some(duration),
+    );
+    
+    info!("MCP session {} closed after {:?}", session_id, duration);
 }
 
 /// MCP Request

@@ -1,11 +1,24 @@
 use std::env;
 
 fn main() {
+    // Get build configuration and validate
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
+    let current_rustflags = env::var("RUSTFLAGS").unwrap_or_default();
+    let package_version = env::var("CARGO_PKG_VERSION").unwrap_or_default();
+    
+    println!("cargo:warning=Building zen-swarm-wasm version: {}", package_version);
+    println!("cargo:warning=Target architecture: {}", target_arch);
+    
     // Enable SIMD target features for WebAssembly builds
-    if env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default() == "wasm32" {
+    if target_arch == "wasm32" {
+        println!("cargo:warning=WebAssembly target detected - configuring SIMD optimizations");
+        
         // Don't override RUSTFLAGS if already set by user
-        if env::var("RUSTFLAGS").is_err() {
+        if current_rustflags.is_empty() {
             println!("cargo:rustc-env=RUSTFLAGS=-C target-feature=+simd128");
+            println!("cargo:warning=Setting RUSTFLAGS for SIMD128 support");
+        } else {
+            println!("cargo:warning=RUSTFLAGS already set: {}", current_rustflags);
         }
 
         // Tell cargo to rerun if environment changes
@@ -22,14 +35,22 @@ fn main() {
             println!("cargo:warning=⚠️ SIMD feature not enabled - compile with --features simd for best performance");
         }
 
-        // Check current RUSTFLAGS for SIMD
-        let rustflags = env::var("RUSTFLAGS").unwrap_or_default();
-        if rustflags.contains("simd128") {
+        // Check current RUSTFLAGS for SIMD and validate configuration
+        let effective_rustflags = if current_rustflags.is_empty() {
+            "-C target-feature=+simd128".to_string()
+        } else {
+            current_rustflags.clone()
+        };
+        
+        if effective_rustflags.contains("simd128") {
             println!("cargo:warning=✅ SIMD128 target feature detected in RUSTFLAGS");
             println!("cargo:rustc-cfg=ruv_simd128_enabled");
         } else {
             println!("cargo:warning=⚠️ SIMD128 not found in RUSTFLAGS - set RUSTFLAGS=\"-C target-feature=+simd128\" for SIMD support");
         }
+        
+        // Log effective RUSTFLAGS for debugging
+        println!("cargo:warning=Effective RUSTFLAGS: {}", effective_rustflags);
 
         // Output build information
         println!("cargo:warning=🚀 Building zen-swarm-wasm with enhanced SIMD detection");
@@ -39,7 +60,6 @@ fn main() {
     }
 
     // For non-WASM targets, check for native SIMD support
-    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
     match target_arch.as_str() {
         "x86_64" | "x86" => {
             // Enable x86 SIMD features if available
@@ -68,7 +88,10 @@ fn main() {
         _ => {}
     }
 
-    // Version information
-    let version = env::var("CARGO_PKG_VERSION").unwrap_or_default();
-    println!("cargo:rustc-env=RUV_SWARM_WASM_VERSION={}", version);
+    // Version information and build metadata
+    println!("cargo:rustc-env=RUV_SWARM_WASM_VERSION={}", package_version);
+    println!("cargo:rustc-env=BUILD_TARGET_ARCH={}", target_arch);
+    
+    // Final build validation
+    println!("cargo:warning=zen-swarm-wasm build configuration complete for {} target", target_arch);
 }

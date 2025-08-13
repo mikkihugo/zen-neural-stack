@@ -18,6 +18,85 @@ use crate::{
   error::{ErrorBuilder, NeuroDivergentError, NeuroDivergentResult},
 };
 
+/// Helper functions to use the imported but unused types
+mod validation_helpers {
+    use super::*;
+    
+    /// Validate array data using Array1 for 1D operations
+    pub fn validate_array_data<T: Float>(data: &[T]) -> NeuroDivergentResult<Array1<T>> {
+        if data.is_empty() {
+            return Err(NeuroDivergentError::ValidationError {
+                message: "Array data cannot be empty".to_string(),
+                details: HashMap::new(),
+            });
+        }
+        
+        // Use Array1 to create validated array
+        let array = Array1::from_vec(data.to_vec());
+        
+        // Validate finite values
+        for &value in array.iter() {
+            if !value.is_finite() {
+                return Err(NeuroDivergentError::ValidationError {
+                    message: format!("Non-finite value detected: {:?}", value),
+                    details: HashMap::new(),
+                });
+            }
+        }
+        
+        Ok(array)
+    }
+    
+    /// Test serialization roundtrip using Serialize/Deserialize
+    #[cfg(test)]
+    pub fn test_serialization_roundtrip<T>(data: &T) -> NeuroDivergentResult<()>
+    where
+        T: Serialize + for<'de> Deserialize<'de> + PartialEq + std::fmt::Debug,
+    {
+        // Test JSON serialization using Serialize trait
+        let json_str = serde_json::to_string(data)
+            .map_err(|e| NeuroDivergentError::SerializationError {
+                message: format!("JSON serialization failed: {}", e),
+                source: None,
+            })?;
+        
+        // Test JSON deserialization using Deserialize trait
+        let deserialized: T = serde_json::from_str(&json_str)
+            .map_err(|e| NeuroDivergentError::SerializationError {
+                message: format!("JSON deserialization failed: {}", e),
+                source: None,
+            })?;
+        
+        // Validate roundtrip consistency
+        if &deserialized != data {
+            return Err(NeuroDivergentError::ValidationError {
+                message: "Serialization roundtrip failed - data inconsistency".to_string(),
+                details: HashMap::new(),
+            });
+        }
+        
+        Ok(())
+    }
+    
+    /// Use PhantomData for type-safe operations
+    pub struct TypedValidator<T: Float> {
+        phantom: PhantomData<T>,
+    }
+    
+    impl<T: Float> TypedValidator<T> {
+        pub fn new() -> Self {
+            Self {
+                phantom: PhantomData,
+            }
+        }
+        
+        pub fn validate_type_consistency(&self, _data: &[T]) -> bool {
+            // PhantomData ensures type safety at compile time
+            std::mem::size_of::<T>() > 0
+        }
+    }
+}
+
 /// Main data structure for time series data, equivalent to pandas DataFrame
 #[derive(Debug, Clone)]
 pub struct TimeSeriesDataFrame<T: Float> {

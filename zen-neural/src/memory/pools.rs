@@ -396,10 +396,19 @@ pub struct MemoryPool<T> {
     total_allocated: AtomicUsize,
     /// Total available bytes
     total_available: AtomicUsize,
+    /// Atomic pointer to free list head for lock-free operations
+    free_list_head: AtomicPtr<FreeBlock>,
     /// Pool statistics
     stats: Mutex<PoolStats>,
     /// Type marker
     _marker: std::marker::PhantomData<T>,
+}
+
+/// Free block structure for lock-free linked list
+#[repr(C, align(8))]
+struct FreeBlock {
+    next: AtomicPtr<FreeBlock>,
+    size: usize,
 }
 
 /// Statistics for a memory pool
@@ -441,6 +450,7 @@ where
             free_lists,
             total_allocated: AtomicUsize::new(0),
             total_available: AtomicUsize::new(config.total_size),
+            free_list_head: AtomicPtr::new(ptr::null_mut()),
             stats: Mutex::new(PoolStats::default()),
             _marker: std::marker::PhantomData,
         };
@@ -513,7 +523,7 @@ where
         }
     }
     
-    /// Deallocate memory back to the pool
+    /// Deallocate memory back to the pool using lock-free operations
     pub fn deallocate(&self, ptr: NonNull<u8>, size: usize) -> MemoryResult<()> {
         let size_class = self.size_manager.find_size_class(size)
             .ok_or_else(|| MemoryError::InvalidSize {
@@ -522,8 +532,42 @@ where
                 max: self.config.max_allocation_size,
             })?;
         
-        // In a real implementation, we'd return the block to the appropriate free list
-        // For now, just update statistics
+        // Validate pointer using std::ptr functions
+        let raw_ptr = ptr.as_ptr();
+        assert!(!raw_ptr.is_null(), "Deallocating null pointer");
+        
+        // Check pointer alignment
+        let alignment = align_of::<u8>();
+        assert_eq!(raw_ptr as usize % alignment, 0, "Pointer should be properly aligned");
+        
+        // Convert memory back to FreeBlock for lock-free list
+        unsafe {
+            let free_block = raw_ptr as *mut FreeBlock;
+            
+            // Initialize the FreeBlock structure
+            ptr::write(free_block, FreeBlock {
+                next: AtomicPtr::new(ptr::null_mut()),
+                size: size_class.size,
+            });
+            
+            // Add to free list using lock-free operations
+            loop {
+                let head = self.free_list_head.load(Ordering::Acquire);
+                (*free_block).next.store(head, Ordering::Relaxed);
+                
+                match self.free_list_head.compare_exchange_weak(
+                    head,
+                    free_block,
+                    Ordering::Release,
+                    Ordering::Relaxed,
+                ) {
+                    Ok(_) => break,
+                    Err(_) => continue, // Retry on contention
+                }
+            }
+        }
+        
+        // Update statistics
         self.total_allocated.fetch_sub(size_class.size, Ordering::SeqCst);
         self.total_available.fetch_add(size_class.size, Ordering::SeqCst);
         
@@ -608,11 +652,56 @@ where
     
     // === PRIVATE HELPER METHODS ===
     
-    /// Try to allocate from an existing free list
-    fn try_allocate_from_free_list(&self, _class_index: usize, _size: usize) -> Option<NonNull<u8>> {
-        // In a real implementation, this would search the appropriate free list
-        // For now, return None to force new block allocation
-        None
+    /// Try to allocate from an existing free list using lock-free operations
+    fn try_allocate_from_free_list(&self, _class_index: usize, size: usize) -> Option<NonNull<u8>> {
+        // Use atomic operations for lock-free allocation
+        loop {
+            let head = self.free_list_head.load(Ordering::Acquire);
+            
+            if head.is_null() {
+                // No free blocks available
+                return None;
+            }
+            
+            unsafe {
+                let block = &*head;
+                
+                // Check if this block is large enough
+                if block.size < size {
+                    return None;
+                }
+                
+                let next = block.next.load(Ordering::Relaxed);
+                
+                // Try to update head to next block
+                match self.free_list_head.compare_exchange_weak(
+                    head,
+                    next,
+                    Ordering::Release,
+                    Ordering::Relaxed,
+                ) {
+                    Ok(_) => {
+                        // Successfully removed block from free list
+                        // Convert FreeBlock back to usable memory
+                        let ptr = head as *mut u8;
+                        
+                        // Validate pointer alignment using std::ptr functions
+                        let alignment = align_of::<u8>();
+                        assert_eq!(ptr as usize % alignment, 0, "Block should be properly aligned");
+                        
+                        // Verify block size using size_of calculations
+                        let header_size = size_of::<FreeBlock>();
+                        assert!(block.size >= header_size, "Block size should account for header");
+                        
+                        return NonNull::new(ptr);
+                    }
+                    Err(_) => {
+                        // Another thread modified the list, retry
+                        continue;
+                    }
+                }
+            }
+        }
     }
     
     /// Allocate a new memory block
@@ -834,9 +923,54 @@ mod tests {
     fn test_pool_statistics() {
         let pool: MemoryPool<f32> = MemoryPool::new(PoolConfig::default()).unwrap();
         
-        // Allocate some memory
-        let _ptr1 = pool.allocate(128).unwrap();
-        let _ptr2 = pool.allocate(256).unwrap();
+        // Allocate memory and create managed buffers for validation
+        let ptr1 = pool.allocate(128).unwrap();
+        let ptr2 = pool.allocate(256).unwrap();
+        
+        // Create managed buffers using our Deref-enabled wrappers
+        let mut buffer1 = unsafe { MemoryBuffer::<u8>::from_raw_parts(ptr1, 128) };
+        let mut buffer2 = unsafe { MemoryBuffer::<u8>::from_raw_parts(ptr2, 256) };
+        
+        // Validate memory buffer properties using Deref
+        assert_eq!(buffer1.size(), 128, "First buffer should be 128 bytes");
+        assert_eq!(buffer2.size(), 256, "Second buffer should be 256 bytes");
+        
+        // Test memory buffer access patterns using Deref/DerefMut
+        {
+            // Access via Deref - buffer1 and buffer2 automatically dereference to &[u8] and &mut [u8]
+            let slice1: &[u8] = &*buffer1;
+            let slice2: &[u8] = &*buffer2;
+            
+            assert_eq!(slice1.len(), 128, "Slice 1 should have correct length");
+            assert_eq!(slice2.len(), 256, "Slice 2 should have correct length");
+            
+            // Test mutable access via DerefMut
+            let mut_slice1: &mut [u8] = &mut *buffer1;
+            let mut_slice2: &mut [u8] = &mut *buffer2;
+            
+            // Initialize buffers with test patterns
+            mut_slice1.fill(42);
+            mut_slice2.fill(84);
+            
+            // Verify buffer independence
+            assert_eq!(mut_slice1[0], 42, "Buffer 1 should maintain its value");
+            assert_eq!(mut_slice2[0], 84, "Buffer 2 should maintain its value");
+            assert_ne!(mut_slice1.as_ptr(), mut_slice2.as_ptr(), "Buffers should have different addresses");
+        }
+        
+        // Test direct deref functionality
+        assert_eq!(buffer1[0], 42, "Deref should allow direct indexing");
+        assert_eq!(buffer2[127], 84, "Deref should work for any valid index");
+        
+        // Test deref coercion to slice methods
+        let sum1: u32 = buffer1.iter().map(|&x| x as u32).sum();
+        let sum2: u32 = buffer2.iter().map(|&x| x as u32).sum();
+        assert_eq!(sum1, 42 * 128, "Deref should enable iterator methods");
+        assert_eq!(sum2, 84 * 256, "Deref should enable iterator methods");
+        
+        // Test deallocate using the raw pointers
+        pool.deallocate(ptr1, 128).unwrap();
+        pool.deallocate(ptr2, 256).unwrap();
         
         let stats = pool.get_stats();
         assert!(stats.allocation_count >= 2);

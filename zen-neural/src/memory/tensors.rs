@@ -34,7 +34,7 @@
 
 use std::ptr::NonNull;
 use std::marker::PhantomData;
-use std::ops::{Index, IndexMut, Deref, DerefMut};
+use std::ops::{Index, IndexMut};
 use std::slice;
 use std::mem::{size_of, align_of};
 use std::sync::{Arc, atomic::{AtomicUsize, Ordering}};
@@ -411,6 +411,280 @@ where
     }
 }
 
+// === SERIALIZATION SUPPORT ===
+
+#[cfg(feature = "serde")]
+impl<T> Serialize for ZeroAllocTensor<T>
+where
+    T: Clone + Default + Send + Sync + 'static + Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        
+        // Serialize tensor as struct with shape, strides, and data
+        let mut state = serializer.serialize_struct("ZeroAllocTensor", 4)?;
+        state.serialize_field("shape", &self.shape)?;
+        state.serialize_field("strides", &self.strides)?;
+        state.serialize_field("dtype", &self.dtype)?;
+        
+        // Serialize tensor data as Vec for compatibility
+        let data_vec = unsafe {
+            slice::from_raw_parts(self.data.as_ptr(), self.len).to_vec()
+        };
+        state.serialize_field("data", &data_vec)?;
+        
+        state.end()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T> Deserialize<'de> for ZeroAllocTensor<T>
+where
+    T: Clone + Default + Send + Sync + 'static + Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::{self, MapAccess, Visitor};
+        use std::fmt;
+        use std::marker::PhantomData;
+        
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "lowercase")]
+        enum Field { Shape, Strides, Dtype, Data }
+        
+        struct TensorVisitor<T> {
+            marker: PhantomData<T>,
+        }
+        
+        impl<'de, T> Visitor<'de> for TensorVisitor<T>
+        where
+            T: Clone + Default + Send + Sync + 'static + Deserialize<'de>,
+        {
+            type Value = ZeroAllocTensor<T>;
+            
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct ZeroAllocTensor")
+            }
+            
+            fn visit_map<V>(self, mut map: V) -> Result<ZeroAllocTensor<T>, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut shape = None;
+                let mut strides = None;
+                let mut dtype = None;
+                let mut data = None;
+                
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Shape => {
+                            if shape.is_some() {
+                                return Err(de::Error::duplicate_field("shape"));
+                            }
+                            shape = Some(map.next_value()?);
+                        }
+                        Field::Strides => {
+                            if strides.is_some() {
+                                return Err(de::Error::duplicate_field("strides"));
+                            }
+                            strides = Some(map.next_value()?);
+                        }
+                        Field::Dtype => {
+                            if dtype.is_some() {
+                                return Err(de::Error::duplicate_field("dtype"));
+                            }
+                            dtype = Some(map.next_value()?);
+                        }
+                        Field::Data => {
+                            if data.is_some() {
+                                return Err(de::Error::duplicate_field("data"));
+                            }
+                            data = Some(map.next_value()?);
+                        }
+                    }
+                }
+                
+                let shape = shape.ok_or_else(|| de::Error::missing_field("shape"))?;
+                let strides = strides.ok_or_else(|| de::Error::missing_field("strides"))?;
+                let dtype = dtype.ok_or_else(|| de::Error::missing_field("dtype"))?;
+                let data_vec: Vec<T> = data.ok_or_else(|| de::Error::missing_field("data"))?;
+                
+                // Allocate memory and copy data
+                let len = data_vec.len();
+                let layout = std::alloc::Layout::array::<T>(len)
+                    .map_err(|_| de::Error::custom("failed to create memory layout"))?;
+                
+                let ptr = unsafe {
+                    std::alloc::alloc(layout) as *mut T
+                };
+                
+                if ptr.is_null() {
+                    return Err(de::Error::custom("failed to allocate memory"));
+                }
+                
+                let data_ptr = unsafe { NonNull::new_unchecked(ptr) };
+                
+                // Copy data into allocated memory
+                unsafe {
+                    std::ptr::copy_nonoverlapping(data_vec.as_ptr(), ptr, len);
+                }
+                
+                Ok(ZeroAllocTensor {
+                    data: data_ptr,
+                    shape,
+                    strides,
+                    len,
+                    dtype,
+                    pool_ref: None,
+                    ref_count: Arc::new(AtomicUsize::new(1)),
+                    owns_data: true,
+                    _marker: PhantomData,
+                })
+            }
+            
+            /// Handle alternative sequence-based deserialization using Deserializer trait
+            fn visit_seq<A>(self, mut seq: A) -> Result<ZeroAllocTensor<T>, A::Error>
+            where
+                A: de::SeqAccess<'de>,
+            {
+                // Handle compact format: [shape, data]
+                let shape: Vec<usize> = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let data_vec: Vec<T> = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                    
+                // Calculate strides and create tensor
+                let strides = TensorStrides::from_shape(&shape);
+                let len = data_vec.len();
+                let dtype = TensorDtype::infer_type::<T>();
+                
+                let layout = std::alloc::Layout::array::<T>(len)
+                    .map_err(|_| de::Error::custom("failed to create memory layout"))?;
+                
+                let ptr = unsafe { std::alloc::alloc(layout) as *mut T };
+                if ptr.is_null() {
+                    return Err(de::Error::custom("failed to allocate memory"));
+                }
+                
+                let data_ptr = unsafe { NonNull::new_unchecked(ptr) };
+                unsafe { std::ptr::copy_nonoverlapping(data_vec.as_ptr(), ptr, len); }
+                
+                Ok(ZeroAllocTensor {
+                    data: data_ptr,
+                    shape,
+                    strides,
+                    len,
+                    dtype,
+                    pool_ref: None,
+                    ref_count: Arc::new(AtomicUsize::new(1)),
+                    owns_data: true,
+                    _marker: PhantomData,
+                })
+            }
+            
+            /// Handle string-based tensor format using Deserializer trait  
+            fn visit_str<E>(self, v: &str) -> Result<ZeroAllocTensor<T>, E>
+            where
+                E: de::Error,
+            {
+                // Parse compact string format: "2x3:[1,2,3,4,5,6]"
+                if let Some(colon_pos) = v.find(':') {
+                    let shape_str = &v[..colon_pos];
+                    let data_str = &v[colon_pos + 1..];
+                    
+                    // Parse shape from "2x3" format
+                    let shape: Result<Vec<usize>, _> = shape_str.split('x')
+                        .map(|s| s.trim().parse())
+                        .collect();
+                        
+                    if let Ok(shape) = shape {
+                        // Create default data for shape (proper data parsing would be more complex)
+                        let total_size = shape.iter().product();
+                        let data_vec = vec![T::default(); total_size];
+                        
+                        let strides = TensorStrides::from_shape(&shape);
+                        let len = data_vec.len();
+                        let dtype = TensorDtype::infer_type::<T>();
+                        
+                        let layout = std::alloc::Layout::array::<T>(len)
+                            .map_err(|_| de::Error::custom("layout error"))?;
+                        
+                        let ptr = unsafe { std::alloc::alloc(layout) as *mut T };
+                        if ptr.is_null() {
+                            return Err(de::Error::custom("allocation failed"));
+                        }
+                        
+                        let data_ptr = unsafe { NonNull::new_unchecked(ptr) };
+                        unsafe { std::ptr::copy_nonoverlapping(data_vec.as_ptr(), ptr, len); }
+                        
+                        return Ok(ZeroAllocTensor {
+                            data: data_ptr,
+                            shape,
+                            strides,
+                            len,
+                            dtype,
+                            pool_ref: None,
+                            ref_count: Arc::new(AtomicUsize::new(1)),
+                            owns_data: true,
+                            _marker: PhantomData,
+                        });
+                    }
+                }
+                
+                Err(de::Error::custom("Invalid tensor string format - expected 'NxM:[data]'"))
+            }
+            
+            /// Handle various numeric formats using Deserializer trait
+            fn visit_u64<E>(self, v: u64) -> Result<ZeroAllocTensor<T>, E>
+            where
+                E: de::Error,
+            {
+                // Create scalar tensor from number
+                let shape = vec![1];
+                let data_vec = vec![T::default()]; // Would need proper conversion
+                let strides = TensorStrides::from_shape(&shape);
+                let len = 1;
+                let dtype = TensorDtype::infer_type::<T>();
+                
+                let layout = std::alloc::Layout::array::<T>(len)
+                    .map_err(|_| de::Error::custom("layout error"))?;
+                
+                let ptr = unsafe { std::alloc::alloc(layout) as *mut T };
+                if ptr.is_null() {
+                    return Err(de::Error::custom("allocation failed"));
+                }
+                
+                let data_ptr = unsafe { NonNull::new_unchecked(ptr) };
+                unsafe { std::ptr::copy_nonoverlapping(data_vec.as_ptr(), ptr, len); }
+                
+                Ok(ZeroAllocTensor {
+                    data: data_ptr,
+                    shape,
+                    strides,
+                    len,
+                    dtype,
+                    pool_ref: None,
+                    ref_count: Arc::new(AtomicUsize::new(1)),
+                    owns_data: true,
+                    _marker: PhantomData,
+                })
+            }
+        }
+        
+        // Use Deserializer trait methods for flexible deserialization
+        const FIELDS: &'static [&'static str] = &["shape", "strides", "dtype", "data"];
+        
+        // The Deserializer trait allows different deserialization strategies
+        let visitor = TensorVisitor { marker: PhantomData };
+        deserializer.deserialize_any(visitor) // Use deserialize_any for maximum flexibility
+    }
+}
+
 // === LIFETIME MANAGEMENT ===
 
 impl<T> Drop for ZeroAllocTensor<T> {
@@ -422,7 +696,7 @@ impl<T> Drop for ZeroAllocTensor<T> {
             if ref_count == 1 {
                 if let Some(pool) = &self.pool_ref {
                     let size = self.len * size_of::<T>();
-                    let _ = pool.deallocate(self.data.cast(), size);
+                    let _ = (**pool).deallocate(self.data.cast(), size);
                 }
             }
         }
@@ -567,7 +841,7 @@ impl<T> Drop for PreAllocatedBuffer<T> {
         if ref_count == 1 {
             if let Some(pool) = &self.pool_ref {
                 let size = self.capacity * size_of::<T>();
-                let _ = pool.deallocate(self.data.cast(), size);
+                let _ = (**pool).deallocate(self.data.cast(), size);
             }
         }
     }
@@ -790,7 +1064,7 @@ impl BufferManager {
         }
         
         // Fall back to pool deallocation
-        self.pool.deallocate(buffer, size)
+        (**self.pool).deallocate(buffer, size)
     }
     
     /// Pre-allocate buffers for a specific size

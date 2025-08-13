@@ -38,11 +38,11 @@ fn generate_synthetic_mnist(samples: usize) -> Vec<DNNTrainingExample> {
     for _ in 0..samples {
         // Generate 28x28 = 784 pixel values
         let input_data: Vec<f32> = (0..784)
-            .map(|_| rng.gen::<f32>())
+            .map(|_| rng.r#gen::<f32>())
             .collect();
         
         // Generate one-hot encoded label (10 classes)
-        let class = rng.gen_range(0..10);
+        let class = rng.r#gen_range(0..10);
         let mut target_data = vec![0.0; 10];
         target_data[class] = 1.0;
         

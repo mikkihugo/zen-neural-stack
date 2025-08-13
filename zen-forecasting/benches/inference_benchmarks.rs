@@ -12,7 +12,8 @@ use criterion::{
 use neuro_divergent::data::{TimeSeriesDataFrame, TimeSeriesSchema};
 use neuro_divergent::models::*;
 use num_traits::Float;
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 use std::time::Duration;
 
 /// Generate pre-trained model weights for consistent benchmarking

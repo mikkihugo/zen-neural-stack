@@ -55,8 +55,11 @@ use ndarray::{Array1, Array2, Axis};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+// Conditional import for parallel processing - only warn about unused when parallel feature is disabled
+#[cfg_attr(not(feature = "parallel"), allow(unused_imports))]
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 
 use super::data::{DNNTensor, BatchData, TensorOps, TensorPool};
 use super::{ZenDNNModel, DNNError, DNNTrainingMode, DNNTrainingExample, DNNTrainingResults, DNNEpochResult};
@@ -1407,6 +1410,172 @@ impl DNNLoss for MAELoss {
         let diff = &predictions.data - &targets.data;
         let gradient = diff.mapv(|x| if x > 0.0 { 1.0 } else if x < 0.0 { -1.0 } else { 0.0 });
         DNNTensor::new(gradient / predictions.data.len() as f32)
+    }
+}
+
+// === TRAINING STATISTICS AND ANALYTICS ===
+
+/// Gradient statistics for training analysis
+#[derive(Debug, Clone)]
+pub struct GradientStatistics {
+    /// Mean gradients along batch axis
+    pub batch_axis_means: Array1<f32>,
+    /// Standard deviations along batch axis
+    pub batch_axis_stds: Array1<f32>,
+    /// Mean gradients along feature axis
+    pub feature_axis_means: Array1<f32>,
+    /// Standard deviations along feature axis
+    pub feature_axis_stds: Array1<f32>,
+    /// Overall gradient norm
+    pub overall_norm: f32,
+}
+
+/// Input statistics for batch analysis
+#[derive(Debug, Clone)]
+pub struct InputStatistics {
+    /// Mean values per feature
+    pub means: Array1<f32>,
+    /// Feature-wise variance
+    pub feature_variance: Array1<f32>,
+}
+
+/// Target distribution analysis
+#[derive(Debug, Clone)]
+pub struct TargetDistribution {
+    /// Count of samples per class
+    pub class_counts: Array1<f32>,
+    /// Class probabilities
+    pub class_probabilities: Array1<f32>,
+    /// Distribution entropy
+    pub entropy: f32,
+}
+
+/// Batch processing result with detailed analytics
+#[derive(Debug, Clone)]
+pub struct BatchProcessingResult {
+    /// Batch identifier
+    pub batch_id: u32,
+    /// Number of samples in batch
+    pub batch_size: usize,
+    /// Number of features
+    pub feature_count: usize,
+    /// Input data statistics
+    pub input_statistics: InputStatistics,
+    /// Target distribution analysis
+    pub target_distribution: TargetDistribution,
+    /// Processing time in milliseconds
+    pub processing_time_ms: f64,
+}
+
+/// Training analytics utilities
+pub struct TrainingAnalytics;
+
+impl TrainingAnalytics {
+    /// Analyze batch data with comprehensive statistics
+    pub fn analyze_batch(batch: &BatchData) -> Result<BatchProcessingResult, DNNError> {
+        let batch_size = batch.inputs.batch_size();
+        let feature_count = batch.inputs.feature_dim();
+        
+        // Compute input statistics using Axis operations
+        let input_means = batch.inputs.data.mean_axis(Axis(0))
+            .ok_or_else(|| DNNError::ComputationError("Failed to compute input means".to_string()))?;
+        
+        let feature_variance = Self::compute_variance_along_axis(&batch.inputs.data, Axis(0));
+        
+        // Analyze target distribution
+        let class_counts = batch.targets.data.sum_axis(Axis(0));
+        let total_samples = batch_size as f32;
+        let class_probabilities: Array1<f32> = class_counts.mapv(|count| count / total_samples);
+        let entropy = Self::compute_entropy(&class_probabilities);
+        
+        Ok(BatchProcessingResult {
+            batch_id: batch.metadata.batch_id,
+            batch_size,
+            feature_count,
+            input_statistics: InputStatistics {
+                means: input_means,
+                feature_variance,
+            },
+            target_distribution: TargetDistribution {
+                class_counts,
+                class_probabilities,
+                entropy,
+            },
+            processing_time_ms: 0.0,
+        })
+    }
+    
+    /// Compute variance along specified axis
+    pub fn compute_variance_along_axis(data: &Array2<f32>, axis: Axis) -> Array1<f32> {
+        let means = data.mean_axis(axis).unwrap_or_else(|| {
+            match axis {
+                Axis(0) => Array1::zeros(data.ncols()),
+                Axis(1) => Array1::zeros(data.nrows()),
+                _ => Array1::zeros(1),
+            }
+        });
+        
+        let mut variances = Array1::zeros(means.len());
+        
+        match axis {
+            Axis(0) => {
+                // Compute variance across batch dimension
+                for (col_idx, &mean) in means.iter().enumerate() {
+                    let column = data.column(col_idx);
+                    let variance = column.iter().map(|x| (x - mean).powi(2)).sum::<f32>() / column.len() as f32;
+                    variances[col_idx] = variance;
+                }
+            }
+            Axis(1) => {
+                // Compute variance across feature dimension
+                for (row_idx, &mean) in means.iter().enumerate() {
+                    let row = data.row(row_idx);
+                    let variance = row.iter().map(|x| (x - mean).powi(2)).sum::<f32>() / row.len() as f32;
+                    variances[row_idx] = variance;
+                }
+            }
+            _ => {}
+        }
+        
+        variances
+    }
+    
+    /// Compute entropy for probability distribution
+    pub fn compute_entropy(probabilities: &Array1<f32>) -> f32 {
+        probabilities.iter()
+            .filter(|&&p| p > 0.0)
+            .map(|&p| -p * p.ln())
+            .sum()
+    }
+    
+    /// Perform axis-wise gradient analysis
+    pub fn analyze_gradients(gradients: &Array2<f32>) -> GradientStatistics {
+        // Compute statistics along batch axis (Axis(0))
+        let batch_means = gradients.mean_axis(Axis(0))
+            .unwrap_or_else(|| Array1::zeros(gradients.ncols()));
+        let batch_stds = Self::compute_std_along_axis(gradients, Axis(0));
+        
+        // Compute statistics along feature axis (Axis(1))  
+        let feature_means = gradients.mean_axis(Axis(1))
+            .unwrap_or_else(|| Array1::zeros(gradients.nrows()));
+        let feature_stds = Self::compute_std_along_axis(gradients, Axis(1));
+        
+        // Compute overall gradient norm
+        let overall_norm = gradients.iter().map(|x| x.powi(2)).sum::<f32>().sqrt();
+        
+        GradientStatistics {
+            batch_axis_means: batch_means,
+            batch_axis_stds: batch_stds,
+            feature_axis_means: feature_means,
+            feature_axis_stds: feature_stds,
+            overall_norm,
+        }
+    }
+    
+    /// Compute standard deviation along specified axis
+    fn compute_std_along_axis(data: &Array2<f32>, axis: Axis) -> Array1<f32> {
+        let variances = Self::compute_variance_along_axis(data, axis);
+        variances.mapv(|var| var.sqrt())
     }
 }
 

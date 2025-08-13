@@ -7,6 +7,208 @@ use uuid::Uuid;
 use crate::config::Config;
 use crate::output::{OutputHandler, StatusLevel};
 
+/// Agent spawning and management utilities using HashMap for agent metadata
+mod agent_management_utils {
+    use super::*;
+    
+    /// Use HashMap for comprehensive agent metadata and lifecycle tracking
+    pub fn create_agent_metadata(
+        agent: &Agent,
+        spawn_time_ms: u64,
+        initialization_log: Vec<String>,
+        resource_allocation: Vec<(String, f64)>,
+    ) -> HashMap<String, String> {
+        let mut metadata = HashMap::new();
+        
+        // Core agent information
+        metadata.insert("agent_id".to_string(), agent.id.clone());
+        metadata.insert("agent_name".to_string(), agent.name.clone());
+        metadata.insert("agent_type".to_string(), agent.agent_type.clone());
+        metadata.insert("capabilities".to_string(), agent.capabilities.join(","));
+        metadata.insert("created_at".to_string(), agent.created_at.to_rfc3339());
+        metadata.insert("status".to_string(), format!("{:?}", agent.status));
+        
+        // Spawn performance metrics
+        metadata.insert("spawn_time_ms".to_string(), spawn_time_ms.to_string());
+        metadata.insert("is_active".to_string(), agent.is_active.to_string());
+        
+        // Initialization details
+        metadata.insert("initialization_steps".to_string(), initialization_log.len().to_string());
+        metadata.insert("initialization_log".to_string(), initialization_log.join(";"));
+        
+        // Resource allocation tracking
+        for (resource, allocation) in resource_allocation {
+            metadata.insert(format!("resource_{}", resource), allocation.to_string());
+        }
+        
+        // Agent performance summary
+        metadata.insert("tasks_completed".to_string(), agent.metrics.tasks_completed.to_string());
+        metadata.insert("tasks_failed".to_string(), agent.metrics.tasks_failed.to_string());
+        metadata.insert("performance_score".to_string(), agent.metrics.performance_score.to_string());
+        metadata.insert("cpu_usage_percent".to_string(), agent.metrics.cpu_usage_percent.to_string());
+        metadata.insert("memory_usage_mb".to_string(), agent.metrics.memory_usage_mb.to_string());
+        
+        metadata
+    }
+    
+    /// Use HashMap for agent capability registry and matching
+    pub fn create_capability_registry(
+        agents: &[Agent],
+        required_capabilities: Vec<String>,
+    ) -> HashMap<String, String> {
+        let mut registry = HashMap::new();
+        
+        // Overall capability statistics
+        registry.insert("total_agents".to_string(), agents.len().to_string());
+        registry.insert("required_capabilities".to_string(), required_capabilities.join(","));
+        registry.insert("registry_timestamp".to_string(), Utc::now().to_rfc3339());
+        
+        // Capability distribution analysis
+        let mut capability_counts: HashMap<String, u32> = HashMap::new();
+        let mut agent_types: HashMap<String, u32> = HashMap::new();
+        
+        for agent in agents {
+            // Count capabilities
+            for capability in &agent.capabilities {
+                *capability_counts.entry(capability.clone()).or_insert(0) += 1;
+            }
+            
+            // Count agent types
+            *agent_types.entry(agent.agent_type.clone()).or_insert(0) += 1;
+        }
+        
+        // Store capability distribution
+        for (capability, count) in capability_counts {
+            registry.insert(format!("capability_{}_count", capability), count.to_string());
+        }
+        
+        // Store agent type distribution  
+        for (agent_type, count) in agent_types {
+            registry.insert(format!("type_{}_count", agent_type), count.to_string());
+        }
+        
+        // Capability coverage analysis
+        let mut coverage_analysis = Vec::new();
+        for required_cap in &required_capabilities {
+            let coverage_count = agents.iter()
+                .filter(|agent| agent.capabilities.contains(required_cap))
+                .count();
+            registry.insert(format!("required_{}_coverage", required_cap), coverage_count.to_string());
+            
+            if coverage_count == 0 {
+                coverage_analysis.push(format!("MISSING: {}", required_cap));
+            } else if coverage_count == 1 {
+                coverage_analysis.push(format!("SINGLE: {}", required_cap));
+            }
+        }
+        
+        registry.insert("coverage_issues".to_string(), coverage_analysis.join(";"));
+        registry.insert("coverage_issue_count".to_string(), coverage_analysis.len().to_string());
+        
+        registry
+    }
+    
+    /// Use HashMap for agent health monitoring and diagnostics
+    pub fn create_agent_health_report(
+        agents: &[Agent],
+        health_check_results: Vec<(String, bool, String)>, // agent_id, is_healthy, reason
+    ) -> HashMap<String, String> {
+        let mut report = HashMap::new();
+        
+        // Health summary statistics
+        let total_agents = agents.len();
+        let healthy_agents = health_check_results.iter().filter(|(_, is_healthy, _)| *is_healthy).count();
+        let unhealthy_agents = total_agents - healthy_agents;
+        
+        report.insert("total_agents".to_string(), total_agents.to_string());
+        report.insert("healthy_agents".to_string(), healthy_agents.to_string());
+        report.insert("unhealthy_agents".to_string(), unhealthy_agents.to_string());
+        report.insert("health_percentage".to_string(), 
+            format!("{:.1}", if total_agents > 0 { (healthy_agents as f64 / total_agents as f64) * 100.0 } else { 0.0 }));
+        report.insert("report_timestamp".to_string(), Utc::now().to_rfc3339());
+        
+        // Detailed health status by agent
+        for (agent_id, is_healthy, reason) in &health_check_results {
+            report.insert(format!("agent_{}_healthy", agent_id), is_healthy.to_string());
+            report.insert(format!("agent_{}_reason", agent_id), reason.clone());
+        }
+        
+        // Agent status distribution
+        let mut status_counts: HashMap<String, u32> = HashMap::new();
+        for agent in agents {
+            let status_key = format!("{:?}", agent.status);
+            *status_counts.entry(status_key).or_insert(0) += 1;
+        }
+        
+        for (status, count) in status_counts {
+            report.insert(format!("status_{}_count", status), count.to_string());
+        }
+        
+        // Performance insights
+        if !agents.is_empty() {
+            let avg_performance: f64 = agents.iter()
+                .map(|a| a.metrics.performance_score)
+                .sum::<f64>() / agents.len() as f64;
+            let avg_cpu: f64 = agents.iter()
+                .map(|a| a.metrics.cpu_usage_percent)
+                .sum::<f64>() / agents.len() as f64;
+            let avg_memory: f64 = agents.iter()
+                .map(|a| a.metrics.memory_usage_mb)
+                .sum::<f64>() / agents.len() as f64;
+            
+            report.insert("avg_performance_score".to_string(), format!("{:.2}", avg_performance));
+            report.insert("avg_cpu_usage_percent".to_string(), format!("{:.2}", avg_cpu));
+            report.insert("avg_memory_usage_mb".to_string(), format!("{:.2}", avg_memory));
+        }
+        
+        report
+    }
+    
+    /// Use HashMap for agent coordination and load balancing insights
+    pub fn create_load_balancing_metadata(
+        agents: &[Agent],
+        task_assignments: Vec<(String, Vec<String>)>, // agent_id, task_ids
+    ) -> HashMap<String, String> {
+        let mut metadata = HashMap::new();
+        
+        // Load distribution analysis
+        let mut task_loads: HashMap<String, usize> = HashMap::new();
+        let mut total_tasks = 0;
+        
+        for (agent_id, task_ids) in &task_assignments {
+            task_loads.insert(agent_id.clone(), task_ids.len());
+            total_tasks += task_ids.len();
+        }
+        
+        metadata.insert("total_assigned_tasks".to_string(), total_tasks.to_string());
+        metadata.insert("load_balancing_timestamp".to_string(), Utc::now().to_rfc3339());
+        
+        // Load statistics
+        if !task_loads.is_empty() {
+            let max_load = task_loads.values().max().unwrap_or(&0);
+            let min_load = task_loads.values().min().unwrap_or(&0);
+            let avg_load = total_tasks as f64 / task_loads.len() as f64;
+            let load_variance = task_loads.values()
+                .map(|&load| (load as f64 - avg_load).powi(2))
+                .sum::<f64>() / task_loads.len() as f64;
+            
+            metadata.insert("max_agent_load".to_string(), max_load.to_string());
+            metadata.insert("min_agent_load".to_string(), min_load.to_string());
+            metadata.insert("avg_agent_load".to_string(), format!("{:.2}", avg_load));
+            metadata.insert("load_variance".to_string(), format!("{:.2}", load_variance));
+            metadata.insert("load_balance_score".to_string(), 
+                format!("{:.2}", if load_variance > 0.0 { 100.0 / (1.0 + load_variance) } else { 100.0 }));
+        }
+        
+        // Per-agent load details
+        for (agent_id, task_count) in task_loads {
+            metadata.insert(format!("agent_{}_task_count", agent_id), task_count.to_string());
+        }
+        
+        metadata
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Agent {
     pub id: String,

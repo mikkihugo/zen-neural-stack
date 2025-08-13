@@ -13,6 +13,7 @@ use std::path::{Path, PathBuf};
 
 #[cfg(feature = "plugin-system")]
 use libloading::Library;
+#[cfg(feature = "plugin-system")]
 use std::sync::Arc;
 
 /// Plugin descriptor containing metadata and model information

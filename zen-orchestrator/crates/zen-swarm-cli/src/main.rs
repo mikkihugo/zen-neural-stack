@@ -10,6 +10,9 @@ mod commands;
 mod config;
 mod output;
 
+#[cfg(feature = "onboarding")]
+pub mod onboarding;
+
 use commands::{init, monitor, orchestrate, spawn, status};
 use config::{Config, Profile};
 use output::{OutputFormat, OutputHandler};

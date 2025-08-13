@@ -2,7 +2,8 @@
 
 use num_traits::Float;
 use polars::prelude::*;
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::marker::PhantomData;

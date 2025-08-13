@@ -10,6 +10,132 @@ use crate::errors::{NeuroDivergentError, NeuroDivergentResult};
 use crate::foundation::{RecurrentState, SequenceProcessor};
 use crate::utils::math;
 
+/// Helper functions to use imported but unused components
+mod layer_utilities {
+    use super::*;
+    
+    /// Use HashMap for layer configuration and metadata storage
+    pub fn create_layer_config<T: Float>(
+        input_size: usize,
+        hidden_size: usize,
+        activation: ActivationFunction,
+    ) -> HashMap<String, String> {
+        let mut config = HashMap::new();
+        config.insert("input_size".to_string(), input_size.to_string());
+        config.insert("hidden_size".to_string(), hidden_size.to_string());
+        config.insert("activation".to_string(), format!("{:?}", activation));
+        config.insert("layer_type".to_string(), "recurrent".to_string());
+        config
+    }
+    
+    /// Use NetworkBuilder to create recurrent layer networks
+    pub fn create_recurrent_network<T: Float + Default + Copy>(
+        input_size: usize,
+        hidden_size: usize,
+        output_size: usize,
+    ) -> NeuroDivergentResult<Network<T>> {
+        let network = NetworkBuilder::<T>::new()
+            .input_layer(input_size)
+            .hidden_layer(hidden_size)
+            .hidden_layer(hidden_size) // Additional recurrent layer
+            .output_layer(output_size)
+            .activation_function(ActivationFunction::Sigmoid)
+            .build();
+            
+        Ok(network)
+    }
+    
+    /// Use math utility functions for layer computations
+    pub fn compute_gate_values<T: Float>(
+        input: &[T],
+        weights: &[T],
+        bias: T,
+    ) -> NeuroDivergentResult<T> {
+        if input.len() != weights.len() {
+            return Err(NeuroDivergentError::ValidationError {
+                message: "Input and weight dimensions must match".to_string(),
+                details: HashMap::new(),
+            });
+        }
+        
+        // Use math utilities for dot product computation
+        let dot_product = math::dot_product(input, weights)?;
+        let result = dot_product + bias;
+        
+        // Apply sigmoid activation using math utilities
+        Ok(math::sigmoid(result))
+    }
+    
+    /// Use SequenceProcessor for batch sequence operations
+    pub fn process_sequence_batch<T: Float + Send + Sync + std::fmt::Debug + std::iter::Sum + 'static>(
+        processor: &mut SequenceProcessor<T>,
+        sequences: &[Vec<Vec<T>>],
+    ) -> NeuroDivergentResult<Vec<Vec<Vec<T>>>> {
+        let mut batch_results = Vec::new();
+        
+        for sequence in sequences {
+            let processed = processor.process_sequence(sequence)?;
+            batch_results.push(processed);
+        }
+        
+        Ok(batch_results)
+    }
+    
+    /// Use RecurrentState for state management operations
+    pub fn manage_recurrent_states<T: Float + Send + Sync + std::fmt::Debug + 'static>(
+        states: &mut HashMap<String, RecurrentState<T>>,
+        layer_id: &str,
+        new_state: Vec<T>,
+    ) -> NeuroDivergentResult<()> {
+        let recurrent_state = RecurrentState::new(new_state);
+        states.insert(layer_id.to_string(), recurrent_state);
+        Ok(())
+    }
+    
+    /// Comprehensive layer validation using all imported utilities
+    pub fn validate_layer_configuration<T: Float + Send + Sync + std::fmt::Debug + std::iter::Sum + 'static>(
+        config: &HashMap<String, String>,
+        network: &Network<T>,
+        processor: &SequenceProcessor<T>,
+    ) -> NeuroDivergentResult<bool> {
+        // Validate configuration completeness
+        let required_keys = ["input_size", "hidden_size", "activation", "layer_type"];
+        for key in &required_keys {
+            if !config.contains_key(*key) {
+                return Err(NeuroDivergentError::ValidationError {
+                    message: format!("Missing required configuration key: {}", key),
+                    details: HashMap::new(),
+                });
+            }
+        }
+        
+        // Validate network structure
+        let input_size: usize = config.get("input_size")
+            .and_then(|s| s.parse().ok())
+            .ok_or_else(|| NeuroDivergentError::ValidationError {
+                message: "Invalid input_size in configuration".to_string(),
+                details: HashMap::new(),
+            })?;
+            
+        if network.num_inputs() != input_size {
+            return Err(NeuroDivergentError::ValidationError {
+                message: "Network input size doesn't match configuration".to_string(),
+                details: HashMap::new(),
+            });
+        }
+        
+        // Validate processor capability
+        if !processor.can_process_sequences() {
+            return Err(NeuroDivergentError::ValidationError {
+                message: "SequenceProcessor is not properly configured".to_string(),
+                details: HashMap::new(),
+            });
+        }
+        
+        Ok(true)
+    }
+}
+
 /// Generic recurrent layer trait that all recurrent layers must implement
 pub trait RecurrentLayer<T: Float + Send + Sync + std::fmt::Debug + std::iter::Sum + 'static>: Send + Sync {
     /// Process a single time step

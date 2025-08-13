@@ -41,8 +41,11 @@ use num_traits::{Float, Zero};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+// Conditional import for parallel processing - only warn about unused when parallel feature is disabled
+#[cfg_attr(not(feature = "parallel"), allow(unused_imports))]
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 
 use crate::errors::ZenNeuralError;
 use super::GNNError;
@@ -773,8 +776,8 @@ pub fn generate_random_graph(
     let mut edge_set = HashSet::new();
     
     while edges.len() < num_edges && edge_set.len() < num_nodes * (num_nodes - 1) {
-        let source = rng.gen_range(0..num_nodes);
-        let target = rng.gen_range(0..num_nodes);
+        let source = rng.r#gen_range(0..num_nodes);
+        let target = rng.r#gen_range(0..num_nodes);
         
         if source != target && !edge_set.contains(&(source, target)) {
             edges.push((source, target));

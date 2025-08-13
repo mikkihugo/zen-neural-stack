@@ -7,7 +7,8 @@ use std::time::{Duration, Instant};
 use std::collections::{HashMap, HashSet};
 use crossbeam::channel::{bounded, unbounded};
 use parking_lot::Mutex as ParkingMutex;
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 use chrono::{DateTime, Utc};
 use polars::prelude::*;
 use dashmap::DashMap;

@@ -137,7 +137,8 @@ impl VectorSimdOps {
     pub fn batch_activation(&self, batches: &mut [&mut [f32]], activation: ActivationFunction) {
         #[cfg(feature = "parallel")]
         {
-            use rayon::prelude::*;
+            #[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
             batches.par_iter_mut().for_each(|batch| {
                 self.apply_activation_vectorized(batch, activation);
             });

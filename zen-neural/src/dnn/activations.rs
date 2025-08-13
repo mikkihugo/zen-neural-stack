@@ -64,8 +64,11 @@ use num_traits::{Float, Zero};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+// Conditional import for parallel processing - only warn about unused when parallel feature is disabled
+#[cfg_attr(not(feature = "parallel"), allow(unused_imports))]
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 
 use super::data::{DNNTensor, TensorOps};
 use super::layers::DNNLayer;
@@ -215,7 +218,15 @@ impl ActivationFunctions {
     
     /// Swish derivative: f'(x) = sigmoid(x) + x * sigmoid(x) * (1 - sigmoid(x))
     pub fn swish_derivative(input: &DNNTensor) -> Result<DNNTensor, DNNError> {
-        let _sigmoid_out = Self::sigmoid(input)?;
+        let sigmoid_out = Self::sigmoid(input)?;
+        
+        // Validate sigmoid output is in valid range [0, 1]
+        for &value in sigmoid_out.data.iter() {
+            assert!(value >= 0.0 && value <= 1.0, 
+                "Sigmoid output should be in [0, 1], got: {}", value);
+        }
+        
+        // Compute derivative using precomputed sigmoid for efficiency
         TensorOps::apply_elementwise(input, |x| {
             let sig_x = 1.0 / (1.0 + (-x).exp());
             sig_x + x * sig_x * (1.0 - sig_x)
@@ -540,6 +551,54 @@ impl ActivationFactory {
 pub struct ActivationUtils;
 
 impl ActivationUtils {
+    /// Create a zero-initialized bias vector for activation layers
+    pub fn create_zero_bias(size: usize) -> Array1<f32> {
+        Array1::from_elem(size, Float::zero())
+    }
+    
+    /// Apply activation function along a specific axis (for advanced operations)
+    pub fn apply_along_axis(
+        input: &Array2<f32>, 
+        axis: usize,
+        activation: ActivationType
+    ) -> Result<Array2<f32>, DNNError> {
+        let mut output = input.clone();
+        
+        match axis {
+            0 => {
+                // Apply along batch dimension (unusual but possible)
+                for mut col in output.axis_iter_mut(Axis(1)) {
+                    match activation {
+                        ActivationType::ReLU => col.mapv_inplace(|x| x.max(0.0)),
+                        ActivationType::Sigmoid => col.mapv_inplace(|x| 1.0 / (1.0 + (-x).exp())),
+                        ActivationType::Tanh => col.mapv_inplace(|x| x.tanh()),
+                        _ => return Err(DNNError::InvalidConfiguration(
+                            format!("Activation {:?} not supported for axis operations", activation)
+                        )),
+                    }
+                }
+            }
+            1 => {
+                // Apply along feature dimension
+                for mut row in output.axis_iter_mut(Axis(0)) {
+                    match activation {
+                        ActivationType::ReLU => row.mapv_inplace(|x| x.max(0.0)),
+                        ActivationType::Sigmoid => row.mapv_inplace(|x| 1.0 / (1.0 + (-x).exp())),
+                        ActivationType::Tanh => row.mapv_inplace(|x| x.tanh()),
+                        _ => return Err(DNNError::InvalidConfiguration(
+                            format!("Activation {:?} not supported for axis operations", activation)
+                        )),
+                    }
+                }
+            }
+            _ => return Err(DNNError::InvalidConfiguration(
+                format!("Unsupported axis: {}. Only 0 and 1 are supported", axis)
+            )),
+        }
+        
+        Ok(output)
+    }
+    
     /// Get activation function by name (for configuration parsing)
     pub fn from_string(name: &str) -> Result<ActivationType, DNNError> {
         match name.to_lowercase().as_str() {

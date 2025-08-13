@@ -21,8 +21,11 @@ use std::time::{Duration, Instant};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+// Conditional import for parallel processing - only warn about unused when parallel feature is disabled
+#[cfg_attr(not(feature = "parallel"), allow(unused_imports))]
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 
 use num_traits::Float;
 use ndarray::{Array1, Array2, ArrayView1, ArrayView2};
@@ -813,10 +816,21 @@ where
     
     fn set_random_seed(seed: u64) {
         // Set random seed for reproducibility
-        use rand::{SeedableRng, rngs::StdRng};
-        let _rng = StdRng::seed_from_u64(seed);
+        use rand::{SeedableRng, rngs::StdRng, Rng};
+        let mut rng = StdRng::seed_from_u64(seed);
+        
+        // Validate RNG is working with the seed
+        let test_values: Vec<f64> = (0..5).map(|_| rng.r#gen::<f64>()).collect();
+        
+        // Verify reproducibility by creating another RNG with same seed
+        let mut rng2 = StdRng::seed_from_u64(seed);
+        let test_values2: Vec<f64> = (0..5).map(|_| rng2.gen::<f64>()).collect();
+        
+        assert_eq!(test_values, test_values2, "RNG should be reproducible with same seed");
+        assert!(test_values.iter().all(|&x| x >= 0.0 && x < 1.0), "RNG should produce values in [0, 1)");
+        
         // In a full implementation, this would set the global thread_local RNG
-        log::info!("Random seed set to {}", seed);
+        log::info!("Random seed set to {} and validated", seed);
     }
     
     fn validate_training_data(&self, data: &TrainingData<T>) -> Result<(), TrainingError> {

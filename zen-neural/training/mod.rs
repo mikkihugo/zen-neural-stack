@@ -15,8 +15,9 @@ use num_traits::Float;
 use std::collections::HashMap;
 use thiserror::Error;
 
-// #[cfg(feature = "parallel")]
-// use rayon::prelude::*;
+// Parallel training operations using rayon (only when parallel feature is enabled)
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct TrainingData<T: Float> {
@@ -35,6 +36,201 @@ pub struct ParallelTrainingOptions {
     pub parallel_gradients: bool,
     /// Whether to use parallel error calculation
     pub parallel_error_calc: bool,
+}
+
+impl ParallelTrainingOptions {
+    /// Create default parallel training options
+    pub fn default() -> Self {
+        Self {
+            num_threads: 0, // Use all available cores
+            batch_size: 32,
+            parallel_gradients: true,
+            parallel_error_calc: true,
+        }
+    }
+    
+    /// Create options for single-threaded training
+    pub fn single_threaded() -> Self {
+        Self {
+            num_threads: 1,
+            batch_size: 1,
+            parallel_gradients: false,
+            parallel_error_calc: false,
+        }
+    }
+    
+    /// Create options optimized for high-performance training
+    pub fn high_performance() -> Self {
+        Self {
+            num_threads: 0, // Use all cores
+            batch_size: 64,
+            parallel_gradients: true,
+            parallel_error_calc: true,
+        }
+    }
+}
+
+/// Parallel training utilities using rayon for high-performance neural network training (parallel feature)
+#[cfg(feature = "parallel")]
+pub struct ParallelTrainingEngine<T: Float + Send + Sync> {
+    options: ParallelTrainingOptions,
+    _phantom: std::marker::PhantomData<T>,
+}
+
+#[cfg(feature = "parallel")]
+impl<T: Float + Send + Sync> ParallelTrainingEngine<T> {
+    /// Create a new parallel training engine
+    pub fn new(options: ParallelTrainingOptions) -> Self {
+        Self {
+            options,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+    
+    /// Parallel batch error computation using rayon
+    pub fn parallel_batch_error(
+        &self,
+        predictions: &[Vec<T>],
+        targets: &[Vec<T>]
+    ) -> Result<T, String> {
+        if predictions.len() != targets.len() {
+            return Err("Prediction and target batch sizes don't match".to_string());
+        }
+        
+        if !self.options.parallel_error_calc {
+            // Single-threaded fallback
+            return self.sequential_batch_error(predictions, targets);
+        }
+        
+        // Parallel error computation using rayon
+        let total_error: T = predictions
+            .par_iter()
+            .zip(targets.par_iter())
+            .map(|(pred, target)| {
+                pred.iter().zip(target.iter())
+                    .map(|(&p, &t)| (p - t) * (p - t))
+                    .fold(T::zero(), |acc, x| acc + x)
+            })
+            .sum();
+        
+        let sample_count = T::from(predictions.len()).unwrap_or(T::one());
+        Ok(total_error / sample_count)
+    }
+    
+    /// Sequential error computation for comparison/fallback
+    fn sequential_batch_error(
+        &self,
+        predictions: &[Vec<T>],
+        targets: &[Vec<T>]
+    ) -> Result<T, String> {
+        let mut total_error = T::zero();
+        
+        for (pred, target) in predictions.iter().zip(targets.iter()) {
+            for (&p, &t) in pred.iter().zip(target.iter()) {
+                let error = p - t;
+                total_error = total_error + error * error;
+            }
+        }
+        
+        let sample_count = T::from(predictions.len()).unwrap_or(T::one());
+        Ok(total_error / sample_count)
+    }
+    
+    /// Parallel gradient computation using rayon
+    pub fn parallel_gradient_computation(
+        &self,
+        network_weights: &[Vec<T>],
+        training_data: &[(Vec<T>, Vec<T>)]
+    ) -> Vec<Vec<T>> {
+        if !self.options.parallel_gradients {
+            // Fallback to sequential processing
+            return self.sequential_gradient_computation(network_weights, training_data);
+        }
+        
+        // Parallel gradient computation across training samples
+        training_data
+            .par_chunks(self.options.batch_size)
+            .map(|batch| {
+                batch.par_iter()
+                    .map(|(input, target)| {
+                        // Simplified gradient computation (would be more complex in real implementation)
+                        self.compute_sample_gradient(network_weights, input, target)
+                    })
+                    .reduce(
+                        || vec![vec![T::zero(); network_weights[0].len()]; network_weights.len()],
+                        |mut acc, grad| {
+                            for (acc_layer, grad_layer) in acc.iter_mut().zip(grad.iter()) {
+                                for (acc_weight, grad_weight) in acc_layer.iter_mut().zip(grad_layer.iter()) {
+                                    *acc_weight = *acc_weight + *grad_weight;
+                                }
+                            }
+                            acc
+                        }
+                    )
+            })
+            .reduce(
+                || vec![vec![T::zero(); network_weights[0].len()]; network_weights.len()],
+                |mut acc, batch_grad| {
+                    for (acc_layer, batch_layer) in acc.iter_mut().zip(batch_grad.iter()) {
+                        for (acc_weight, batch_weight) in acc_layer.iter_mut().zip(batch_layer.iter()) {
+                            *acc_weight = *acc_weight + *batch_weight;
+                        }
+                    }
+                    acc
+                }
+            )
+    }
+    
+    /// Sequential gradient computation for comparison/fallback
+    fn sequential_gradient_computation(
+        &self,
+        network_weights: &[Vec<T>],
+        training_data: &[(Vec<T>, Vec<T>)]
+    ) -> Vec<Vec<T>> {
+        let mut gradients = vec![vec![T::zero(); network_weights[0].len()]; network_weights.len()];
+        
+        for (input, target) in training_data {
+            let sample_grad = self.compute_sample_gradient(network_weights, input, target);
+            for (grad_layer, sample_layer) in gradients.iter_mut().zip(sample_grad.iter()) {
+                for (grad_weight, sample_weight) in grad_layer.iter_mut().zip(sample_layer.iter()) {
+                    *grad_weight = *grad_weight + *sample_weight;
+                }
+            }
+        }
+        
+        gradients
+    }
+    
+    /// Compute gradient for a single training sample
+    fn compute_sample_gradient(
+        &self,
+        _network_weights: &[Vec<T>],
+        _input: &[T],
+        _target: &[T]
+    ) -> Vec<Vec<T>> {
+        // Simplified gradient computation - in real implementation this would
+        // involve forward pass, backward propagation, etc.
+        vec![vec![T::from(0.01).unwrap_or(T::zero()); 10]; 3] // Placeholder
+    }
+    
+    /// Parallel data preprocessing using rayon
+    pub fn parallel_data_preprocessing(
+        &self,
+        raw_data: &[Vec<T>]
+    ) -> Vec<Vec<T>> {
+        raw_data
+            .par_iter()
+            .map(|sample| {
+                // Example preprocessing: normalization
+                let sum: T = sample.iter().cloned().sum();
+                let mean = sum / T::from(sample.len()).unwrap_or(T::one());
+                
+                sample.iter()
+                    .map(|&x| x - mean)
+                    .collect()
+            })
+            .collect()
+    }
 }
 
 impl Default for ParallelTrainingOptions {

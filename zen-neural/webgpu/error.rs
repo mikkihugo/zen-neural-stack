@@ -40,6 +40,9 @@ pub enum ComputeError {
 
     #[error("General error: {0}")]
     General(String),
+
+    #[error("Internal error: {0}")]
+    InternalError(String),
 }
 
 /// Result type for compute operations

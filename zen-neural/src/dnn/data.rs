@@ -21,18 +21,228 @@
  * @since 2025-01-14
  */
 
-use ndarray::{Array1, Array2, Array3, ArrayD, Axis, Dimension, IxDyn};
-use num_traits::{Float, Zero, One};
+use ndarray::{Array1, Array2, Axis, Dimension};
+use num_traits::Float;
 use std::fmt;
 use std::ops::Index;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+// Conditional import for parallel processing - only warn about unused when parallel feature is disabled
+#[cfg_attr(not(feature = "parallel"), allow(unused_imports))]
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 
 use super::DNNError;
+
+// === FLOAT TRAIT UTILITIES ===
+
+/// Generic floating-point utilities for neural network operations
+pub struct FloatOps;
+
+impl FloatOps {
+    /// Safe division with Float trait - handles NaN/infinity
+    pub fn safe_divide<F: Float>(numerator: F, denominator: F) -> Result<F, DNNError> {
+        if denominator == F::zero() {
+            return Err(DNNError::InvalidInput("Division by zero".to_string()));
+        }
+        
+        let result = numerator / denominator;
+        if !result.is_finite() {
+            return Err(DNNError::ComputationError("Division resulted in non-finite value".to_string()));
+        }
+        
+        Ok(result)
+    }
+    
+    /// Stable logarithm for loss functions using Float trait
+    pub fn stable_log<F: Float>(x: F) -> Result<F, DNNError> {
+        if x <= F::zero() {
+            return Err(DNNError::InvalidInput("Logarithm of non-positive number".to_string()));
+        }
+        
+        let result = x.ln();
+        if !result.is_finite() {
+            return Err(DNNError::ComputationError("Logarithm resulted in non-finite value".to_string()));
+        }
+        
+        Ok(result)
+    }
+    
+    /// Numerically stable softmax using Float trait
+    pub fn stable_softmax<F: Float>(inputs: &[F]) -> Result<Vec<F>, DNNError> {
+        if inputs.is_empty() {
+            return Err(DNNError::InvalidInput("Empty input for softmax".to_string()));
+        }
+        
+        // Find maximum for numerical stability
+        let max_val = inputs.iter().cloned().fold(F::neg_infinity(), F::max);
+        if !max_val.is_finite() {
+            return Err(DNNError::ComputationError("Non-finite maximum in softmax".to_string()));
+        }
+        
+        // Compute exp(x - max) for stability
+        let exp_values: Vec<F> = inputs
+            .iter()
+            .map(|&x| (x - max_val).exp())
+            .collect();
+        
+        // Check for non-finite values
+        if exp_values.iter().any(|&x| !x.is_finite()) {
+            return Err(DNNError::ComputationError("Non-finite values in softmax computation".to_string()));
+        }
+        
+        // Sum for normalization
+        let sum: F = exp_values.iter().cloned().fold(F::zero(), |acc, x| acc + x);
+        if sum == F::zero() {
+            return Err(DNNError::ComputationError("Zero sum in softmax normalization".to_string()));
+        }
+        
+        // Normalize
+        let result: Vec<F> = exp_values.iter().map(|&x| x / sum).collect();
+        
+        Ok(result)
+    }
+    
+    /// Clamp values to prevent numerical instability
+    pub fn clamp_finite<F: Float>(x: F, min_val: F, max_val: F) -> F {
+        if !x.is_finite() {
+            // Return midpoint if input is not finite
+            return (min_val + max_val) / (F::one() + F::one());
+        }
+        
+        x.max(min_val).min(max_val)
+    }
+    
+    /// Convert between different Float types safely
+    pub fn safe_cast<F1: Float, F2: Float>(value: F1) -> Result<F2, DNNError> {
+        // This is a simplified conversion - in practice would need more robust handling
+        F2::from(value.to_f64().unwrap_or(0.0))
+            .ok_or_else(|| DNNError::ComputationError("Float conversion failed".to_string()))
+    }
+}
+
+// === DIMENSION UTILITIES ===
+
+/// Dimension manipulation utilities using ndarray Dimension trait
+pub struct DimensionUtils;
+
+impl DimensionUtils {
+    /// Generic dimension validation using Dimension trait
+    pub fn validate_dimension<D: Dimension>(dim: &D) -> Result<(), DNNError> {
+        if dim.ndim() == 0 {
+            return Err(DNNError::InvalidInput("Empty dimension not allowed".to_string()));
+        }
+        
+        for &size in dim.slice() {
+            if size == 0 {
+                return Err(DNNError::InvalidInput("Zero-sized dimensions not allowed".to_string()));
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Compute total elements in dimension using Dimension trait
+    pub fn compute_total_elements<D: Dimension>(dim: &D) -> usize {
+        dim.slice().iter().product()
+    }
+    
+    /// Check if dimension is compatible for matrix operations
+    pub fn is_matrix_compatible<D: Dimension>(dim: &D) -> bool {
+        dim.ndim() == 2 && dim.slice().iter().all(|&size| size > 0)
+    }
+    
+    /// Reshape dimension for neural network operations
+    pub fn reshape_for_neural<D: Dimension + Clone>(
+        dim: &D, 
+        target_ndim: usize
+    ) -> Result<Vec<usize>, DNNError> {
+        let current_elements = Self::compute_total_elements(dim);
+        
+        match target_ndim {
+            1 => Ok(vec![current_elements]),
+            2 => {
+                // Common neural network reshaping: flatten to [batch, features]
+                if dim.ndim() == 1 {
+                    Ok(vec![1, current_elements])
+                } else if dim.ndim() >= 2 {
+                    let batch_size = dim.slice()[0];
+                    let feature_size = current_elements / batch_size;
+                    Ok(vec![batch_size, feature_size])
+                } else {
+                    Err(DNNError::InvalidInput("Cannot reshape 0D to 2D".to_string()))
+                }
+            },
+            _ => Err(DNNError::InvalidInput(format!("Unsupported target dimension: {}", target_ndim)))
+        }
+    }
+    
+    /// Create dimension-aware tensor strides for memory optimization
+    pub fn compute_optimal_strides<D: Dimension>(dim: &D) -> Vec<usize> {
+        let mut strides = vec![1; dim.ndim()];
+        
+        // Compute C-order strides (row-major) for neural network compatibility
+        for i in (0..dim.ndim().saturating_sub(1)).rev() {
+            strides[i] = strides[i + 1] * dim.slice()[i + 1];
+        }
+        
+        strides
+    }
+    
+    /// Validate dimension for broadcast operations
+    pub fn validate_broadcast_compatibility<D: Dimension>(
+        dim1: &D, 
+        dim2: &D
+    ) -> Result<Vec<usize>, DNNError> {
+        let shape1 = dim1.slice();
+        let shape2 = dim2.slice();
+        
+        let max_ndim = shape1.len().max(shape2.len());
+        let mut result_shape = vec![1; max_ndim];
+        
+        // Pad dimensions with 1s from the left
+        let pad1 = max_ndim - shape1.len();
+        let pad2 = max_ndim - shape2.len();
+        
+        for i in 0..max_ndim {
+            let dim1_size = if i >= pad1 { shape1[i - pad1] } else { 1 };
+            let dim2_size = if i >= pad2 { shape2[i - pad2] } else { 1 };
+            
+            result_shape[i] = if dim1_size == 1 {
+                dim2_size
+            } else if dim2_size == 1 {
+                dim1_size
+            } else if dim1_size == dim2_size {
+                dim1_size
+            } else {
+                return Err(DNNError::DimensionMismatch(
+                    format!("Cannot broadcast shapes {:?} and {:?}", shape1, shape2)
+                ));
+            };
+        }
+        
+        Ok(result_shape)
+    }
+    
+    /// Create dimension from neural network layer specification
+    pub fn from_layer_spec(
+        batch_size: usize, 
+        input_size: usize, 
+        layer_type: &str
+    ) -> Result<Vec<usize>, DNNError> {
+        match layer_type {
+            "dense" | "linear" => Ok(vec![batch_size, input_size]),
+            "conv1d" => Ok(vec![batch_size, input_size, 1]), // Simple 1D conv
+            "flatten" => Ok(vec![batch_size * input_size]),  // Flatten to 1D
+            _ => Err(DNNError::InvalidConfiguration(
+                format!("Unknown layer type for dimension creation: {}", layer_type)
+            ))
+        }
+    }
+}
 
 // === CORE TENSOR TYPES ===
 
@@ -177,7 +387,7 @@ impl DNNTensor {
             ));
         }
         
-        let reshaped_data = self.data.clone().into_shape((new_shape.dims[0], new_shape.dims[1]))
+        let reshaped_data = self.data.clone().into_shape_with_order((new_shape.dims[0], new_shape.dims[1]))
             .map_err(|e| DNNError::InvalidInput(format!("Reshape failed: {}", e)))?;
         
         Ok(Self {

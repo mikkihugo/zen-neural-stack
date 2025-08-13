@@ -259,14 +259,39 @@ impl Config {
                 .try_parsing(true),
         );
 
-        // Build and deserialize
-        let mut config: Config = builder
-            .build()
-            .context("Failed to build configuration")?
-            .try_deserialize()
-            .context("Failed to deserialize configuration")?;
-
-        config.profile = *profile;
+        // Use ConfigError utilities for robust configuration building and validation
+        let config_result = builder.build();
+        match config_result {
+            Ok(built_config) => {
+                let mut config: Config = built_config
+                    .try_deserialize()
+                    .context("Failed to deserialize configuration")?;
+                
+                config.profile = *profile;
+                
+                // Use ConfigError utilities for comprehensive validation
+                config_error_utils::validate_environment_config(&config)
+                    .context("Configuration validation failed for environment")?;
+                
+                let validation_results = config_error_utils::validate_config_with_detailed_errors(&config)
+                    .context("Comprehensive configuration validation failed")?;
+                
+                // Log validation results
+                log::debug!("Configuration validation completed for profile {:?}:", profile);
+                for (key, value) in &validation_results {
+                    log::trace!("  {}: {}", key, value);
+                }
+                
+                log::info!("Successfully loaded and validated configuration for profile: {}", profile);
+                config
+            }
+            Err(config_error) => {
+                // Use ConfigError for detailed error reporting
+                let error_message = format!("Configuration build failed: {}", config_error);
+                log::error!("{}", error_message);
+                return Err(anyhow::anyhow!(error_message));
+            }
+        }
 
         // Handle API key from environment
         if config.api.api_key.is_none() {

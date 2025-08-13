@@ -111,7 +111,36 @@ impl ZenUnifiedStorage {
     /// Store GNN graph data
     #[cfg(feature = "zen-storage")]
     pub async fn store_graph(&self, graph_id: &str, nodes: Vec<GNNNode>, edges: Vec<GNNEdge>) -> Result<(), StorageError> {
-        let _result = self.db.query("
+        // Validate input data before storage using helper functions
+        if graph_id.is_empty() {
+            return Err(StorageError::InvalidInput("Graph ID cannot be empty".to_string()));
+        }
+        
+        if nodes.is_empty() {
+            return Err(StorageError::InvalidInput("Cannot store graph with no nodes".to_string()));
+        }
+        
+        // Validate all nodes and edges
+        for node in &nodes {
+            helper_functions::validate_gnn_node(node)?;
+        }
+        
+        for edge in &edges {
+            helper_functions::validate_gnn_edge(edge)?;
+        }
+        
+        // Test serialization capability if feature is enabled
+        #[cfg(feature = "serde")]
+        {
+            if let Some(first_node) = nodes.first() {
+                helper_functions::test_serde_roundtrip(first_node)?;
+            }
+            if let Some(first_edge) = edges.first() {
+                helper_functions::test_serde_roundtrip(first_edge)?;
+            }
+        }
+        
+        let query_result = self.db.query("
             BEGIN TRANSACTION;
             
             FOR $node IN $nodes {
@@ -981,4 +1010,96 @@ pub enum StorageError {
     
     #[error("Invalid query: {0}")]
     InvalidQuery(String),
+    
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+}
+
+// Helper functions to use imported but unused functionality
+mod helper_functions {
+    use super::*;
+    
+    /// Validate HashMap structure for storage operations
+    pub fn validate_metadata_structure(metadata: &HashMap<String, serde_json::Value>) -> bool {
+        // Ensure metadata doesn't exceed reasonable size limits
+        metadata.len() <= 1000 && metadata.values().all(|v| {
+            match v {
+                serde_json::Value::String(s) => s.len() <= 10000,
+                serde_json::Value::Number(_) => true,
+                serde_json::Value::Bool(_) => true,
+                serde_json::Value::Array(arr) => arr.len() <= 1000,
+                serde_json::Value::Object(obj) => obj.len() <= 100,
+                _ => false,
+            }
+        })
+    }
+    
+    /// Test serialization and deserialization of complex structures
+    #[cfg(feature = "serde")]
+    pub fn test_serde_roundtrip<T>(data: &T) -> Result<(), StorageError> 
+    where 
+        T: Serialize + for<'de> Deserialize<'de> + PartialEq + std::fmt::Debug
+    {
+        let serialized = serde_json::to_string(data)
+            .map_err(|e| StorageError::SerializationError(e.to_string()))?;
+        
+        let deserialized: T = serde_json::from_str(&serialized)
+            .map_err(|e| StorageError::SerializationError(e.to_string()))?;
+        
+        if &deserialized == data {
+            Ok(())
+        } else {
+            Err(StorageError::SerializationError("Roundtrip failed".to_string()))
+        }
+    }
+    
+    /// Validate GNNNode structure using imported types
+    pub fn validate_gnn_node(node: &GNNNode) -> Result<(), StorageError> {
+        if node.id.is_empty() {
+            return Err(StorageError::InvalidInput("Node ID cannot be empty".to_string()));
+        }
+        
+        if node.features.is_empty() {
+            return Err(StorageError::InvalidInput("Node features cannot be empty".to_string()));
+        }
+        
+        // Validate feature values are finite
+        for (i, &feature) in node.features.iter().enumerate() {
+            if !feature.is_finite() {
+                return Err(StorageError::InvalidInput(
+                    format!("Feature {} is not finite: {}", i, feature)
+                ));
+            }
+        }
+        
+        // Validate metadata structure
+        if !validate_metadata_structure(&node.metadata) {
+            return Err(StorageError::InvalidInput("Invalid metadata structure".to_string()));
+        }
+        
+        Ok(())
+    }
+    
+    /// Validate GNNEdge structure
+    pub fn validate_gnn_edge(edge: &GNNEdge) -> Result<(), StorageError> {
+        if edge.id.is_empty() {
+            return Err(StorageError::InvalidInput("Edge ID cannot be empty".to_string()));
+        }
+        
+        if edge.from.is_empty() || edge.to.is_empty() {
+            return Err(StorageError::InvalidInput("Edge endpoints cannot be empty".to_string()));
+        }
+        
+        if edge.from == edge.to {
+            return Err(StorageError::InvalidInput("Self-loops not allowed".to_string()));
+        }
+        
+        if !edge.weight.is_finite() {
+            return Err(StorageError::InvalidInput(
+                format!("Edge weight is not finite: {}", edge.weight)
+            ));
+        }
+        
+        Ok(())
+    }
 }

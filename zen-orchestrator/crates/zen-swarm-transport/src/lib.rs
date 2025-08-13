@@ -124,6 +124,187 @@ pub struct TransportStats {
     pub last_activity: Option<chrono::DateTime<chrono::Utc>>,
 }
 
+/// Advanced health scoring system for transport performance
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HealthScore {
+    pub overall: f64,
+    pub reliability: f64,
+    pub throughput: f64,
+    pub bandwidth: f64,
+    pub efficiency: f64,
+    pub status: HealthStatus,
+}
+
+/// Health status categories
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum HealthStatus {
+    Excellent,
+    Good,
+    Fair,
+    Poor,
+    Critical,
+}
+
+/// Real-time metrics for live monitoring
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RealTimeMetrics {
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub messages_per_second: f64,
+    pub bytes_per_second: f64,
+    pub connections_per_second: f64,
+    pub active_connections: u64,
+    pub capacity_utilization: f64,
+    pub error_rate: f64,
+    pub latency_estimate: f64,
+}
+
+/// Performance trend analysis
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PerformanceTrend {
+    Improving,
+    Stable,
+    Degrading,
+}
+
+/// Optimization recommendation system
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OptimizationRecommendation {
+    pub category: OptimizationCategory,
+    pub priority: Priority,
+    pub description: String,
+    pub estimated_impact: ImpactLevel,
+}
+
+/// Categories of optimization recommendations
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum OptimizationCategory {
+    Reliability,
+    Performance,
+    Capacity,
+    Security,
+    Efficiency,
+}
+
+/// Priority levels for recommendations
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum Priority {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+/// Impact level of optimizations
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ImpactLevel {
+    Low,
+    Medium,
+    High,
+}
+
+/// Performance window for historical tracking
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PerformanceWindow {
+    pub start_time: chrono::DateTime<chrono::Utc>,
+    pub duration_minutes: u64,
+    pub snapshot: TransportStats,
+    pub health_score: HealthScore,
+    pub real_time_metrics: RealTimeMetrics,
+    pub optimization_recommendations: Vec<OptimizationRecommendation>,
+}
+
+/// WebSocket-specific real-time metrics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebSocketRealTimeMetrics {
+    pub base_metrics: RealTimeMetrics,
+    pub tls_connections_ratio: f64,
+    pub compression_efficiency: f64,
+    pub ping_pong_health: f64,
+    pub reconnection_rate: f64,
+}
+
+/// WebSocket security analysis
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebSocketSecurityAnalysis {
+    pub tls_coverage: f64,
+    pub encryption_strength: SecurityLevel,
+    pub vulnerability_score: f64,
+}
+
+/// Security level classification
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SecurityLevel {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+/// Performance tier classification
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum PerformanceTier {
+    Basic,
+    Standard,
+    High,
+    Premium,
+}
+
+/// Comprehensive WebSocket performance analysis
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebSocketPerformanceAnalysis {
+    pub basic_window: PerformanceWindow,
+    pub websocket_metrics: WebSocketRealTimeMetrics,
+    pub security_analysis: WebSocketSecurityAnalysis,
+    pub performance_classification: PerformanceTier,
+}
+
+/// SharedMemory-specific real-time metrics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SharedMemoryRealTimeMetrics {
+    pub base_metrics: RealTimeMetrics,
+    pub ring_buffer_operations_per_sec: f64,
+    pub buffer_overflow_rate: f64,
+    pub memory_efficiency: f64,
+    pub peer_health_score: f64,
+    pub lock_contention_rate: f64,
+}
+
+/// Ring buffer analysis for SharedMemory transport
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RingBufferAnalysis {
+    pub total_operations: u64,
+    pub write_read_ratio: f64,
+    pub overflow_frequency: f64,
+    pub average_operation_size: f64,
+}
+
+/// Memory analysis for SharedMemory transport
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryAnalysis {
+    pub total_allocated: u64,
+    pub efficiency_score: f64,
+    pub fragmentation_estimate: f64,
+    pub utilization_trend: MemoryTrend,
+}
+
+/// Memory utilization trend
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MemoryTrend {
+    Increasing,
+    Stable,
+    Decreasing,
+}
+
+/// Comprehensive SharedMemory performance analysis
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SharedMemoryPerformanceAnalysis {
+    pub basic_window: PerformanceWindow,
+    pub shared_memory_metrics: SharedMemoryRealTimeMetrics,
+    pub ring_buffer_analysis: RingBufferAnalysis,
+    pub memory_analysis: MemoryAnalysis,
+    pub performance_classification: PerformanceTier,
+}
+
 /// Transport builder trait for creating configured transports
 #[async_trait]
 pub trait TransportBuilder: Send + Sync {
@@ -132,6 +313,11 @@ pub trait TransportBuilder: Send + Sync {
         &self,
         config: TransportConfig,
     ) -> Result<Box<dyn Transport<Message = Message, Error = TransportError>>, TransportError>;
+}
+
+/// Generate unique transport IDs using UUID for identification and tracking
+pub fn generate_transport_id() -> String {
+    Uuid::new_v4().to_string()
 }
 
 /// Registry for available transports

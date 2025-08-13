@@ -123,10 +123,15 @@ pub trait SwarmOrchestrator {
     fn metrics(&self) -> Self::Metrics;
     
     /// Check if the swarm is healthy
+    /// 
+    /// Default implementation returns true. Implementors should override
+    /// this method to provide meaningful health checks based on their metrics.
     fn is_healthy(&self) -> bool {
-        let metrics = self.metrics();
+        let _metrics = self.metrics();
         // Default health check - can be overridden by implementors
-        true // Simplified for now
+        // Each swarm implementation should provide its own health logic
+        // based on the specific metrics it tracks
+        true
     }
     
     /// Get swarm configuration summary

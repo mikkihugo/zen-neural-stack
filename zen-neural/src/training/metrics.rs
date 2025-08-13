@@ -7,10 +7,61 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, Instant};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use num_traits::Float;
+
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 use crate::TrainingError;
 use super::{MetricType, EpochMetrics};
+
+/// High-performance atomic counters for training metrics
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Default)]
+pub struct AtomicTrainingCounters {
+    /// Total training samples processed
+    pub samples_processed: AtomicU64,
+    /// Total training epochs completed
+    pub epochs_completed: AtomicU64,
+    /// Total forward passes executed
+    pub forward_passes: AtomicU64,
+    /// Total backward passes executed
+    pub backward_passes: AtomicU64,
+    /// Total gradient updates applied
+    pub gradient_updates: AtomicU64,
+    /// Total training time in microseconds
+    pub training_time_us: AtomicU64,
+    /// Total inference time in microseconds
+    pub inference_time_us: AtomicU64,
+    /// Total parameter updates count
+    pub parameter_updates: AtomicU64,
+    /// Total loss computations
+    pub loss_computations: AtomicU64,
+    /// Total metric computations
+    pub metric_computations: AtomicU64,
+    /// Training convergence checks
+    pub convergence_checks: AtomicU64,
+    /// Early stopping triggers
+    pub early_stopping_triggers: AtomicU64,
+    /// Learning rate adjustments
+    pub lr_adjustments: AtomicU64,
+    /// Batch processing operations
+    pub batch_operations: AtomicU64,
+    /// Memory allocation operations
+    pub memory_allocations: AtomicU64,
+    /// GPU operations (if available)
+    pub gpu_operations: AtomicU64,
+    /// Cache hits for optimization
+    pub cache_hits: AtomicU64,
+    /// Cache misses
+    pub cache_misses: AtomicU64,
+    /// Thread contention events
+    pub thread_contentions: AtomicU64,
+    /// Optimization recommendation triggers
+    pub optimization_recommendations: AtomicU64,
+}
 
 /// Comprehensive metrics collector for training monitoring
 pub struct ZenMetricsCollector<T: Float> {
@@ -28,6 +79,152 @@ pub struct ZenMetricsCollector<T: Float> {
     computation_times: HashMap<MetricType, Duration>,
     /// Metric configurations
     config: MetricsConfig<T>,
+    /// High-performance atomic counters
+    pub atomic_counters: Arc<AtomicTrainingCounters>,
+    /// Performance health scorer
+    health_scorer: TrainingHealthScorer<T>,
+    /// Optimization recommender
+    optimizer_recommender: OptimizationRecommender<T>,
+    /// Trend analyzer for convergence detection
+    trend_analyzer: TrendAnalyzer<T>,
+}
+
+impl AtomicTrainingCounters {
+    /// Create new atomic training counters
+    pub fn new() -> Self {
+        Self::default()
+    }
+    
+    /// Reset all counters to zero
+    pub fn reset(&self) {
+        self.samples_processed.store(0, Ordering::SeqCst);
+        self.epochs_completed.store(0, Ordering::SeqCst);
+        self.forward_passes.store(0, Ordering::SeqCst);
+        self.backward_passes.store(0, Ordering::SeqCst);
+        self.gradient_updates.store(0, Ordering::SeqCst);
+        self.training_time_us.store(0, Ordering::SeqCst);
+        self.inference_time_us.store(0, Ordering::SeqCst);
+        self.parameter_updates.store(0, Ordering::SeqCst);
+        self.loss_computations.store(0, Ordering::SeqCst);
+        self.metric_computations.store(0, Ordering::SeqCst);
+        self.convergence_checks.store(0, Ordering::SeqCst);
+        self.early_stopping_triggers.store(0, Ordering::SeqCst);
+        self.lr_adjustments.store(0, Ordering::SeqCst);
+        self.batch_operations.store(0, Ordering::SeqCst);
+        self.memory_allocations.store(0, Ordering::SeqCst);
+        self.gpu_operations.store(0, Ordering::SeqCst);
+        self.cache_hits.store(0, Ordering::SeqCst);
+        self.cache_misses.store(0, Ordering::SeqCst);
+        self.thread_contentions.store(0, Ordering::SeqCst);
+        self.optimization_recommendations.store(0, Ordering::SeqCst);
+    }
+    
+    /// Get comprehensive performance statistics
+    pub fn get_performance_stats(&self) -> TrainingPerformanceStats {
+        let samples = self.samples_processed.load(Ordering::SeqCst);
+        let training_time = self.training_time_us.load(Ordering::SeqCst);
+        let inference_time = self.inference_time_us.load(Ordering::SeqCst);
+        let total_time = training_time + inference_time;
+        
+        let samples_per_second = if total_time > 0 {
+            (samples as f64 * 1_000_000.0) / total_time as f64
+        } else {
+            0.0
+        };
+        
+        let cache_total = self.cache_hits.load(Ordering::SeqCst) + self.cache_misses.load(Ordering::SeqCst);
+        let cache_hit_rate = if cache_total > 0 {
+            self.cache_hits.load(Ordering::SeqCst) as f64 / cache_total as f64
+        } else {
+            0.0
+        };
+        
+        TrainingPerformanceStats {
+            samples_processed: samples,
+            epochs_completed: self.epochs_completed.load(Ordering::SeqCst),
+            total_time_us: total_time,
+            training_time_us: training_time,
+            inference_time_us: inference_time,
+            samples_per_second,
+            forward_passes: self.forward_passes.load(Ordering::SeqCst),
+            backward_passes: self.backward_passes.load(Ordering::SeqCst),
+            gradient_updates: self.gradient_updates.load(Ordering::SeqCst),
+            parameter_updates: self.parameter_updates.load(Ordering::SeqCst),
+            cache_hit_rate,
+            gpu_operations: self.gpu_operations.load(Ordering::SeqCst),
+            thread_contentions: self.thread_contentions.load(Ordering::SeqCst),
+            optimization_recommendations: self.optimization_recommendations.load(Ordering::SeqCst),
+        }
+    }
+    
+    /// Calculate training efficiency score (0.0-100.0)
+    pub fn calculate_efficiency_score(&self) -> f64 {
+        let stats = self.get_performance_stats();
+        let mut score = 50.0; // Base score
+        
+        // Factor in cache hit rate (20% of score)
+        score += stats.cache_hit_rate * 20.0;
+        
+        // Factor in samples per second (30% of score, normalized)
+        let normalized_sps = (stats.samples_per_second / 1000.0).min(30.0);
+        score += normalized_sps;
+        
+        // Penalize thread contentions (up to -20% of score)
+        let contention_penalty = (stats.thread_contentions as f64 / stats.samples_processed.max(1) as f64) * 20.0;
+        score -= contention_penalty.min(20.0);
+        
+        score.max(0.0).min(100.0)
+    }
+    
+    /// Record a training sample being processed
+    pub fn record_sample_processed(&self, count: u64) {
+        self.samples_processed.fetch_add(count, Ordering::SeqCst);
+    }
+    
+    /// Record an epoch completion
+    pub fn record_epoch_completed(&self) {
+        self.epochs_completed.fetch_add(1, Ordering::SeqCst);
+    }
+    
+    /// Record forward pass execution
+    pub fn record_forward_pass(&self, count: u64) {
+        self.forward_passes.fetch_add(count, Ordering::SeqCst);
+    }
+    
+    /// Record backward pass execution
+    pub fn record_backward_pass(&self, count: u64) {
+        self.backward_passes.fetch_add(count, Ordering::SeqCst);
+    }
+    
+    /// Record training time
+    pub fn record_training_time_us(&self, duration_us: u64) {
+        self.training_time_us.fetch_add(duration_us, Ordering::SeqCst);
+    }
+    
+    /// Record inference time
+    pub fn record_inference_time_us(&self, duration_us: u64) {
+        self.inference_time_us.fetch_add(duration_us, Ordering::SeqCst);
+    }
+    
+    /// Record cache hit
+    pub fn record_cache_hit(&self) {
+        self.cache_hits.fetch_add(1, Ordering::SeqCst);
+    }
+    
+    /// Record cache miss
+    pub fn record_cache_miss(&self) {
+        self.cache_misses.fetch_add(1, Ordering::SeqCst);
+    }
+    
+    /// Record thread contention event
+    pub fn record_thread_contention(&self) {
+        self.thread_contentions.fetch_add(1, Ordering::SeqCst);
+    }
+    
+    /// Record GPU operation
+    pub fn record_gpu_operation(&self, count: u64) {
+        self.gpu_operations.fetch_add(count, Ordering::SeqCst);
+    }
 }
 
 impl<T: Float + Clone + Default + Send + Sync> ZenMetricsCollector<T> {
@@ -41,6 +238,10 @@ impl<T: Float + Clone + Default + Send + Sync> ZenMetricsCollector<T> {
             computation_cache: HashMap::new(),
             computation_times: HashMap::new(),
             config: MetricsConfig::default(),
+            atomic_counters: Arc::new(AtomicTrainingCounters::new()),
+            health_scorer: TrainingHealthScorer::new(),
+            optimizer_recommender: OptimizationRecommender::new(),
+            trend_analyzer: TrendAnalyzer::new(),
         }
     }
     
@@ -54,7 +255,49 @@ impl<T: Float + Clone + Default + Send + Sync> ZenMetricsCollector<T> {
             computation_cache: HashMap::new(),
             computation_times: HashMap::new(),
             config,
+            atomic_counters: Arc::new(AtomicTrainingCounters::new()),
+            health_scorer: TrainingHealthScorer::new(),
+            optimizer_recommender: OptimizationRecommender::new(),
+            trend_analyzer: TrendAnalyzer::new(),
         }
+    }
+    
+    /// Get shared reference to atomic counters for thread-safe access
+    pub fn get_atomic_counters(&self) -> Arc<AtomicTrainingCounters> {
+        self.atomic_counters.clone()
+    }
+    
+    /// Calculate comprehensive training health score
+    pub fn calculate_training_health(&self) -> TrainingHealthScore<T> {
+        let performance_stats = self.atomic_counters.get_performance_stats();
+        self.health_scorer.calculate_health(&performance_stats, &self.history, &self.config)
+    }
+    
+    /// Get optimization recommendations based on current metrics
+    pub fn get_optimization_recommendations(&self) -> Vec<OptimizationRecommendation<T>> {
+        let performance_stats = self.atomic_counters.get_performance_stats();
+        self.optimizer_recommender.analyze_performance(&performance_stats, &self.history, &self.config)
+    }
+    
+    /// Analyze training convergence trends
+    pub fn analyze_convergence_trends(&self, metric_type: MetricType) -> ConvergenceTrend<T> {
+        self.trend_analyzer.analyze_metric_trend(&self.history, metric_type, &self.config)
+    }
+    
+    /// Record performance metrics automatically during training
+    pub fn record_training_step(&self, duration: Duration, batch_size: usize, forward_time: Duration, backward_time: Duration) {
+        let duration_us = duration.as_micros() as u64;
+        let forward_us = forward_time.as_micros() as u64;
+        let backward_us = backward_time.as_micros() as u64;
+        
+        self.atomic_counters.record_sample_processed(batch_size as u64);
+        self.atomic_counters.record_training_time_us(duration_us);
+        self.atomic_counters.record_forward_pass(1);
+        self.atomic_counters.record_backward_pass(1);
+        self.atomic_counters.training_time_us.fetch_add(forward_us + backward_us, Ordering::SeqCst);
+        self.atomic_counters.gradient_updates.fetch_add(1, Ordering::SeqCst);
+        self.atomic_counters.parameter_updates.fetch_add(1, Ordering::SeqCst);
+        self.atomic_counters.metric_computations.fetch_add(1, Ordering::SeqCst);
     }
     
     /// Compute metrics for predictions and targets
@@ -214,6 +457,10 @@ impl<T: Float + Clone + Default + Send + Sync> ZenMetricsCollector<T> {
         self.best_values.clear();
         self.computation_cache.clear();
         self.computation_times.clear();
+        self.atomic_counters.reset();
+        self.health_scorer.reset();
+        self.optimizer_recommender.reset();
+        self.trend_analyzer.reset();
     }
     
     // Metric computation methods
@@ -466,6 +713,116 @@ pub enum TaskType {
     Regression,
 }
 
+/// Training performance statistics from atomic counters
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
+pub struct TrainingPerformanceStats {
+    pub samples_processed: u64,
+    pub epochs_completed: u64,
+    pub total_time_us: u64,
+    pub training_time_us: u64,
+    pub inference_time_us: u64,
+    pub samples_per_second: f64,
+    pub forward_passes: u64,
+    pub backward_passes: u64,
+    pub gradient_updates: u64,
+    pub parameter_updates: u64,
+    pub cache_hit_rate: f64,
+    pub gpu_operations: u64,
+    pub thread_contentions: u64,
+    pub optimization_recommendations: u64,
+}
+
+/// Comprehensive training health assessment
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
+pub struct TrainingHealthScore<T: Float> {
+    pub overall_score: T,
+    pub performance_score: T,
+    pub convergence_score: T,
+    pub efficiency_score: T,
+    pub stability_score: T,
+    pub recommendations: Vec<String>,
+    pub status: HealthStatus,
+}
+
+/// Health status classification
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HealthStatus {
+    Excellent,
+    Good,
+    Fair,
+    Poor,
+    Critical,
+}
+
+/// Optimization recommendation
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
+pub struct OptimizationRecommendation<T: Float> {
+    pub category: OptimizationCategory,
+    pub priority: RecommendationPriority,
+    pub description: String,
+    pub estimated_improvement: T,
+    pub implementation_difficulty: DifficultyLevel,
+}
+
+/// Optimization categories
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OptimizationCategory {
+    LearningRate,
+    BatchSize,
+    Architecture,
+    Regularization,
+    DataProcessing,
+    ComputeOptimization,
+    MemoryOptimization,
+}
+
+/// Recommendation priority levels
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum RecommendationPriority {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+/// Implementation difficulty levels
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DifficultyLevel {
+    Easy,
+    Medium,
+    Hard,
+    VeryHard,
+}
+
+/// Convergence trend analysis
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
+pub struct ConvergenceTrend<T: Float> {
+    pub trend_direction: TrendDirection,
+    pub convergence_rate: T,
+    pub stability: T,
+    pub predicted_epochs_to_convergence: Option<u64>,
+    pub confidence: T,
+}
+
+/// Trend direction classification
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TrendDirection {
+    Improving,
+    Stable,
+    Deteriorating,
+    Oscillating,
+    Converged,
+}
+
 /// Configuration for metrics collection
 #[derive(Debug, Clone)]
 pub struct MetricsConfig<T: Float> {
@@ -477,6 +834,12 @@ pub struct MetricsConfig<T: Float> {
     pub enable_caching: bool,
     /// Precision threshold for binary classification
     pub binary_threshold: T,
+    /// Convergence tolerance for trend analysis
+    pub convergence_tolerance: T,
+    /// Window size for trend analysis
+    pub trend_window_size: usize,
+    /// Minimum epochs before providing recommendations
+    pub min_epochs_for_recommendations: usize,
 }
 
 impl<T: Float + Default> Default for MetricsConfig<T> {
@@ -486,6 +849,9 @@ impl<T: Float + Default> Default for MetricsConfig<T> {
             max_history_size: Some(1000),
             enable_caching: true,
             binary_threshold: T::from(0.5).unwrap(),
+            convergence_tolerance: T::from(1e-6).unwrap(),
+            trend_window_size: 20,
+            min_epochs_for_recommendations: 5,
         }
     }
 }
@@ -546,6 +912,471 @@ impl<T: Float + Clone + Default + Send + Sync> MetricsDashboard<T> {
         }
         
         summary
+    }
+    
+    /// Get comprehensive performance statistics from all collectors
+    pub fn get_comprehensive_stats(&self) -> HashMap<String, TrainingPerformanceStats> {
+        self.collectors.iter()
+            .map(|(name, collector)| {
+                (name.clone(), collector.atomic_counters.get_performance_stats())
+            })
+            .collect()
+    }
+    
+    /// Get health assessment from all collectors
+    pub fn get_health_assessment(&self) -> HashMap<String, TrainingHealthScore<T>> {
+        self.collectors.iter()
+            .map(|(name, collector)| {
+                (name.clone(), collector.calculate_training_health())
+            })
+            .collect()
+    }
+    
+    /// Get optimization recommendations from all collectors
+    pub fn get_all_optimization_recommendations(&self) -> HashMap<String, Vec<OptimizationRecommendation<T>>> {
+        self.collectors.iter()
+            .map(|(name, collector)| {
+                (name.clone(), collector.get_optimization_recommendations())
+            })
+            .collect()
+    }
+}
+
+/// Training health scorer for comprehensive assessment
+#[derive(Debug, Default)]
+pub struct TrainingHealthScorer<T: Float> {
+    _phantom: std::marker::PhantomData<T>,
+}
+
+impl<T: Float + Clone + Default + Send + Sync> TrainingHealthScorer<T> {
+    pub fn new() -> Self {
+        Self {
+            _phantom: std::marker::PhantomData,
+        }
+    }
+    
+    pub fn calculate_health(
+        &self,
+        performance_stats: &TrainingPerformanceStats,
+        history: &[HashMap<MetricType, T>],
+        config: &MetricsConfig<T>,
+    ) -> TrainingHealthScore<T> {
+        let performance_score = self.calculate_performance_score(performance_stats);
+        let convergence_score = self.calculate_convergence_score(history, config);
+        let efficiency_score = T::from(performance_stats.cache_hit_rate * 100.0).unwrap();
+        let stability_score = self.calculate_stability_score(history);
+        
+        let overall_score = (performance_score + convergence_score + efficiency_score + stability_score) / T::from(4.0).unwrap();
+        
+        let status = match overall_score {
+            score if score >= T::from(90.0).unwrap() => HealthStatus::Excellent,
+            score if score >= T::from(75.0).unwrap() => HealthStatus::Good,
+            score if score >= T::from(50.0).unwrap() => HealthStatus::Fair,
+            score if score >= T::from(25.0).unwrap() => HealthStatus::Poor,
+            _ => HealthStatus::Critical,
+        };
+        
+        let recommendations = self.generate_health_recommendations(&status, performance_stats);
+        
+        TrainingHealthScore {
+            overall_score,
+            performance_score,
+            convergence_score,
+            efficiency_score,
+            stability_score,
+            recommendations,
+            status,
+        }
+    }
+    
+    fn calculate_performance_score(&self, stats: &TrainingPerformanceStats) -> T {
+        let mut score = T::from(50.0).unwrap(); // Base score
+        
+        // Factor in samples per second (normalized to 0-50 range)
+        let sps_score = T::from((stats.samples_per_second / 100.0).min(50.0)).unwrap();
+        score = score + sps_score;
+        
+        // Penalize thread contentions
+        let contention_penalty = if stats.samples_processed > 0 {
+            T::from((stats.thread_contentions as f64 / stats.samples_processed as f64) * 25.0).unwrap()
+        } else {
+            T::zero()
+        };
+        score = score - contention_penalty;
+        
+        score.max(T::zero()).min(T::from(100.0).unwrap())
+    }
+    
+    fn calculate_convergence_score(&self, history: &[HashMap<MetricType, T>], _config: &MetricsConfig<T>) -> T {
+        if history.len() < 3 {
+            return T::from(50.0).unwrap(); // Not enough data
+        }
+        
+        // Check if loss is generally decreasing
+        let recent_losses: Vec<T> = history.iter()
+            .rev()
+            .take(10)
+            .filter_map(|metrics| metrics.get(&MetricType::Loss).copied())
+            .collect();
+        
+        if recent_losses.len() < 2 {
+            return T::from(50.0).unwrap();
+        }
+        
+        let trend = recent_losses.first().unwrap() - recent_losses.last().unwrap();
+        if trend > T::zero() {
+            T::from(80.0).unwrap() // Loss is decreasing
+        } else {
+            T::from(30.0).unwrap() // Loss is not decreasing
+        }
+    }
+    
+    fn calculate_stability_score(&self, history: &[HashMap<MetricType, T>]) -> T {
+        if history.len() < 5 {
+            return T::from(50.0).unwrap();
+        }
+        
+        // Calculate variance in recent loss values
+        let recent_losses: Vec<T> = history.iter()
+            .rev()
+            .take(10)
+            .filter_map(|metrics| metrics.get(&MetricType::Loss).copied())
+            .collect();
+        
+        if recent_losses.len() < 3 {
+            return T::from(50.0).unwrap();
+        }
+        
+        let mean: T = recent_losses.iter().fold(T::zero(), |acc, &x| acc + x) / T::from(recent_losses.len()).unwrap();
+        let variance: T = recent_losses.iter()
+            .map(|&x| (x - mean) * (x - mean))
+            .fold(T::zero(), |acc, x| acc + x) / T::from(recent_losses.len()).unwrap();
+        
+        // Lower variance = higher stability score
+        let stability_score = T::from(100.0).unwrap() - (variance * T::from(1000.0).unwrap()).min(T::from(100.0).unwrap());
+        stability_score.max(T::zero())
+    }
+    
+    fn generate_health_recommendations(&self, status: &HealthStatus, stats: &TrainingPerformanceStats) -> Vec<String> {
+        let mut recommendations = Vec::new();
+        
+        match status {
+            HealthStatus::Critical | HealthStatus::Poor => {
+                recommendations.push("Consider reducing learning rate".to_string());
+                recommendations.push("Check data quality and preprocessing".to_string());
+                
+                if stats.thread_contentions > stats.samples_processed / 10 {
+                    recommendations.push("High thread contention detected - consider reducing parallelism".to_string());
+                }
+            }
+            HealthStatus::Fair => {
+                recommendations.push("Monitor convergence closely".to_string());
+                
+                if stats.cache_hit_rate < 0.7 {
+                    recommendations.push("Low cache hit rate - consider optimizing data access patterns".to_string());
+                }
+            }
+            HealthStatus::Good | HealthStatus::Excellent => {
+                if stats.samples_per_second < 50.0 {
+                    recommendations.push("Consider increasing batch size for better throughput".to_string());
+                }
+            }
+        }
+        
+        recommendations
+    }
+    
+    pub fn reset(&mut self) {
+        // Nothing to reset for now
+    }
+}
+
+/// Optimization recommender for performance improvements
+#[derive(Debug, Default)]
+pub struct OptimizationRecommender<T: Float> {
+    _phantom: std::marker::PhantomData<T>,
+}
+
+impl<T: Float + Clone + Default + Send + Sync> OptimizationRecommender<T> {
+    pub fn new() -> Self {
+        Self {
+            _phantom: std::marker::PhantomData,
+        }
+    }
+    
+    pub fn analyze_performance(
+        &self,
+        performance_stats: &TrainingPerformanceStats,
+        history: &[HashMap<MetricType, T>],
+        config: &MetricsConfig<T>,
+    ) -> Vec<OptimizationRecommendation<T>> {
+        let mut recommendations = Vec::new();
+        
+        // Learning rate recommendations
+        if let Some(lr_rec) = self.analyze_learning_rate(history, config) {
+            recommendations.push(lr_rec);
+        }
+        
+        // Batch size recommendations
+        if let Some(batch_rec) = self.analyze_batch_size(performance_stats) {
+            recommendations.push(batch_rec);
+        }
+        
+        // Compute optimization recommendations
+        if let Some(compute_rec) = self.analyze_compute_optimization(performance_stats) {
+            recommendations.push(compute_rec);
+        }
+        
+        // Memory optimization recommendations
+        if let Some(memory_rec) = self.analyze_memory_optimization(performance_stats) {
+            recommendations.push(memory_rec);
+        }
+        
+        recommendations
+    }
+    
+    fn analyze_learning_rate(&self, history: &[HashMap<MetricType, T>], _config: &MetricsConfig<T>) -> Option<OptimizationRecommendation<T>> {
+        if history.len() < 10 {
+            return None;
+        }
+        
+        // Analyze loss progression
+        let recent_losses: Vec<T> = history.iter()
+            .rev()
+            .take(10)
+            .filter_map(|metrics| metrics.get(&MetricType::Loss).copied())
+            .collect();
+        
+        if recent_losses.len() < 5 {
+            return None;
+        }
+        
+        let initial_loss = recent_losses.last().unwrap();
+        let current_loss = recent_losses.first().unwrap();
+        
+        if *current_loss > *initial_loss {
+            // Loss is increasing - reduce learning rate
+            Some(OptimizationRecommendation {
+                category: OptimizationCategory::LearningRate,
+                priority: RecommendationPriority::High,
+                description: "Loss is increasing - consider reducing learning rate by 50%".to_string(),
+                estimated_improvement: T::from(15.0).unwrap(),
+                implementation_difficulty: DifficultyLevel::Easy,
+            })
+        } else if (*initial_loss - *current_loss) < T::from(0.001).unwrap() {
+            // Loss plateaued - might need adjustment
+            Some(OptimizationRecommendation {
+                category: OptimizationCategory::LearningRate,
+                priority: RecommendationPriority::Medium,
+                description: "Loss appears to have plateaued - consider learning rate scheduling".to_string(),
+                estimated_improvement: T::from(10.0).unwrap(),
+                implementation_difficulty: DifficultyLevel::Medium,
+            })
+        } else {
+            None
+        }
+    }
+    
+    fn analyze_batch_size(&self, stats: &TrainingPerformanceStats) -> Option<OptimizationRecommendation<T>> {
+        if stats.samples_per_second < 20.0 {
+            Some(OptimizationRecommendation {
+                category: OptimizationCategory::DataProcessing,
+                priority: RecommendationPriority::Medium,
+                description: "Low throughput detected - consider increasing batch size".to_string(),
+                estimated_improvement: T::from(25.0).unwrap(),
+                implementation_difficulty: DifficultyLevel::Easy,
+            })
+        } else {
+            None
+        }
+    }
+    
+    fn analyze_compute_optimization(&self, stats: &TrainingPerformanceStats) -> Option<OptimizationRecommendation<T>> {
+        if stats.gpu_operations == 0 && stats.samples_processed > 1000 {
+            Some(OptimizationRecommendation {
+                category: OptimizationCategory::ComputeOptimization,
+                priority: RecommendationPriority::High,
+                description: "No GPU operations detected - consider GPU acceleration for large datasets".to_string(),
+                estimated_improvement: T::from(200.0).unwrap(),
+                implementation_difficulty: DifficultyLevel::Hard,
+            })
+        } else {
+            None
+        }
+    }
+    
+    fn analyze_memory_optimization(&self, stats: &TrainingPerformanceStats) -> Option<OptimizationRecommendation<T>> {
+        if stats.cache_hit_rate < 0.6 {
+            Some(OptimizationRecommendation {
+                category: OptimizationCategory::MemoryOptimization,
+                priority: RecommendationPriority::Medium,
+                description: format!("Low cache hit rate ({:.1}%) - optimize data access patterns", stats.cache_hit_rate * 100.0),
+                estimated_improvement: T::from(20.0).unwrap(),
+                implementation_difficulty: DifficultyLevel::Medium,
+            })
+        } else {
+            None
+        }
+    }
+    
+    pub fn reset(&mut self) {
+        // Nothing to reset for now
+    }
+}
+
+/// Trend analyzer for convergence detection
+#[derive(Debug, Default)]
+pub struct TrendAnalyzer<T: Float> {
+    _phantom: std::marker::PhantomData<T>,
+}
+
+impl<T: Float + Clone + Default + Send + Sync> TrendAnalyzer<T> {
+    pub fn new() -> Self {
+        Self {
+            _phantom: std::marker::PhantomData,
+        }
+    }
+    
+    pub fn analyze_metric_trend(
+        &self,
+        history: &[HashMap<MetricType, T>],
+        metric_type: MetricType,
+        config: &MetricsConfig<T>,
+    ) -> ConvergenceTrend<T> {
+        let values: Vec<T> = history.iter()
+            .rev()
+            .take(config.trend_window_size)
+            .filter_map(|metrics| metrics.get(&metric_type).copied())
+            .collect();
+        
+        if values.len() < 3 {
+            return ConvergenceTrend {
+                trend_direction: TrendDirection::Stable,
+                convergence_rate: T::zero(),
+                stability: T::from(0.5).unwrap(),
+                predicted_epochs_to_convergence: None,
+                confidence: T::from(0.1).unwrap(),
+            };
+        }
+        
+        let trend_direction = self.calculate_trend_direction(&values);
+        let convergence_rate = self.calculate_convergence_rate(&values);
+        let stability = self.calculate_stability(&values);
+        let predicted_epochs = self.predict_convergence_epochs(&values, config);
+        let confidence = self.calculate_confidence(&values, config);
+        
+        ConvergenceTrend {
+            trend_direction,
+            convergence_rate,
+            stability,
+            predicted_epochs_to_convergence: predicted_epochs,
+            confidence,
+        }
+    }
+    
+    fn calculate_trend_direction(&self, values: &[T]) -> TrendDirection {
+        if values.len() < 3 {
+            return TrendDirection::Stable;
+        }
+        
+        let first_third = &values[0..values.len()/3];
+        let last_third = &values[(2*values.len()/3)..];
+        
+        let first_avg = first_third.iter().fold(T::zero(), |acc, &x| acc + x) / T::from(first_third.len()).unwrap();
+        let last_avg = last_third.iter().fold(T::zero(), |acc, &x| acc + x) / T::from(last_third.len()).unwrap();
+        
+        let diff = last_avg - first_avg;
+        let threshold = T::from(0.01).unwrap();
+        
+        if diff > threshold {
+            TrendDirection::Deteriorating
+        } else if diff < -threshold {
+            TrendDirection::Improving
+        } else {
+            TrendDirection::Stable
+        }
+    }
+    
+    fn calculate_convergence_rate(&self, values: &[T]) -> T {
+        if values.len() < 2 {
+            return T::zero();
+        }
+        
+        let first = values.last().unwrap();
+        let last = values.first().unwrap();
+        let rate = (*first - *last).abs() / T::from(values.len()).unwrap();
+        rate
+    }
+    
+    fn calculate_stability(&self, values: &[T]) -> T {
+        if values.len() < 2 {
+            return T::from(0.5).unwrap();
+        }
+        
+        let mean = values.iter().fold(T::zero(), |acc, &x| acc + x) / T::from(values.len()).unwrap();
+        let variance = values.iter()
+            .map(|&x| (x - mean) * (x - mean))
+            .fold(T::zero(), |acc, x| acc + x) / T::from(values.len()).unwrap();
+        
+        // Convert variance to stability score (0-1)
+        let stability = T::one() / (T::one() + variance);
+        stability
+    }
+    
+    fn predict_convergence_epochs(&self, values: &[T], config: &MetricsConfig<T>) -> Option<u64> {
+        if values.len() < 5 {
+            return None;
+        }
+        
+        let convergence_rate = self.calculate_convergence_rate(values);
+        let current_value = *values.first().unwrap();
+        
+        if convergence_rate > T::zero() {
+            let epochs_to_convergence = current_value / convergence_rate;
+            if epochs_to_convergence < T::from(1000.0).unwrap() {
+                Some(epochs_to_convergence.to_u64().unwrap_or(u64::MAX))
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+    
+    fn calculate_confidence(&self, values: &[T], _config: &MetricsConfig<T>) -> T {
+        let stability = self.calculate_stability(values);
+        let data_completeness = T::from(values.len() as f64 / 20.0).unwrap().min(T::one());
+        
+        (stability + data_completeness) / T::from(2.0).unwrap()
+    }
+    
+    pub fn reset(&mut self) {
+        // Nothing to reset for now
+    }
+}
+
+// Helper trait implementations for numeric conversions
+trait NumericConversions<T> {
+    fn to_u64(self) -> Option<u64>;
+}
+
+impl NumericConversions<f32> for f32 {
+    fn to_u64(self) -> Option<u64> {
+        if self >= 0.0 && self <= u64::MAX as f32 {
+            Some(self as u64)
+        } else {
+            None
+        }
+    }
+}
+
+impl NumericConversions<f64> for f64 {
+    fn to_u64(self) -> Option<u64> {
+        if self >= 0.0 && self <= u64::MAX as f64 {
+            Some(self as u64)
+        } else {
+            None
+        }
     }
 }
 

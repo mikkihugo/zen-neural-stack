@@ -354,6 +354,7 @@ impl<T: Float + Send + Sync + Clone + Default> ParallelTrainingLoop<T> {
     where
         M: ZenNeuralModel<T> + Send + Sync,
     {
+        #[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
         use rayon::prelude::*;
         
         let num_batches = (inputs.len() + batch_size - 1) / batch_size;

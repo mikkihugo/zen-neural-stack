@@ -328,6 +328,7 @@ pub struct DynamicAgent {
     id: String,
     capabilities: Vec<String>,
     metadata: AgentMetadata,
+    metrics: AgentMetrics,
     status: AgentStatus,
     processor: Box<dyn AgentProcessor>,
 }
@@ -339,6 +340,7 @@ impl DynamicAgent {
             id: id.into(),
             capabilities,
             metadata: AgentMetadata::default(),
+            metrics: AgentMetrics::default(),
             status: AgentStatus::Running,
             processor: Box::new(DefaultProcessor),
         }
@@ -396,6 +398,126 @@ impl DynamicAgent {
     pub async fn shutdown(&mut self) -> crate::error::Result<()> {
         self.status = AgentStatus::Offline;
         Ok(())
+    }
+
+    /// Process a task using the agent's processor
+    /// 
+    /// # Errors
+    /// 
+    /// Returns error if task processing fails
+    pub async fn process_task(&mut self, task: crate::task::Task) -> crate::error::Result<crate::task::TaskResult> {
+        use crate::task::{TaskResult, TaskStatus, TaskOutput};
+        
+        let start_time = std::time::Instant::now();
+        self.status = AgentStatus::Running;
+        
+        // Convert task to JSON for processing
+        let task_json = serde_json::json!({
+            "id": task.id.0,
+            "task_type": task.task_type,
+            "priority": format!("{:?}", task.priority),
+            "payload": match &task.payload {
+                crate::task::TaskPayload::Empty => serde_json::Value::Null,
+                crate::task::TaskPayload::Text(s) => serde_json::Value::String(s.clone()),
+                crate::task::TaskPayload::Binary(b) => serde_json::Value::Array(
+                    b.iter().map(|&x| serde_json::Value::Number(x.into())).collect()
+                ),
+                crate::task::TaskPayload::Json(s) => {
+                    serde_json::from_str(s).unwrap_or(serde_json::Value::String(s.clone()))
+                },
+                crate::task::TaskPayload::Custom(_) => serde_json::Value::String("custom_payload".to_string()),
+            },
+            "required_capabilities": task.required_capabilities,
+        });
+        
+        // Process through the agent processor
+        let result = self.processor.process_dynamic(task_json).await;
+        let execution_time = start_time.elapsed().as_millis() as u64;
+        
+        // Update metrics with processing results
+        self.metrics.tasks_processed += 1;
+        
+        match result {
+            Ok(output) => {
+                self.metrics.tasks_succeeded += 1;
+                self.status = AgentStatus::Idle;
+                
+                // Convert output back to TaskOutput
+                let task_output = match &output {
+                    serde_json::Value::String(s) => TaskOutput::Text(s.clone()),
+                    serde_json::Value::Array(arr) => {
+                        // Check if it looks like binary data (all numbers)
+                        if arr.iter().all(|v| v.is_number()) {
+                            let bytes: Vec<u8> = arr.iter()
+                                .filter_map(|v| v.as_u64().map(|n| n as u8))
+                                .collect();
+                            TaskOutput::Binary(bytes)
+                        } else {
+                            // Otherwise treat as JSON
+                            TaskOutput::Json(serde_json::to_string(&output).unwrap_or_default())
+                        }
+                    },
+                    serde_json::Value::Object(_) => {
+                        TaskOutput::Json(serde_json::to_string(&output).unwrap_or_default())
+                    },
+                    _ => TaskOutput::None,
+                };
+                
+                Ok(TaskResult {
+                    task_id: task.id,
+                    status: TaskStatus::Completed,
+                    output: Some(task_output),
+                    error: None,
+                    execution_time_ms: execution_time,
+                })
+            },
+            Err(e) => {
+                self.metrics.tasks_failed += 1;
+                self.status = AgentStatus::Idle;
+                
+                Ok(TaskResult {
+                    task_id: task.id,
+                    status: TaskStatus::Failed,
+                    output: None,
+                    error: Some(format!("Agent processing failed: {}", e)),
+                    execution_time_ms: execution_time,
+                })
+            }
+        }
+    }
+
+    /// Update agent metrics based on task execution
+    pub fn update_metrics(&mut self, success: bool, execution_time_ms: u64) {
+        self.metrics.tasks_processed += 1;
+        if success {
+            self.metrics.tasks_succeeded += 1;
+        } else {
+            self.metrics.tasks_failed += 1;
+        }
+        
+        // Update average processing time using incremental formula
+        let total_time = self.metrics.avg_processing_time_ms * (self.metrics.tasks_processed - 1) as f64;
+        self.metrics.avg_processing_time_ms = (total_time + execution_time_ms as f64) / self.metrics.tasks_processed as f64;
+    }
+
+    /// Get agent metadata
+    pub fn metadata(&self) -> &AgentMetadata {
+        &self.metadata
+    }
+
+    /// Get mutable access to agent metadata  
+    pub fn metadata_mut(&mut self) -> &mut AgentMetadata {
+        &mut self.metadata
+    }
+
+    /// Get agent metrics
+    pub fn metrics(&self) -> &AgentMetrics {
+        &self.metrics
+    }
+
+    /// Get mutable access to agent metrics  
+    pub fn metrics_mut(&mut self) -> &mut AgentMetrics {
+        &mut self.metrics
     }
 }
 

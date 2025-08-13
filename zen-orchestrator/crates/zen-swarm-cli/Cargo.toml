@@ -60,6 +60,24 @@ chrono = { version = "0.4", features = ["serde"] }
 # UUID generation
 uuid = { version = "1.10", features = ["v4", "serde"] }
 
+[features]
+default = ["onboarding", "enhanced-logging"]
+
+# User experience features
+onboarding = []                    # Interactive CLI setup and guided initialization
+enhanced-logging = []              # Enhanced logging with status levels and formatting
+backtrace = []                     # Detailed error backtraces for debugging
+
+# Monitoring and metrics
+performance-metrics = []           # Performance counters and monitoring
+memory-tracking = []               # Memory usage tracking with AtomicU64
+health-checks = []                 # System health monitoring
+
+# Advanced features  
+gpu-integration = []               # GPU compute context integration
+distributed-coordination = []      # Advanced distributed swarm coordination
+auto-scaling = []                  # Automatic agent scaling based on load
+
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.1"

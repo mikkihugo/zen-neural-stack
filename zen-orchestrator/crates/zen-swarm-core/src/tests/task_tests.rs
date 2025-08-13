@@ -1,7 +1,6 @@
 //! Simple task tests that match the actual API
 
 use crate::task::*;
-use crate::agent::Capability;
 
 #[test]
 fn test_task_creation() {

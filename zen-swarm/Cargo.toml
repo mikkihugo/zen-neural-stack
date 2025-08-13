@@ -1,0 +1,146 @@
+[package]
+name = "zen-swarm"
+version = "0.2.0"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Unified high-performance swarm intelligence system with neural networks, vector databases, and AI coordination"
+
+[dependencies]
+# Core async runtime
+async-trait = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+parking_lot = { workspace = true }
+futures = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+dashmap = { workspace = true }
+
+# zen-orchestrator for A2A protocol
+zen-orchestrator = { path = "../zen-orchestrator" }
+
+# Vector Database & Embeddings (LanceDB v0.20 - latest stable)
+lancedb = { version = "0.20.0", optional = true }
+arrow = { version = "55.2.0", optional = true }
+arrow-array = { version = "55.2.0", optional = true }
+arrow-schema = { version = "55.2.0", optional = true }
+
+# Neural Networks & ML (workspace version for compatibility)
+candle-core = { workspace = true, optional = true }
+candle-nn = { workspace = true, optional = true }
+nalgebra = { version = "0.33.0", features = ["serde"], optional = true }
+tokenizers = { version = "0.20.3", optional = true }
+
+# Graph Database - Pure Rust Cozo (no CPU instruction dependencies) 
+# Removed: kuzu (AVX512FP16 issues), petgraph (redundant with Cozo)
+cozo = { version = "0.7", optional = true }     # Pure Rust, embedded, excellent analytics
+
+# Node.js v24+ Runtime (external processes)
+# No additional dependencies needed - uses system Node.js
+
+# Persistence & Storage - Using Cozo for all database operations (no heavy FFI dependencies)
+# libsql = { version = "0.9.20", features = ["core", "serde"], optional = true }  # Replaced with Cozo
+
+# Web server for MCP with OpenAPI/Swagger
+axum = { workspace = true, features = ["ws", "macros"], optional = true }
+tower = { workspace = true, optional = true }
+tokio-tungstenite = { workspace = true, optional = true }
+utoipa = { version = "5.4.0", optional = true, features = ["axum_extras", "chrono", "uuid"] }
+utoipa-swagger-ui = { version = "8.1.0", optional = true, features = ["axum"] }
+
+# Async streaming
+tokio-stream = { version = "0.1", optional = true }
+async-stream = { version = "0.3", optional = true }
+
+# File operations
+path-clean = "1.0"
+tempfile = "3.12"
+
+# Cryptographic operations and HTTP client (for vector.rs)
+ring = { version = "0.17", optional = true }
+data-encoding = { version = "2.6", optional = true }
+reqwest = { version = "0.12", features = ["json"], optional = true }
+futures-util = { version = "0.3", optional = true }
+
+# Metrics (optional)
+prometheus = { version = "0.13", optional = true }
+metrics = { version = "0.24", optional = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+tokio-test = "0.4"
+
+[features]
+default = ["core", "neural", "vector", "runtime", "persistence", "graph"]
+
+# Core swarm functionality
+core = []
+
+# Neural networks and ML
+neural = ["candle-core", "candle-nn", "nalgebra", "tokenizers"]
+
+# Vector database and embeddings
+vector = ["lancedb", "arrow", "arrow-array", "arrow-schema", "tokio-stream", "async-stream", "ring", "data-encoding", "reqwest", "futures-util"]
+
+# Node.js v24+ runtime for AI plugins
+runtime = []
+
+# Persistence and storage - Pure Cozo (no FFI dependencies)
+persistence = ["cozo"]
+
+# Graph database and analysis - Pure Cozo (no CPU dependencies)
+graph = ["cozo"]
+
+# MCP protocol server with OpenAPI docs
+mcp = ["axum", "tower", "tokio-tungstenite", "utoipa", "utoipa-swagger-ui"]
+
+# Performance monitoring
+metrics = ["prometheus", "dep:metrics"]
+
+# All features enabled
+full = ["neural", "vector", "runtime", "persistence", "graph", "mcp", "metrics"]
+
+# Minimal build (core only)
+minimal = ["core"]
+
+# GPU acceleration (future)
+gpu = []
+
+# WASM support (future)  
+wasm = []
+
+[[example]]
+name = "basic_swarm"
+path = "examples/basic_swarm.rs"
+
+[[example]]
+name = "neural_coordination"
+path = "examples/neural_coordination.rs"
+required-features = ["neural"]
+
+[[example]]
+name = "vector_search"
+path = "examples/vector_search.rs"
+required-features = ["vector"]
+
+[[example]]
+name = "node_plugins"
+path = "examples/node_plugins.rs"
+required-features = ["runtime"]
+
+[[example]]
+name = "graph_analysis"
+path = "examples/graph_analysis.rs"
+required-features = ["graph"]
+
+# Benchmarks disabled during initial development
+# [[bench]]
+# name = "swarm_performance"
+# harness = false

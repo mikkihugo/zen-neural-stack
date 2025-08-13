@@ -408,13 +408,13 @@ impl SimdBenchmarkSuite {
     fn generate_random_matrix(&self, rows: usize, cols: usize) -> Vec<f32> {
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        (0..rows * cols).map(|_| rng.gen_range(-1.0..1.0)).collect()
+        (0..rows * cols).map(|_| rng.r#gen_range(-1.0..1.0)).collect()
     }
 
     fn generate_random_vector(&self, size: usize) -> Vec<f32> {
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        (0..size).map(|_| rng.gen_range(-1.0..1.0)).collect()
+        (0..size).map(|_| rng.r#gen_range(-1.0..1.0)).collect()
     }
 
     fn validate_matrix_equality(&self, a: &[f32], b: &[f32], tolerance: f32) -> bool {

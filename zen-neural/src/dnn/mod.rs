@@ -78,7 +78,6 @@
  */
 
 use std::collections::HashMap;
-use std::sync::Arc;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -92,11 +91,11 @@ use crate::distributed::{DistributedZenNetwork, DistributionStrategy};
 #[cfg(feature = "gpu")]
 use crate::webgpu::{WebGPUBackend, ComputeContext};
 
+// Conditional import for parallel processing - only warn about unused when parallel feature is disabled
+#[cfg_attr(not(feature = "parallel"), allow(unused_imports))]
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
-
-use crate::errors::RuvFannError;
-use crate::activation::ActivationFunction;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 
 // === MODULE DECLARATIONS ===
 
@@ -134,6 +133,10 @@ pub mod utils;
 #[cfg(feature = "parallel")]
 pub mod simd;
 
+/// Concurrent neural network operations with Arc/RwLock
+#[cfg(feature = "concurrent")]
+pub mod concurrent;
+
 // === RE-EXPORTS ===
 
 pub use data::{DNNTensor, BatchData, TensorShape, TensorOps};
@@ -153,6 +156,12 @@ pub use storage::{
 
 #[cfg(feature = "zen-distributed")]
 pub use distributed::DistributedDNNNetwork;
+
+#[cfg(feature = "concurrent")]
+pub use concurrent::{
+    ConcurrentDNNModel, ConcurrentInferenceConfig, ConcurrentMetrics, ConcurrentLayer,
+    ConcurrentUtils, InferenceRequest, InferenceResponse, LockStatistics, ThreadUtilization
+};
 
 // === CORE DNN MODEL ===
 
@@ -221,6 +230,9 @@ pub struct ZenDNNModel {
     
     /// Model compilation state
     pub compiled: bool,
+    
+    /// Model metadata for tracking training history, hyperparameters, etc.
+    pub metadata: HashMap<String, String>,
 }
 
 /**
@@ -733,6 +745,9 @@ impl DNNModelBuilder {
         let input_shape = TensorShape::new(vec![1, self.config.input_dim]); // Batch dimension flexible
         let output_shape = TensorShape::new(vec![1, self.config.output_dim]);
         
+        let input_dim = self.config.input_dim;
+        let output_dim = self.config.output_dim;
+        
         Ok(ZenDNNModel {
             config: self.config,
             layers: self.layers,
@@ -741,27 +756,40 @@ impl DNNModelBuilder {
             
             #[cfg(feature = "gpu")]
             gpu_backend: if self.gpu_enabled {
-                Some(Arc::new(WebGPUBackend::new().expect("Failed to initialize GPU backend")))
+                Some(std::sync::Arc::new(WebGPUBackend::new().expect("Failed to initialize GPU backend")))
             } else {
                 None
             },
             
             #[cfg(feature = "zen-storage")]
             storage: if self.storage_enabled {
-                Some(Arc::new(DNNStorage::new().expect("Failed to initialize storage backend")))
+                Some(std::sync::Arc::new(DNNStorage::new().expect("Failed to initialize storage backend")))
             } else {
                 None
             },
             
             #[cfg(feature = "zen-distributed")]
             distributed: if self.distributed_enabled {
-                Some(Arc::new(DistributedDNNNetwork::new().expect("Failed to initialize distributed backend")))
+                Some(std::sync::Arc::new(DistributedDNNNetwork::new().expect("Failed to initialize distributed backend")))
             } else {
                 None
             },
             
             trainer: None,
             compiled: false,
+            metadata: {
+                let mut meta = HashMap::new();
+                meta.insert("created_at".to_string(), std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs()
+                    .to_string());
+                meta.insert("version".to_string(), env!("CARGO_PKG_VERSION").to_string());
+                meta.insert("architecture".to_string(), "DNN".to_string());
+                meta.insert("input_dim".to_string(), input_dim.to_string());
+                meta.insert("output_dim".to_string(), output_dim.to_string());
+                meta
+            },
         })
     }
 }

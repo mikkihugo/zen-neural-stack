@@ -322,20 +322,22 @@ impl CpuSimdOps {
 
                             if remaining == SIMD_WIDTH {
                                 // Full SIMD vector processing
-                                let mut sum_vec = _mm256_setzero_ps();
+                                unsafe {
+                                    let mut sum_vec = _mm256_setzero_ps();
 
-                                for k_idx in k_block..k_end {
-                                    let a_val = _mm256_set1_ps(a[i * k + k_idx]);
-                                    let b_ptr = b.as_ptr().add(k_idx * n + j);
-                                    let b_vec = _mm256_loadu_ps(b_ptr);
-                                    sum_vec = _mm256_fmadd_ps(a_val, b_vec, sum_vec);
+                                    for k_idx in k_block..k_end {
+                                        let a_val = _mm256_set1_ps(a[i * k + k_idx]);
+                                        let b_ptr = b.as_ptr().add(k_idx * n + j);
+                                        let b_vec = _mm256_loadu_ps(b_ptr);
+                                        sum_vec = _mm256_fmadd_ps(a_val, b_vec, sum_vec);
+                                    }
+
+                                    // Store result
+                                    let c_ptr = c.as_mut_ptr().add(i * n + j);
+                                    let c_vec = _mm256_loadu_ps(c_ptr);
+                                    let result = _mm256_add_ps(c_vec, sum_vec);
+                                    _mm256_storeu_ps(c_ptr, result);
                                 }
-
-                                // Store result
-                                let c_ptr = c.as_mut_ptr().add(i * n + j);
-                                let c_vec = _mm256_loadu_ps(c_ptr);
-                                let result = _mm256_add_ps(c_vec, sum_vec);
-                                _mm256_storeu_ps(c_ptr, result);
                             } else {
                                 // Handle remaining elements with scalar code
                                 for j_idx in j..(j + remaining) {
@@ -388,8 +390,9 @@ impl CpuSimdOps {
             // Horizontal sum of the vector
             let sum_array = std::mem::transmute::<__m256, [f32; 8]>(sum_vec);
             let mut sum = sum_array.iter().sum::<f32>();
-
+            
             // Handle remaining elements
+
             for j in (chunks * SIMD_WIDTH)..n {
                 sum += a[i * n + j] * x[j];
             }
@@ -483,14 +486,16 @@ impl CpuSimdOps {
 
         match activation {
             ActivationFunction::Relu => {
-                let zero = _mm256_setzero_ps();
+                unsafe {
+                    let zero = _mm256_setzero_ps();
 
-                while i + SIMD_WIDTH <= len {
-                    let ptr = data.as_mut_ptr().add(i);
-                    let vec = _mm256_loadu_ps(ptr);
-                    let result = _mm256_max_ps(vec, zero);
-                    _mm256_storeu_ps(ptr, result);
-                    i += SIMD_WIDTH;
+                    while i + SIMD_WIDTH <= len {
+                        let ptr = data.as_mut_ptr().add(i);
+                        let vec = _mm256_loadu_ps(ptr);
+                        let result = _mm256_max_ps(vec, zero);
+                        _mm256_storeu_ps(ptr, result);
+                        i += SIMD_WIDTH;
+                    }
                 }
             }
             _ => {
@@ -580,14 +585,16 @@ impl CpuSimdOps {
                 let one = _mm256_set1_ps(1.0);
 
                 while i + SIMD_WIDTH <= len {
-                    let data_ptr = data.as_ptr().add(i);
-                    let deriv_ptr = derivatives.as_mut_ptr().add(i);
+                    unsafe {
+                        let data_ptr = data.as_ptr().add(i);
+                        let deriv_ptr = derivatives.as_mut_ptr().add(i);
 
-                    let data_vec = _mm256_loadu_ps(data_ptr);
-                    let mask = _mm256_cmp_ps(data_vec, zero, _CMP_GT_OS);
-                    let result = _mm256_and_ps(mask, one);
+                        let data_vec = _mm256_loadu_ps(data_ptr);
+                        let mask = _mm256_cmp_ps(data_vec, zero, _CMP_GT_OS);
+                        let result = _mm256_and_ps(mask, one);
 
-                    _mm256_storeu_ps(deriv_ptr, result);
+                        _mm256_storeu_ps(deriv_ptr, result);
+                    }
                     i += SIMD_WIDTH;
                 }
             }
@@ -634,6 +641,7 @@ impl ParallelTraining {
     where
         F: Fn(&[f32], &[f32]) + Send + Sync,
     {
+        #[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
         use rayon::prelude::*;
 
         inputs
@@ -652,6 +660,7 @@ impl ParallelTraining {
         errors: &[Vec<f32>],
         gradients: &mut [Vec<f32>],
     ) {
+        #[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
         use rayon::prelude::*;
 
         gradients

@@ -7,6 +7,63 @@ use num_traits::Float;
 use std::collections::HashMap;
 use crate::errors::{NeuroDivergentError, NeuroDivergentResult};
 
+/// Configuration and metadata utilities
+mod config_utils {
+    use super::*;
+    
+    /// Use HashMap for model configuration and hyperparameter storage
+    pub fn create_model_config<T: Float>() -> HashMap<String, String> {
+        let mut config = HashMap::new();
+        config.insert("model_type".to_string(), "neuro_divergent".to_string());
+        config.insert("precision".to_string(), std::any::type_name::<T>().to_string());
+        config.insert("version".to_string(), env!("CARGO_PKG_VERSION").to_string());
+        config.insert("features".to_string(), "math_utils,validation,preprocessing".to_string());
+        config
+    }
+    
+    /// Use HashMap for validation metadata and error tracking
+    pub fn create_validation_metadata(
+        total_samples: usize,
+        validation_errors: Vec<String>,
+        performance_metrics: Vec<f64>,
+    ) -> HashMap<String, String> {
+        let mut metadata = HashMap::new();
+        metadata.insert("total_samples".to_string(), total_samples.to_string());
+        metadata.insert("error_count".to_string(), validation_errors.len().to_string());
+        metadata.insert("errors".to_string(), validation_errors.join("; "));
+        
+        if !performance_metrics.is_empty() {
+            let avg_performance: f64 = performance_metrics.iter().sum::<f64>() / performance_metrics.len() as f64;
+            metadata.insert("avg_performance".to_string(), avg_performance.to_string());
+            metadata.insert("min_performance".to_string(), performance_metrics.iter().fold(f64::INFINITY, |a, &b| a.min(b)).to_string());
+            metadata.insert("max_performance".to_string(), performance_metrics.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b)).to_string());
+        }
+        
+        metadata
+    }
+    
+    /// Use HashMap for hyperparameter tuning results
+    pub fn store_hyperparameter_results<T: Float>(
+        hyperparams: &[(String, f64)],
+        performance_score: T,
+        training_time_ms: u64,
+    ) -> HashMap<String, String> {
+        let mut results = HashMap::new();
+        
+        // Store hyperparameters
+        for (param, value) in hyperparams {
+            results.insert(format!("hyperparam_{}", param), value.to_string());
+        }
+        
+        // Store performance metrics
+        results.insert("performance_score".to_string(), performance_score.to_string());
+        results.insert("training_time_ms".to_string(), training_time_ms.to_string());
+        results.insert("timestamp".to_string(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs().to_string());
+        
+        results
+    }
+}
+
 /// Mathematical utility functions
 pub mod math {
     use super::*;

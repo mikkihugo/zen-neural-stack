@@ -1,9 +1,17 @@
-//! # Zen Orchestrator
+//! # Zen Orchestrator  
 //!
-//! Decentralized Autonomous Agent orchestration with THE COLLECTIVE coordination
-//! for the zen-neural-stack ecosystem. This crate provides high-level orchestration
-//! capabilities for managing swarms of agents across neural networks, forecasting
-//! models, and CUDA computation.
+//! Distributed orchestration engine that runs INSIDE THE COLLECTIVE (zen-code).
+//! This crate provides the "hive intelligence" that coordinates neural networks,
+//! forecasting models, and CUDA computation within THE COLLECTIVE infrastructure.
+//!
+//! ## Architecture
+//!
+//! zen-orchestrator is a library component of THE COLLECTIVE that provides:
+//! - Multi-agent coordination within the hive
+//! - Neural network orchestration (zen-neural integration)
+//! - Forecasting pipeline management (zen-forecasting integration)  
+//! - GPU compute coordination (zen-compute integration)
+//! - Intelligent task distribution and load balancing
 //!
 //! ## Features
 //!
@@ -87,6 +95,9 @@ pub mod performance;
 pub mod mcp;
 pub mod transport;
 pub mod persistence;
+
+// A2A protocol implementation
+pub mod a2a;
 
 // WASM support
 #[cfg(feature = "wasm")]

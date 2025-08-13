@@ -8,6 +8,138 @@ use crate::commands::orchestrate::{Task, TaskStatus};
 use crate::commands::spawn::{Agent, AgentMetrics, AgentStatus};
 use crate::output::{OutputHandler, StatusLevel};
 
+/// Comprehensive status level utilities for swarm monitoring
+mod status_level_utils {
+    use super::*;
+    
+    /// Use StatusLevel for comprehensive agent status visualization
+    pub fn determine_agent_status_level(agent: &Agent, metrics: &AgentMetrics) -> StatusLevel {
+        if !agent.is_active {
+            return StatusLevel::Error;
+        }
+        
+        if agent.status == AgentStatus::Offline {
+            return StatusLevel::Error;
+        }
+        
+        if agent.status == AgentStatus::Error {
+            return StatusLevel::Error;
+        }
+        
+        if metrics.performance_score < 0.3 {
+            return StatusLevel::Warning;
+        }
+        
+        if metrics.performance_score >= 0.8 {
+            return StatusLevel::Good;
+        }
+        
+        StatusLevel::Info
+    }
+    
+    /// Use StatusLevel for task status visualization
+    pub fn determine_task_status_level(task: &Task) -> StatusLevel {
+        match task.status {
+            TaskStatus::Completed => StatusLevel::Good,
+            TaskStatus::Failed => StatusLevel::Error,
+            TaskStatus::Running => StatusLevel::Info,
+            TaskStatus::Pending => StatusLevel::Neutral,
+            TaskStatus::Cancelled => StatusLevel::Warning,
+        }
+    }
+    
+    /// Use StatusLevel for swarm health assessment
+    pub fn assess_swarm_health(status: &SwarmStatus) -> StatusLevel {
+        let active_ratio = if status.total_agents > 0 {
+            status.active_agents as f32 / status.total_agents as f32
+        } else {
+            0.0
+        };
+        
+        let success_ratio = if status.total_tasks > 0 {
+            status.completed_tasks as f32 / status.total_tasks as f32
+        } else {
+            1.0
+        };
+        
+        let failure_ratio = if status.total_tasks > 0 {
+            status.failed_tasks as f32 / status.total_tasks as f32
+        } else {
+            0.0
+        };
+        
+        if active_ratio < 0.5 || failure_ratio > 0.3 {
+            StatusLevel::Error
+        } else if active_ratio < 0.8 || failure_ratio > 0.1 {
+            StatusLevel::Warning
+        } else if active_ratio >= 0.9 && success_ratio >= 0.8 {
+            StatusLevel::Good
+        } else {
+            StatusLevel::Info
+        }
+    }
+    
+    /// Use StatusLevel for performance metrics display
+    pub fn display_agent_metrics_with_status(
+        output: &OutputHandler,
+        agent: &Agent,
+        metrics: &AgentMetrics,
+    ) {
+        let status_level = determine_agent_status_level(agent, metrics);
+        
+        output.print_status("Agent ID", &agent.id, StatusLevel::Neutral);
+        output.print_status("Name", &agent.name, StatusLevel::Info);
+        output.print_status("Type", &agent.agent_type, StatusLevel::Info);
+        output.print_status("Status", &format!("{:?}", agent.status), status_level);
+        output.print_status("Performance Score", &format!("{:.2}", metrics.performance_score), status_level);
+        output.print_status("CPU Usage", &format!("{:.1}%", metrics.cpu_usage), StatusLevel::Info);
+        output.print_status("Memory Usage", &format!("{:.1}MB", metrics.memory_usage), StatusLevel::Info);
+        output.print_status("Tasks Completed", &metrics.tasks_completed.to_string(), StatusLevel::Good);
+        output.print_status("Tasks Failed", &metrics.tasks_failed.to_string(), 
+            if metrics.tasks_failed > 0 { StatusLevel::Warning } else { StatusLevel::Good });
+    }
+    
+    /// Use StatusLevel for comprehensive swarm overview
+    pub fn display_swarm_overview_with_status(
+        output: &OutputHandler,
+        status: &SwarmStatus,
+    ) {
+        let health_level = assess_swarm_health(status);
+        
+        output.print_status("Swarm ID", &status.swarm_id, StatusLevel::Info);
+        output.print_status("Topology", &status.topology, StatusLevel::Info);
+        output.print_status("Health", &format!("{:?}", health_level), health_level);
+        output.print_status("Total Agents", &status.total_agents.to_string(), StatusLevel::Neutral);
+        output.print_status("Active Agents", &status.active_agents.to_string(), 
+            if status.active_agents == status.total_agents { StatusLevel::Good } else { StatusLevel::Warning });
+        output.print_status("Total Tasks", &status.total_tasks.to_string(), StatusLevel::Neutral);
+        output.print_status("Running Tasks", &status.running_tasks.to_string(), StatusLevel::Info);
+        output.print_status("Completed Tasks", &status.completed_tasks.to_string(), StatusLevel::Good);
+        output.print_status("Failed Tasks", &status.failed_tasks.to_string(), 
+            if status.failed_tasks == 0 { StatusLevel::Good } else { StatusLevel::Error });
+        output.print_status("Uptime", &format!("{}", status.uptime), StatusLevel::Info);
+    }
+    
+    /// Use StatusLevel for task summary visualization
+    pub fn display_task_summary_with_status(
+        output: &OutputHandler,
+        tasks: &[Task],
+    ) {
+        let mut status_counts = HashMap::new();
+        for task in tasks {
+            let status_level = determine_task_status_level(task);
+            *status_counts.entry(status_level).or_insert(0) += 1;
+        }
+        
+        output.print_status("Total Tasks", &tasks.len().to_string(), StatusLevel::Neutral);
+        
+        for (level, count) in status_counts {
+            let label = format!("Tasks ({:?})", level);
+            output.print_status(&label, &count.to_string(), level);
+        }
+    }
+}
+
 #[derive(Debug)]
 struct SwarmStatus {
     swarm_id: String,
@@ -40,11 +172,15 @@ pub async fn execute(
 ) -> Result<()> {
     output.section("Zen Swarm Status");
 
-    // Load current swarm
+    // Load current swarm with status level feedback
+    output.print_status("Loading", "Current swarm configuration", StatusLevel::Info);
     let swarm_config = load_current_swarm(output).await?;
+    output.print_status("Loaded", "Swarm configuration", StatusLevel::Good);
 
-    // Load agents
+    // Load agents with status level feedback
+    output.print_status("Loading", "Agent information", StatusLevel::Info);
     let all_agents = load_agents(&swarm_config).await?;
+    output.print_status("Loaded", &format!("{} agents", all_agents.len()), StatusLevel::Good);
 
     // Filter agents based on criteria
     let filtered_agents: Vec<Agent> = all_agents

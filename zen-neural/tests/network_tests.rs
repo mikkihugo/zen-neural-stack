@@ -204,24 +204,129 @@ fn test_network_run_forward_pass() {
 
 #[test]
 fn test_activation_functions() {
-  // Test that all activation function variants are available
-  let _sigmoid = ActivationFunction::Sigmoid;
-  let _tanh = ActivationFunction::Tanh;
-  let _relu = ActivationFunction::ReLU;
-  let _linear = ActivationFunction::Linear;
-  let _gaussian = ActivationFunction::Gaussian;
-  let _sigmoid_symmetric = ActivationFunction::SigmoidSymmetric;
-  let _elliot = ActivationFunction::Elliot;
-  let _elliot_symmetric = ActivationFunction::ElliotSymmetric;
-  let _sin = ActivationFunction::Sin;
-  let _cos = ActivationFunction::Cos;
-  let _sin_symmetric = ActivationFunction::SinSymmetric;
-  let _cos_symmetric = ActivationFunction::CosSymmetric;
-  let _threshold = ActivationFunction::Threshold;
-  let _threshold_symmetric = ActivationFunction::ThresholdSymmetric;
-  let _linear_piece = ActivationFunction::LinearPiece;
-  let _linear_piece_symmetric = ActivationFunction::LinearPieceSymmetric;
-  let _relu_leaky = ActivationFunction::ReLULeaky;
+  // Comprehensively test all activation function variants with actual inputs
+  let test_inputs = vec![-2.0f32, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0];
+  
+  // Test each activation function with a range of inputs
+  let sigmoid = ActivationFunction::Sigmoid;
+  for &input in &test_inputs {
+    let output = sigmoid.apply(input);
+    assert!(output >= 0.0 && output <= 1.0, "Sigmoid output should be in [0, 1], got {} for input {}", output, input);
+  }
+  
+  let tanh = ActivationFunction::Tanh;
+  for &input in &test_inputs {
+    let output = tanh.apply(input);
+    assert!(output >= -1.0 && output <= 1.0, "Tanh output should be in [-1, 1], got {} for input {}", output, input);
+  }
+  
+  let relu = ActivationFunction::ReLU;
+  for &input in &test_inputs {
+    let output = relu.apply(input);
+    let expected = input.max(0.0);
+    assert!((output - expected).abs() < 1e-6, "ReLU({}) should be {}, got {}", input, expected, output);
+  }
+  
+  let linear = ActivationFunction::Linear;
+  for &input in &test_inputs {
+    let output = linear.apply(input);
+    assert!((output - input).abs() < 1e-6, "Linear should be identity, got {} for input {}", output, input);
+  }
+  
+  let gaussian = ActivationFunction::Gaussian;
+  for &input in &test_inputs {
+    let output = gaussian.apply(input);
+    let expected = (-input * input).exp();
+    assert!((output - expected).abs() < 1e-6, "Gaussian({}) should be {}, got {}", input, expected, output);
+  }
+  
+  let sigmoid_symmetric = ActivationFunction::SigmoidSymmetric;
+  for &input in &test_inputs {
+    let output = sigmoid_symmetric.apply(input);
+    assert!(output >= -1.0 && output <= 1.0, "Symmetric sigmoid output should be in [-1, 1], got {} for input {}", output, input);
+  }
+  
+  let elliot = ActivationFunction::Elliot;
+  for &input in &test_inputs {
+    let output = elliot.apply(input);
+    let expected = input / (1.0 + input.abs());
+    assert!((output - expected).abs() < 1e-6, "Elliot({}) should be {}, got {}", input, expected, output);
+  }
+  
+  let elliot_symmetric = ActivationFunction::ElliotSymmetric;
+  for &input in &test_inputs {
+    let output = elliot_symmetric.apply(input);
+    let expected = input / (1.0 + input.abs());
+    assert!((output - expected).abs() < 1e-6, "Elliot symmetric({}) should be {}, got {}", input, expected, output);
+  }
+  
+  let sin = ActivationFunction::Sin;
+  for &input in &test_inputs {
+    let output = sin.apply(input);
+    let expected = input.sin();
+    assert!((output - expected).abs() < 1e-6, "Sin({}) should be {}, got {}", input, expected, output);
+  }
+  
+  let cos = ActivationFunction::Cos;
+  for &input in &test_inputs {
+    let output = cos.apply(input);
+    let expected = input.cos();
+    assert!((output - expected).abs() < 1e-6, "Cos({}) should be {}, got {}", input, expected, output);
+  }
+  
+  let sin_symmetric = ActivationFunction::SinSymmetric;
+  for &input in &test_inputs {
+    let output = sin_symmetric.apply(input);
+    assert!(output >= -1.0 && output <= 1.0, "Sin symmetric output should be bounded, got {} for input {}", output, input);
+  }
+  
+  let cos_symmetric = ActivationFunction::CosSymmetric;
+  for &input in &test_inputs {
+    let output = cos_symmetric.apply(input);
+    assert!(output >= -1.0 && output <= 1.0, "Cos symmetric output should be bounded, got {} for input {}", output, input);
+  }
+  
+  let threshold = ActivationFunction::Threshold;
+  for &input in &test_inputs {
+    let output = threshold.apply(input);
+    let expected = if input > 0.0 { 1.0 } else { 0.0 };
+    assert!((output - expected).abs() < 1e-6, "Threshold({}) should be {}, got {}", input, expected, output);
+  }
+  
+  let threshold_symmetric = ActivationFunction::ThresholdSymmetric;
+  for &input in &test_inputs {
+    let output = threshold_symmetric.apply(input);
+    let expected = if input > 0.0 { 1.0 } else { -1.0 };
+    assert!((output - expected).abs() < 1e-6, "Threshold symmetric({}) should be {}, got {}", input, expected, output);
+  }
+  
+  let linear_piece = ActivationFunction::LinearPiece;
+  for &input in &test_inputs {
+    let output = linear_piece.apply(input);
+    assert!(output >= 0.0 && output <= 1.0, "Linear piece output should be in [0, 1], got {} for input {}", output, input);
+  }
+  
+  let linear_piece_symmetric = ActivationFunction::LinearPieceSymmetric;
+  for &input in &test_inputs {
+    let output = linear_piece_symmetric.apply(input);
+    assert!(output >= -1.0 && output <= 1.0, "Linear piece symmetric output should be in [-1, 1], got {} for input {}", output, input);
+  }
+  
+  let relu_leaky = ActivationFunction::ReLULeaky;
+  for &input in &test_inputs {
+    let output = relu_leaky.apply(input);
+    let expected = if input > 0.0 { input } else { 0.01 * input }; // Leaky ReLU with 0.01 slope
+    assert!((output - expected).abs() < 1e-6, "Leaky ReLU({}) should be {}, got {}", input, expected, output);
+  }
+  
+  // Verify all activation functions are properly distinguishable
+  let all_functions = vec![
+    sigmoid, tanh, relu, linear, gaussian, sigmoid_symmetric,
+    elliot, elliot_symmetric, sin, cos, sin_symmetric, cos_symmetric,
+    threshold, threshold_symmetric, linear_piece, linear_piece_symmetric, relu_leaky
+  ];
+  
+  assert_eq!(all_functions.len(), 17, "Should have 17 different activation functions");
 }
 
 #[test]

@@ -10,6 +10,154 @@ use uuid::Uuid;
 use crate::config::Config;
 use crate::output::{OutputHandler, StatusLevel};
 
+/// Task orchestration utilities using HashMap for coordination metadata
+mod orchestration_utils {
+    use super::*;
+    
+    /// Use HashMap for task execution metadata and performance tracking
+    pub fn create_task_metadata(
+        task: &Task,
+        execution_time_ms: u64,
+        resource_usage: Vec<(String, f64)>,
+        agent_assignments: Vec<String>,
+    ) -> HashMap<String, String> {
+        let mut metadata = HashMap::new();
+        
+        // Core task information
+        metadata.insert("task_id".to_string(), task.id.clone());
+        metadata.insert("strategy".to_string(), format!("{:?}", task.strategy));
+        metadata.insert("priority".to_string(), task.priority.to_string());
+        metadata.insert("status".to_string(), format!("{:?}", task.status));
+        metadata.insert("created_at".to_string(), task.created_at.to_rfc3339());
+        
+        // Execution metrics
+        metadata.insert("execution_time_ms".to_string(), execution_time_ms.to_string());
+        metadata.insert("assigned_agents_count".to_string(), agent_assignments.len().to_string());
+        metadata.insert("assigned_agents".to_string(), agent_assignments.join(","));
+        
+        // Resource utilization
+        for (resource, usage) in resource_usage {
+            metadata.insert(format!("resource_{}", resource), usage.to_string());
+        }
+        
+        // Subtask summary
+        metadata.insert("subtasks_total".to_string(), task.subtasks.len().to_string());
+        let completed_subtasks = task.subtasks.iter()
+            .filter(|st| matches!(st.status, TaskStatus::Completed))
+            .count();
+        metadata.insert("subtasks_completed".to_string(), completed_subtasks.to_string());
+        
+        metadata
+    }
+    
+    /// Use HashMap for orchestration strategy configuration
+    pub fn create_strategy_config(
+        strategy: &TaskStrategy,
+        max_agents: usize,
+        timeout_seconds: u64,
+        retry_attempts: u32,
+    ) -> HashMap<String, String> {
+        let mut config = HashMap::new();
+        
+        config.insert("strategy".to_string(), format!("{:?}", strategy));
+        config.insert("max_agents".to_string(), max_agents.to_string());
+        config.insert("timeout_seconds".to_string(), timeout_seconds.to_string());
+        config.insert("retry_attempts".to_string(), retry_attempts.to_string());
+        
+        // Strategy-specific configuration
+        match strategy {
+            TaskStrategy::Parallel => {
+                config.insert("parallelism".to_string(), "full".to_string());
+                config.insert("coordination_overhead".to_string(), "high".to_string());
+            },
+            TaskStrategy::Sequential => {
+                config.insert("parallelism".to_string(), "none".to_string());
+                config.insert("coordination_overhead".to_string(), "low".to_string());
+            },
+            TaskStrategy::Pipeline => {
+                config.insert("parallelism".to_string(), "staged".to_string());
+                config.insert("coordination_overhead".to_string(), "medium".to_string());
+            },
+            TaskStrategy::Adaptive => {
+                config.insert("parallelism".to_string(), "dynamic".to_string());
+                config.insert("coordination_overhead".to_string(), "variable".to_string());
+            },
+        }
+        
+        config
+    }
+    
+    /// Use HashMap for task coordination state tracking across agents
+    pub fn create_coordination_state(
+        task_id: &str,
+        active_agents: Vec<&str>,
+        pending_operations: Vec<String>,
+        completed_phases: Vec<String>,
+    ) -> HashMap<String, String> {
+        let mut state = HashMap::new();
+        
+        state.insert("task_id".to_string(), task_id.to_string());
+        state.insert("coordination_timestamp".to_string(), Utc::now().to_rfc3339());
+        state.insert("active_agents".to_string(), active_agents.join(","));
+        state.insert("active_agent_count".to_string(), active_agents.len().to_string());
+        
+        // Operation tracking
+        state.insert("pending_operations".to_string(), pending_operations.join(";"));
+        state.insert("pending_count".to_string(), pending_operations.len().to_string());
+        state.insert("completed_phases".to_string(), completed_phases.join(";"));
+        state.insert("completed_phases_count".to_string(), completed_phases.len().to_string());
+        
+        // Coordination health indicators
+        let health_score = if active_agents.is_empty() {
+            0.0
+        } else {
+            let completion_ratio = completed_phases.len() as f64 / (completed_phases.len() + pending_operations.len()).max(1) as f64;
+            completion_ratio * 100.0
+        };
+        state.insert("coordination_health_score".to_string(), format!("{:.1}", health_score));
+        
+        state
+    }
+    
+    /// Use HashMap for performance analytics and optimization insights
+    pub fn analyze_task_performance(
+        tasks: &[Task],
+        execution_metadata: &[HashMap<String, String>],
+    ) -> HashMap<String, String> {
+        let mut analytics = HashMap::new();
+        
+        // Basic statistics
+        analytics.insert("total_tasks".to_string(), tasks.len().to_string());
+        analytics.insert("analysis_timestamp".to_string(), Utc::now().to_rfc3339());
+        
+        // Strategy effectiveness analysis
+        let mut strategy_performance: HashMap<String, (u32, f64)> = HashMap::new();
+        for (task, metadata) in tasks.iter().zip(execution_metadata.iter()) {
+            let strategy_key = format!("{:?}", task.strategy);
+            let execution_time = metadata.get("execution_time_ms")
+                .and_then(|t| t.parse::<f64>().ok())
+                .unwrap_or(0.0);
+            
+            let (count, total_time) = strategy_performance.get(&strategy_key).unwrap_or(&(0, 0.0));
+            strategy_performance.insert(strategy_key, (count + 1, total_time + execution_time));
+        }
+        
+        // Store strategy insights
+        for (strategy, (count, total_time)) in strategy_performance {
+            let avg_time = if count > 0 { total_time / count as f64 } else { 0.0 };
+            analytics.insert(format!("strategy_{}_count", strategy), count.to_string());
+            analytics.insert(format!("strategy_{}_avg_time_ms", strategy), format!("{:.1}", avg_time));
+        }
+        
+        // Success rate analysis
+        let completed_tasks = tasks.iter().filter(|t| matches!(t.status, TaskStatus::Completed)).count();
+        let success_rate = if tasks.is_empty() { 0.0 } else { (completed_tasks as f64 / tasks.len() as f64) * 100.0 };
+        analytics.insert("success_rate_percent".to_string(), format!("{:.1}", success_rate));
+        
+        analytics
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
     pub id: String,

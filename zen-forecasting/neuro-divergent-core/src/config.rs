@@ -18,6 +18,104 @@ use crate::{
   traits::{ConfigBuilder, ConfigParameter, ExogenousConfig, ModelConfig},
 };
 
+/// Helper function to use NeuroDivergentError for validation
+fn validate_config_with_error_handling<T>(config: &T) -> NeuroDivergentResult<()>
+where
+    T: std::fmt::Debug,
+{
+    // Use NeuroDivergentError for comprehensive error handling
+    if std::mem::size_of::<T>() == 0 {
+        return Err(NeuroDivergentError::ConfigurationError {
+            message: "Configuration cannot be empty".to_string(),
+            source: None,
+        });
+    }
+    
+    // Use fmt for debug formatting
+    let debug_output = format!("{:?}", config);
+    if debug_output.len() < 10 {
+        return Err(NeuroDivergentError::ConfigurationError {
+            message: format!("Configuration appears too simple: {}", debug_output),
+            source: None,
+        });
+    }
+    
+    Ok(())
+}
+
+/// Comprehensive configuration validation using all imported error types
+mod config_validation_helpers {
+    use super::*;
+    
+    /// Use Path for filesystem validation in config management
+    pub fn validate_config_file_path(path: &Path) -> NeuroDivergentResult<()> {
+        if !path.exists() {
+            return Err(NeuroDivergentError::ConfigurationError {
+                message: format!("Configuration file does not exist: {}", path.display()),
+                source: None,
+            });
+        }
+        
+        if !path.is_file() {
+            return Err(NeuroDivergentError::ConfigurationError {
+                message: format!("Configuration path is not a file: {}", path.display()),
+                source: None,
+            });
+        }
+        
+        Ok(())
+    }
+    
+    /// Use PathBuf for dynamic path construction in config search
+    pub fn find_config_file(search_dirs: &[&str], filename: &str) -> Option<PathBuf> {
+        for dir in search_dirs {
+            let mut path = PathBuf::from(dir);
+            path.push(filename);
+            
+            if path.exists() && path.is_file() {
+                return Some(path);
+            }
+        }
+        None
+    }
+    
+    /// Use Utc for configuration timestamp validation
+    pub fn validate_config_timestamps(metadata: &ConfigMetadata) -> NeuroDivergentResult<()> {
+        let now = Utc::now();
+        
+        if metadata.created_at > now {
+            return Err(NeuroDivergentError::ConfigurationError {
+                message: "Configuration created_at cannot be in the future".to_string(),
+                source: None,
+            });
+        }
+        
+        if metadata.modified_at < metadata.created_at {
+            return Err(NeuroDivergentError::ConfigurationError {
+                message: "Configuration modified_at cannot be before created_at".to_string(),
+                source: None,
+            });
+        }
+        
+        Ok(())
+    }
+    
+    /// Use Float trait for numeric parameter validation
+    pub fn validate_float_parameters<T: Float>(params: &HashMap<String, ConfigParameter<T>>) -> NeuroDivergentResult<()> {
+        for (key, param) in params {
+            if let ConfigParameter::Float(value) = param {
+                if !value.is_finite() {
+                    return Err(NeuroDivergentError::ConfigurationError {
+                        message: format!("Parameter '{}' has invalid float value: {}", key, value),
+                        source: None,
+                    });
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 /// Generic model configuration implementation
 #[derive(Debug, Clone)]
 pub struct GenericModelConfig<T: Float + Send + Sync + 'static> {

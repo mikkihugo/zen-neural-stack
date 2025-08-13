@@ -35,6 +35,63 @@ use super::{DNNConfig, ActivationType, WeightInitialization};
 pub struct TensorUtils;
 
 impl TensorUtils {
+    /// Create a TensorShape from dimensions with validation
+    pub fn create_tensor_shape(dims: Vec<usize>) -> Result<TensorShape, DNNError> {
+        if dims.is_empty() {
+            return Err(DNNError::InvalidInput(
+                "Tensor must have at least one dimension".to_string()
+            ));
+        }
+        
+        if dims.iter().any(|&d| d == 0) {
+            return Err(DNNError::InvalidInput(
+                "All dimensions must be greater than zero".to_string()
+            ));
+        }
+        
+        Ok(TensorShape::new(dims))
+    }
+    
+    /// Validate TensorShape compatibility for neural network operations
+    pub fn validate_tensor_shape_for_layer(
+        input_shape: &TensorShape,
+        layer_type: &str,
+        expected_features: usize
+    ) -> Result<(), DNNError> {
+        let dims = input_shape.dimensions();
+        
+        match layer_type {
+            "dense" | "linear" => {
+                if dims.len() != 2 {
+                    return Err(DNNError::InvalidInput(
+                        format!("Dense layer requires 2D input, got {}D", dims.len())
+                    ));
+                }
+                
+                if dims[1] != expected_features {
+                    return Err(DNNError::DimensionMismatch(
+                        format!("Expected {} input features, got {}", expected_features, dims[1])
+                    ));
+                }
+            }
+            "activation" => {
+                // Activation layers preserve shape
+                if dims.len() < 2 {
+                    return Err(DNNError::InvalidInput(
+                        "Activation layer requires at least 2D input".to_string()
+                    ));
+                }
+            }
+            _ => {
+                return Err(DNNError::InvalidConfiguration(
+                    format!("Unknown layer type: {}", layer_type)
+                ));
+            }
+        }
+        
+        Ok(())
+    }
+    
     /// Validate tensor shape compatibility for matrix operations
     pub fn validate_shapes_for_matmul(
         a_shape: &[usize], 
@@ -105,7 +162,7 @@ impl TensorUtils {
         let array = Array2::from_shape_vec((batch_size, feature_size), data)
             .map_err(|e| DNNError::TensorError(e.to_string()))?;
             
-        Ok(DNNTensor { data: array })
+        DNNTensor::new(array)
     }
     
     /// Extract batch from tensor
@@ -118,7 +175,7 @@ impl TensorUtils {
         }
         
         let batch_data = tensor.data.slice(s![batch_idx..batch_idx+1, ..]).to_owned();
-        Ok(DNNTensor { data: batch_data })
+        DNNTensor::new(batch_data)
     }
     
     /// Concatenate tensors along batch dimension
@@ -147,7 +204,7 @@ impl TensorUtils {
         let concatenated = ndarray::concatenate(Axis(0), &arrays)
             .map_err(|e| DNNError::TensorError(e.to_string()))?;
             
-        Ok(DNNTensor { data: concatenated })
+        DNNTensor::new(concatenated)
     }
 }
 
@@ -208,9 +265,9 @@ impl NumericalUtils {
     }
     
     /// Safe log computation that handles zeros
-    pub fn safe_log(tensor: &DNNTensor, epsilon: f32) -> DNNTensor {
+    pub fn safe_log(tensor: &DNNTensor, epsilon: f32) -> Result<DNNTensor, DNNError> {
         let data = tensor.data.mapv(|x| (x + epsilon).ln());
-        DNNTensor { data }
+        DNNTensor::new(data)
     }
     
     /// Check for exploding gradients
@@ -559,7 +616,7 @@ mod tests {
     #[test]
     fn test_tensor_stats() {
         let data = Array2::from_shape_vec((2, 3), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
-        let tensor = DNNTensor { data };
+        let tensor = DNNTensor::new(data).unwrap();
         
         let stats = DebugUtils::compute_tensor_stats(&tensor);
         assert_eq!(stats.shape, vec![2, 3]);
@@ -573,7 +630,7 @@ mod tests {
     #[test]
     fn test_numerical_stability() {
         let data = Array2::from_shape_vec((1, 3), vec![f32::NAN, 1.0, f32::INFINITY]).unwrap();
-        let tensor = DNNTensor { data };
+        let tensor = DNNTensor::new(data).unwrap();
         
         assert!(NumericalUtils::has_invalid_values(&tensor));
     }

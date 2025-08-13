@@ -574,6 +574,168 @@ where
     }
 }
 
+// === MEMORY LAYOUT MANAGER ===
+
+/// Core memory layout manager for neural network operations
+#[derive(Debug)]
+pub struct MemoryLayoutManager {
+    /// Cache configuration
+    cache_config: CacheConfig,
+    /// Layout optimization strategies
+    optimization_strategies: Vec<LayoutStrategy>,
+    /// Performance metrics
+    metrics: MemoryHierarchyMetrics,
+}
+
+impl MemoryLayoutManager {
+    /// Create a new memory layout manager
+    pub fn new() -> Self {
+        Self {
+            cache_config: CacheConfig::default(),
+            optimization_strategies: vec![
+                LayoutStrategy::Sequential,
+                LayoutStrategy::Simd,
+                LayoutStrategy::Graph,
+                LayoutStrategy::Matrix,
+            ],
+            metrics: MemoryHierarchyMetrics::default(),
+        }
+    }
+    
+    /// Get optimal layout for tensor type
+    pub fn get_optimal_layout(&self, tensor_type: TensorType, shape: &[usize]) -> Result<MemoryLayout, MemoryError> {
+        // Determine optimal memory layout based on tensor type and shape
+        let layout = match tensor_type {
+            TensorType::Float32 | TensorType::Float64 => {
+                if shape.len() >= 2 {
+                    MemoryLayout::ContiguousAligned(self.cache_config.simd_width)
+                } else {
+                    MemoryLayout::Contiguous
+                }
+            }
+            TensorType::Int32 | TensorType::UInt32 => {
+                MemoryLayout::ContiguousAligned(self.cache_config.l1_cache_line_size)
+            }
+            _ => MemoryLayout::Contiguous,
+        };
+        
+        Ok(layout)
+    }
+    
+    /// Optimize existing layout
+    pub fn optimize_layout(&self, tensor_type: TensorType, current: &MemoryLayout) -> Result<MemoryLayout, MemoryError> {
+        match current {
+            MemoryLayout::Contiguous => {
+                // Upgrade to aligned layout for better performance
+                Ok(MemoryLayout::ContiguousAligned(self.cache_config.simd_width))
+            }
+            MemoryLayout::ContiguousAligned(_) => {
+                // Already optimized for alignment
+                Ok(current.clone())
+            }
+            MemoryLayout::Strided(_) => {
+                // Convert strided to contiguous for better cache performance
+                Ok(MemoryLayout::Contiguous)
+            }
+            MemoryLayout::StructureOfArrays => {
+                // Good for SIMD operations, keep as is
+                Ok(current.clone())
+            }
+            MemoryLayout::ArrayOfStructures => {
+                // Consider converting to SoA for better vectorization
+                if tensor_type.is_simd_compatible() {
+                    Ok(MemoryLayout::StructureOfArrays)
+                } else {
+                    Ok(current.clone())
+                }
+            }
+        }
+    }
+}
+
+/// Memory layout strategies for different operation types
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MemoryLayout {
+    /// Standard contiguous layout
+    Contiguous,
+    /// Contiguous layout aligned to specified boundary
+    ContiguousAligned(usize),
+    /// Strided layout with specified stride
+    Strided(usize),
+    /// Structure of Arrays (better for SIMD)
+    StructureOfArrays,
+    /// Array of Structures (better for random access)
+    ArrayOfStructures,
+}
+
+/// Thread-safe memory layout manager for concurrent operations
+#[derive(Debug, Clone)]
+pub struct ConcurrentMemoryLayoutManager {
+    /// Shared layout state
+    layout: Arc<RwLock<MemoryLayoutManager>>,
+    /// Performance metrics
+    metrics: Arc<RwLock<LayoutMetrics>>,
+}
+
+/// Performance metrics for memory layout operations
+#[derive(Debug, Default, Clone)]
+pub struct LayoutMetrics {
+    pub optimizations_performed: u64,
+    pub cache_hits: u64,
+    pub cache_misses: u64,
+    pub alignment_improvements: u64,
+}
+
+impl ConcurrentMemoryLayoutManager {
+    /// Create a new concurrent memory layout manager
+    pub fn new() -> Self {
+        Self {
+            layout: Arc::new(RwLock::new(MemoryLayoutManager::new())),
+            metrics: Arc::new(RwLock::new(LayoutMetrics::default())),
+        }
+    }
+    
+    /// Get optimal layout for tensor type with concurrent safety
+    pub fn get_optimal_layout(&self, tensor_type: TensorType, shape: &[usize]) -> Result<MemoryLayout, MemoryError> {
+        let layout = self.layout.read().unwrap();
+        let mut metrics = self.metrics.write().unwrap();
+        
+        let result = layout.get_optimal_layout(tensor_type, shape);
+        
+        match &result {
+            Ok(_) => metrics.cache_hits += 1,
+            Err(_) => metrics.cache_misses += 1,
+        }
+        
+        result
+    }
+    
+    /// Optimize layout with concurrent access tracking
+    pub fn optimize_layout(&self, tensor_type: TensorType, current: &MemoryLayout) -> Result<MemoryLayout, MemoryError> {
+        let layout = self.layout.read().unwrap();
+        let mut metrics = self.metrics.write().unwrap();
+        
+        let result = layout.optimize_layout(tensor_type, current);
+        
+        if result.is_ok() {
+            metrics.optimizations_performed += 1;
+        }
+        
+        result
+    }
+    
+    /// Get performance metrics
+    pub fn get_metrics(&self) -> LayoutMetrics {
+        self.metrics.read().unwrap().clone()
+    }
+    
+    /// Reset performance metrics
+    pub fn reset_metrics(&self) {
+        let mut metrics = self.metrics.write().unwrap();
+        *metrics = LayoutMetrics::default();
+    }
+}
+
 // === MEMORY HIERARCHY MANAGER ===
 
 /// Manages memory hierarchy optimization for the entire system

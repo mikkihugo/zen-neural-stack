@@ -469,6 +469,124 @@ pub struct TrainingStatistics<T: Float> {
   pub metrics: HashMap<String, Vec<T>>,
 }
 
+/// TrainingMetrics for individual epoch tracking
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrainingMetrics<T: Float> {
+  /// Current epoch number
+  pub epoch: usize,
+  /// Training loss for this epoch
+  pub training_loss: T,
+  /// Validation loss for this epoch (if available)
+  pub validation_loss: Option<T>,
+  /// Learning rate for this epoch
+  pub learning_rate: T,
+  /// Batch size used for training
+  pub batch_size: usize,
+  /// Custom metrics for this epoch
+  pub metrics: HashMap<String, T>,
+  /// Gradient information (if tracked)
+  pub gradients: Option<Vec<T>>,
+  /// Weight L2 norm (if computed)
+  pub weights_l2_norm: Option<T>,
+  /// Convergence metrics for this epoch
+  pub convergence_metrics: Option<HashMap<String, T>>,
+}
+
+/// Comprehensive training metrics tracking for neural models
+mod training_metrics_helpers {
+    use super::*;
+    
+    /// TrainingMetrics implementation for comprehensive tracking
+    pub fn create_comprehensive_training_metrics<T: Float>() -> TrainingMetrics<T> {
+        TrainingMetrics {
+            epoch: 0,
+            training_loss: T::infinity(),
+            validation_loss: None,
+            learning_rate: T::from(0.001).unwrap_or_else(|| T::one() / T::from(1000).unwrap()),
+            batch_size: 32,
+            metrics: HashMap::new(),
+            gradients: None,
+            weights_l2_norm: None,
+            convergence_metrics: None,
+        }
+    }
+    
+    /// Update TrainingMetrics with validation data
+    pub fn update_training_metrics_with_validation<T: Float>(
+        metrics: &mut TrainingMetrics<T>,
+        validation_loss: T,
+        epoch: usize,
+    ) {
+        metrics.validation_loss = Some(validation_loss);
+        metrics.epoch = epoch;
+        
+        // Add custom validation metrics
+        metrics.metrics.insert("validation_accuracy".to_string(), validation_loss);
+        metrics.metrics.insert("epochs_completed".to_string(), T::from(epoch).unwrap_or_else(T::zero));
+    }
+    
+    /// Calculate comprehensive metrics from TrainingMetrics
+    pub fn calculate_convergence_metrics<T: Float>(metrics: &TrainingMetrics<T>) -> HashMap<String, T> {
+        let mut convergence = HashMap::new();
+        
+        // Calculate improvement ratio
+        if let Some(val_loss) = metrics.validation_loss {
+            let improvement_ratio = if metrics.training_loss.is_finite() && val_loss.is_finite() {
+                (metrics.training_loss - val_loss) / metrics.training_loss
+            } else {
+                T::zero()
+            };
+            convergence.insert("improvement_ratio".to_string(), improvement_ratio);
+        }
+        
+        // Add learning rate decay metrics
+        convergence.insert("current_learning_rate".to_string(), metrics.learning_rate);
+        convergence.insert("training_loss".to_string(), metrics.training_loss);
+        
+        convergence
+    }
+    
+    /// Convert TrainingMetrics to TrainingStatistics for aggregation
+    pub fn convert_metrics_to_statistics<T: Float>(
+        metrics_history: &[TrainingMetrics<T>]
+    ) -> TrainingStatistics<T> {
+        let mut stats = TrainingStatistics::default();
+        
+        if metrics_history.is_empty() {
+            return stats;
+        }
+        
+        stats.epochs_completed = metrics_history.len();
+        stats.training_loss = metrics_history.iter().map(|m| m.training_loss).collect();
+        stats.learning_rate = metrics_history.iter().map(|m| m.learning_rate).collect();
+        
+        // Extract validation loss if available
+        let validation_losses: Vec<T> = metrics_history
+            .iter()
+            .filter_map(|m| m.validation_loss)
+            .collect();
+        
+        if !validation_losses.is_empty() {
+            stats.validation_loss = Some(validation_losses);
+        }
+        
+        // Find best epoch (lowest validation or training loss)
+        stats.best_epoch = if let Some(ref val_losses) = stats.validation_loss {
+            val_losses.iter()
+                .enumerate()
+                .min_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
+                .map(|(idx, _)| idx)
+        } else {
+            stats.training_loss.iter()
+                .enumerate()
+                .min_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
+                .map(|(idx, _)| idx)
+        };
+        
+        stats
+    }
+}
+
 /// Exogenous variable configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExogenousConfig {

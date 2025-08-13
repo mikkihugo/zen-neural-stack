@@ -16,7 +16,8 @@ use std::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 
 /// Configuration for feature engineering
 #[derive(Debug, Clone)]

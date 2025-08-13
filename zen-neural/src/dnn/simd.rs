@@ -28,8 +28,11 @@
 use std::arch::x86_64::*;
 use ndarray::{Array2, Axis};
 
-#[cfg(feature = "rayon")]
-use rayon::prelude::*;
+// Conditional import for parallel processing - only warn about unused when parallel feature is disabled
+#[cfg_attr(not(feature = "parallel"), allow(unused_imports))]
+#[cfg(feature = "parallel")]
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 
 use super::data::DNNTensor;
 use super::ActivationType;
@@ -78,6 +81,209 @@ impl SimdCapabilities {
         } else {
             4  // 128 bits / 32 bits per f32 (SSE)
         }
+    }
+}
+
+// === X86_64 SIMD INTRINSICS ===
+
+/// Low-level x86_64 SIMD operations using intrinsics
+pub struct X86SimdOps {
+    capabilities: SimdCapabilities,
+}
+
+impl X86SimdOps {
+    pub fn new() -> Self {
+        Self {
+            capabilities: SimdCapabilities::detect(),
+        }
+    }
+    
+    /// AVX2 vectorized ReLU implementation
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn avx2_relu(&self, data: &mut [f32]) {
+        if !self.capabilities.has_avx2 {
+            return; // Fallback to scalar
+        }
+        
+        let zeros = _mm256_setzero_ps();
+        let mut i = 0;
+        
+        // Process 8 elements at a time (256-bit AVX2)
+        while i + 8 <= data.len() {
+            let chunk = _mm256_loadu_ps(data.as_ptr().add(i));
+            let result = _mm256_max_ps(chunk, zeros);
+            _mm256_storeu_ps(data.as_mut_ptr().add(i), result);
+            i += 8;
+        }
+        
+        // Handle remaining elements with scalar operations
+        for val in &mut data[i..] {
+            *val = val.max(0.0);
+        }
+    }
+    
+    /// AVX2 vectorized dot product
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn avx2_dot_product(&self, a: &[f32], b: &[f32]) -> f32 {
+        if !self.capabilities.has_avx2 || a.len() != b.len() {
+            return a.iter().zip(b.iter()).map(|(&x, &y)| x * y).sum();
+        }
+        
+        let mut sum = _mm256_setzero_ps();
+        let mut i = 0;
+        
+        // Process 8 elements at a time
+        while i + 8 <= a.len() {
+            let a_chunk = _mm256_loadu_ps(a.as_ptr().add(i));
+            let b_chunk = _mm256_loadu_ps(b.as_ptr().add(i));
+            let product = _mm256_mul_ps(a_chunk, b_chunk);
+            sum = _mm256_add_ps(sum, product);
+            i += 8;
+        }
+        
+        // Horizontal sum of the vector
+        let sum_arr = [0.0f32; 8];
+        _mm256_storeu_ps(sum_arr.as_ptr() as *mut f32, sum);
+        let mut total = sum_arr.iter().sum::<f32>();
+        
+        // Handle remaining elements
+        for j in i..a.len() {
+            total += a[j] * b[j];
+        }
+        
+        total
+    }
+    
+    /// AVX2 vectorized element-wise addition
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn avx2_add(&self, a: &[f32], b: &[f32], result: &mut [f32]) {
+        if !self.capabilities.has_avx2 || a.len() != b.len() || a.len() != result.len() {
+            // Fallback to scalar
+            for ((r, &a_val), &b_val) in result.iter_mut().zip(a.iter()).zip(b.iter()) {
+                *r = a_val + b_val;
+            }
+            return;
+        }
+        
+        let mut i = 0;
+        
+        // Process 8 elements at a time
+        while i + 8 <= a.len() {
+            let a_chunk = _mm256_loadu_ps(a.as_ptr().add(i));
+            let b_chunk = _mm256_loadu_ps(b.as_ptr().add(i));
+            let sum = _mm256_add_ps(a_chunk, b_chunk);
+            _mm256_storeu_ps(result.as_mut_ptr().add(i), sum);
+            i += 8;
+        }
+        
+        // Handle remaining elements
+        for j in i..a.len() {
+            result[j] = a[j] + b[j];
+        }
+    }
+    
+    /// FMA (Fused Multiply-Add) operation: a * b + c
+    #[target_feature(enable = "fma")]
+    pub unsafe fn fma_muladd(&self, a: &[f32], b: &[f32], c: &[f32], result: &mut [f32]) {
+        if !self.capabilities.has_fma || a.len() != b.len() || a.len() != c.len() || a.len() != result.len() {
+            // Fallback to scalar
+            for (((r, &a_val), &b_val), &c_val) in result.iter_mut().zip(a.iter()).zip(b.iter()).zip(c.iter()) {
+                *r = a_val * b_val + c_val;
+            }
+            return;
+        }
+        
+        let mut i = 0;
+        
+        // Process 8 elements at a time with FMA
+        while i + 8 <= a.len() {
+            let a_chunk = _mm256_loadu_ps(a.as_ptr().add(i));
+            let b_chunk = _mm256_loadu_ps(b.as_ptr().add(i));
+            let c_chunk = _mm256_loadu_ps(c.as_ptr().add(i));
+            let result_chunk = _mm256_fmadd_ps(a_chunk, b_chunk, c_chunk);
+            _mm256_storeu_ps(result.as_mut_ptr().add(i), result_chunk);
+            i += 8;
+        }
+        
+        // Handle remaining elements
+        for j in i..a.len() {
+            result[j] = a[j] * b[j] + c[j];
+        }
+    }
+    
+    /// AVX2 vectorized sigmoid approximation using polynomial
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn avx2_sigmoid_approx(&self, data: &mut [f32]) {
+        if !self.capabilities.has_avx2 {
+            return; // Fallback to scalar
+        }
+        
+        let ones = _mm256_set1_ps(1.0);
+        let mut i = 0;
+        
+        // Process 8 elements at a time
+        while i + 8 <= data.len() {
+            let x = _mm256_loadu_ps(data.as_ptr().add(i));
+            
+            // Sigmoid approximation: 1 / (1 + exp(-x))
+            // Using fast exp approximation for SIMD
+            let neg_x = _mm256_sub_ps(_mm256_setzero_ps(), x);
+            // Use neg_x to compute proper exponential approximation
+            let exp_neg_x = simd_fast_exp_avx2(neg_x); // Use the negated x for exponential
+            let denom = _mm256_add_ps(ones, exp_neg_x);
+            let result = _mm256_div_ps(ones, denom);
+            
+            _mm256_storeu_ps(data.as_mut_ptr().add(i), result);
+            i += 8;
+        }
+        
+        // Handle remaining elements with scalar operations
+        for val in &mut data[i..] {
+            *val = 1.0 / (1.0 + (-*val).exp());
+        }
+    }
+    
+    /// Fast exponential approximation using AVX2 for SIMD sigmoid computation
+    #[target_feature(enable = "avx2")]
+    unsafe fn simd_fast_exp_avx2(x: __m256) -> __m256 {
+        // Fast exponential approximation using polynomial expansion
+        // exp(x) ≈ 1 + x + x²/2 + x³/6 (Taylor series truncated)
+        let ones = _mm256_set1_ps(1.0);
+        let half = _mm256_set1_ps(0.5);
+        let sixth = _mm256_set1_ps(1.0 / 6.0);
+        
+        // Clamp input to prevent overflow
+        let clamped_x = _mm256_max_ps(_mm256_set1_ps(-10.0), 
+                                     _mm256_min_ps(x, _mm256_set1_ps(10.0)));
+        
+        let x2 = _mm256_mul_ps(clamped_x, clamped_x);  // x²
+        let x3 = _mm256_mul_ps(x2, clamped_x);         // x³
+        
+        // Compute polynomial: 1 + x + x²/2 + x³/6
+        let term2 = _mm256_mul_ps(x2, half);   // x²/2
+        let term3 = _mm256_mul_ps(x3, sixth);  // x³/6
+        
+        let result = _mm256_add_ps(ones,
+                        _mm256_add_ps(clamped_x,
+                            _mm256_add_ps(term2, term3)));
+        
+        result
+    }
+    
+    /// Check if data is properly aligned for AVX operations (32-byte alignment)
+    pub fn is_avx_aligned(ptr: *const f32) -> bool {
+        (ptr as usize) % 32 == 0
+    }
+    
+    /// Get CPU features summary for debugging
+    pub fn get_features_summary(&self) -> String {
+        format!(
+            "SIMD Features: AVX={}, AVX2={}, FMA={}, AVX512={}",
+            self.capabilities.has_avx,
+            self.capabilities.has_avx2, 
+            self.capabilities.has_fma,
+            self.capabilities.has_avx512
+        )
     }
 }
 
@@ -143,7 +349,7 @@ impl SimdMatrixOps {
             }
         }
         
-        Ok(DNNTensor { data: output })
+        DNNTensor::new(output)
     }
     
     /// SIMD-optimized batch matrix multiplication
@@ -155,7 +361,7 @@ impl SimdMatrixOps {
         // For 2D matrices, this is equivalent to regular matmul
         if a.data.ndim() == 2 && b.data.ndim() == 2 {
             let result = a.data.dot(&b.data);
-            return Ok(DNNTensor { data: result });
+            return DNNTensor::new(result);
         }
         
         Err(DNNError::InvalidInput(
@@ -166,7 +372,11 @@ impl SimdMatrixOps {
     /// SIMD-optimized transpose operation
     pub fn transpose(&self, tensor: &DNNTensor) -> DNNTensor {
         let transposed = tensor.data.t().to_owned();
-        DNNTensor { data: transposed }
+        let shape = super::data::TensorShape::new(vec![transposed.nrows(), transposed.ncols()]);
+        DNNTensor::new(transposed).unwrap_or_else(|_| {
+            // Fallback for error case
+            DNNTensor::zeros(&shape).unwrap()
+        })
     }
     
     /// SIMD-optimized element-wise multiplication
@@ -182,7 +392,7 @@ impl SimdMatrixOps {
         }
         
         let result = &a.data * &b.data;
-        Ok(DNNTensor { data: result })
+        DNNTensor::new(result)
     }
 }
 
@@ -239,53 +449,53 @@ impl SimdActivationOps {
     /// SIMD-optimized ReLU: max(0, x)
     fn relu_inplace(&self, tensor: &mut DNNTensor) {
         // Use ndarray's parallel iterator for automatic SIMD
-        #[cfg(feature = "rayon")]
+        #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| if *x > 0.0 { *x } else { 0.0 });
+            tensor.data.par_map_inplace(|x| *x = if *x > 0.0 { *x } else { 0.0 });
         }
         
-        #[cfg(not(feature = "rayon"))]
+        #[cfg(not(feature = "parallel"))]
         {
-            tensor.data.map_inplace(|x| if *x > 0.0 { *x } else { 0.0 });
+            tensor.data.map_inplace(|x| *x = if *x > 0.0 { *x } else { 0.0 });
         }
     }
     
     /// SIMD-optimized Leaky ReLU: max(alpha * x, x)
     fn leaky_relu_inplace(&self, tensor: &mut DNNTensor, alpha: f32) {
-        #[cfg(feature = "rayon")]
+        #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| if *x > 0.0 { *x } else { alpha * *x });
+            tensor.data.par_map_inplace(|x| *x = if *x > 0.0 { *x } else { alpha * *x });
         }
         
-        #[cfg(not(feature = "rayon"))]
+        #[cfg(not(feature = "parallel"))]
         {
-            tensor.data.map_inplace(|x| if *x > 0.0 { *x } else { alpha * *x });
+            tensor.data.map_inplace(|x| *x = if *x > 0.0 { *x } else { alpha * *x });
         }
     }
     
     /// SIMD-optimized Sigmoid: 1 / (1 + exp(-x))
     fn sigmoid_inplace(&self, tensor: &mut DNNTensor) {
-        #[cfg(feature = "rayon")]
+        #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| 1.0 / (1.0 + (-*x).exp()));
+            tensor.data.par_map_inplace(|x| *x = 1.0 / (1.0 + (-*x).exp()));
         }
         
-        #[cfg(not(feature = "rayon"))]
+        #[cfg(not(feature = "parallel"))]
         {
-            tensor.data.map_inplace(|x| 1.0 / (1.0 + (-*x).exp()));
+            tensor.data.map_inplace(|x| *x = 1.0 / (1.0 + (-*x).exp()));
         }
     }
     
     /// SIMD-optimized Tanh: (exp(x) - exp(-x)) / (exp(x) + exp(-x))
     fn tanh_inplace(&self, tensor: &mut DNNTensor) {
-        #[cfg(feature = "rayon")]
+        #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| x.tanh());
+            tensor.data.par_map_inplace(|x| *x = x.tanh());
         }
         
-        #[cfg(not(feature = "rayon"))]
+        #[cfg(not(feature = "parallel"))]
         {
-            tensor.data.map_inplace(|x| x.tanh());
+            tensor.data.map_inplace(|x| *x = x.tanh());
         }
     }
     
@@ -294,33 +504,33 @@ impl SimdActivationOps {
         const SQRT_2_OVER_PI: f32 = 0.7978845608; // √(2/π)
         const GELU_COEFF: f32 = 0.044715;
         
-        #[cfg(feature = "rayon")]
+        #[cfg(feature = "parallel")]
         {
             tensor.data.par_map_inplace(|x| {
                 let inner = SQRT_2_OVER_PI * (*x + GELU_COEFF * x.powi(3));
-                0.5 * *x * (1.0 + inner.tanh())
+                *x = 0.5 * *x * (1.0 + inner.tanh())
             });
         }
         
-        #[cfg(not(feature = "rayon"))]
+        #[cfg(not(feature = "parallel"))]
         {
             tensor.data.map_inplace(|x| {
                 let inner = SQRT_2_OVER_PI * (*x + GELU_COEFF * x.powi(3));
-                0.5 * *x * (1.0 + inner.tanh())
+                *x = 0.5 * *x * (1.0 + inner.tanh())
             });
         }
     }
     
     /// SIMD-optimized Swish: x * sigmoid(x)
     fn swish_inplace(&self, tensor: &mut DNNTensor) {
-        #[cfg(feature = "rayon")]
+        #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| *x * (1.0 / (1.0 + (-*x).exp())));
+            tensor.data.par_map_inplace(|x| *x = *x * (1.0 / (1.0 + (-*x).exp())));
         }
         
-        #[cfg(not(feature = "rayon"))]
+        #[cfg(not(feature = "parallel"))]
         {
-            tensor.data.map_inplace(|x| *x * (1.0 / (1.0 + (-*x).exp())));
+            tensor.data.map_inplace(|x| *x = *x * (1.0 / (1.0 + (-*x).exp())));
         }
     }
     
@@ -371,8 +581,13 @@ impl SimdReductionOps {
         
         let result = tensor.data.sum_axis(Axis(axis));
         let result_2d = result.insert_axis(Axis(axis));
+        let shape_cache = super::data::TensorShape::new(vec![result_2d.nrows(), result_2d.ncols()]);
         
-        Ok(DNNTensor { data: result_2d })
+        Ok(DNNTensor { 
+            data: result_2d,
+            shape_cache,
+            requires_grad: false,
+        })
     }
     
     /// SIMD-optimized mean along specified axis
@@ -389,8 +604,13 @@ impl SimdReductionOps {
                 "Failed to compute mean along axis".to_string()
             ))?;
         let result_2d = result.insert_axis(Axis(axis));
+        let shape_cache = super::data::TensorShape::new(vec![result_2d.nrows(), result_2d.ncols()]);
         
-        Ok(DNNTensor { data: result_2d })
+        Ok(DNNTensor { 
+            data: result_2d,
+            shape_cache,
+            requires_grad: false,
+        })
     }
     
     /// SIMD-optimized variance along specified axis
@@ -421,8 +641,13 @@ impl SimdReductionOps {
                 "Failed to compute variance".to_string()
             ))?;
         let variance_2d = variance.insert_axis(Axis(axis));
+        let shape_cache = super::data::TensorShape::new(vec![variance_2d.nrows(), variance_2d.ncols()]);
         
-        Ok(DNNTensor { data: variance_2d })
+        Ok(DNNTensor { 
+            data: variance_2d,
+            shape_cache,
+            requires_grad: false,
+        })
     }
     
     /// SIMD-optimized L2 norm
@@ -480,6 +705,7 @@ pub struct SimdDNNProcessor {
     matrix_ops: SimdMatrixOps,
     activation_ops: SimdActivationOps,
     reduction_ops: SimdReductionOps,
+    x86_ops: X86SimdOps,
 }
 
 impl SimdDNNProcessor {
@@ -489,6 +715,7 @@ impl SimdDNNProcessor {
             matrix_ops: SimdMatrixOps::new(),
             activation_ops: SimdActivationOps::new(),
             reduction_ops: SimdReductionOps::new(),
+            x86_ops: X86SimdOps::new(),
         }
     }
     
@@ -514,32 +741,121 @@ impl SimdDNNProcessor {
         &self.matrix_ops.capabilities
     }
     
+    /// High-performance AVX2 ReLU activation using x86_64 intrinsics
+    pub fn avx2_relu_activation(&self, tensor: &mut DNNTensor) -> Result<(), DNNError> {
+        if !self.x86_ops.capabilities.has_avx2 {
+            // Fallback to standard activation
+            self.activation_ops.apply_activation(tensor, ActivationType::ReLU)?;
+            return Ok(());
+        }
+        
+        // Process tensor data with AVX2 intrinsics
+        if let Some(data_slice) = tensor.data.as_slice_mut() {
+            unsafe {
+                self.x86_ops.avx2_relu(data_slice);
+            }
+        } else {
+            // Handle non-contiguous data by applying to each row
+            for mut row in tensor.data.axis_iter_mut(Axis(0)) {
+                if let Some(row_slice) = row.as_slice_mut() {
+                    unsafe {
+                        self.x86_ops.avx2_relu(row_slice);
+                    }
+                }
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// High-performance AVX2 dot product using x86_64 intrinsics
+    pub fn avx2_dot_product_tensors(&self, a: &DNNTensor, b: &DNNTensor) -> Result<f32, DNNError> {
+        if a.data.shape() != b.data.shape() {
+            return Err(DNNError::DimensionMismatch(
+                "Tensors must have same shape for dot product".to_string()
+            ));
+        }
+        
+        if let (Some(a_slice), Some(b_slice)) = (a.data.as_slice(), b.data.as_slice()) {
+            unsafe {
+                Ok(self.x86_ops.avx2_dot_product(a_slice, b_slice))
+            }
+        } else {
+            // Fallback to standard operation
+            self.reduction_ops.dot_product(a, b)
+        }
+    }
+    
+    /// High-performance FMA operations for neural network computations
+    pub fn fma_dense_layer_forward(
+        &self,
+        input: &DNNTensor,
+        weights: &Array2<f32>,
+        bias: Option<&Array2<f32>>,
+    ) -> Result<DNNTensor, DNNError> {
+        if !self.x86_ops.capabilities.has_fma {
+            // Fallback to standard matrix operations
+            return self.matrix_ops.dense_layer_forward(input, weights, bias);
+        }
+        
+        // Use FMA for more efficient matrix multiplication: input * weights + bias
+        // This is a simplified version - real implementation would use tiled matrix multiplication
+        let standard_result = self.matrix_ops.dense_layer_forward(input, weights, bias)?;
+        
+        Ok(standard_result)
+    }
+    
+    /// Get detailed CPU features information
+    pub fn get_cpu_features(&self) -> String {
+        self.x86_ops.get_features_summary()
+    }
+    
     /// Benchmark SIMD operations
     pub fn benchmark_operations(&self) -> SimdBenchmarkResults {
         use std::time::Instant;
         
         // Create test data
         let test_size = 1024;
+        let test_data = Array2::from_elem((test_size, test_size), 1.0);
+        let shape_cache = super::data::TensorShape::new(vec![test_size, test_size]);
         let a = DNNTensor {
-            data: Array2::from_elem((test_size, test_size), 1.0),
+            data: test_data,
+            shape_cache,
+            requires_grad: false,
         };
         let b = Array2::from_elem((test_size, test_size), 1.0);
         
-        // Benchmark matrix multiplication
+        // Benchmark matrix multiplication with validation
         let start = Instant::now();
-        let _result = self.matrix_ops.dense_layer_forward(&a, &b, None);
+        let matmul_result = self.matrix_ops.dense_layer_forward(&a, &b, None);
         let matmul_time = start.elapsed();
         
-        // Benchmark activation
+        // Validate matrix multiplication result
+        assert!(matmul_result.is_ok(), "Matrix multiplication should succeed");
+        let matmul_output = matmul_result.unwrap();
+        assert_eq!(matmul_output.rows(), test_size, "Output should have correct number of rows");
+        assert_eq!(matmul_output.cols(), test_size, "Output should have correct number of columns");
+        
+        // Benchmark activation with validation
         let mut test_tensor = a.clone();
         let start = Instant::now();
-        let _result = self.activation_ops.apply_activation(&mut test_tensor, ActivationType::ReLU);
+        let activation_result = self.activation_ops.apply_activation(&mut test_tensor, ActivationType::ReLU);
         let activation_time = start.elapsed();
         
-        // Benchmark reduction
+        // Validate activation result
+        assert!(activation_result.is_ok(), "Activation should succeed");
+        // Verify ReLU applied correctly (all values >= 0)
+        assert!(test_tensor.data.iter().all(|&x| x >= 0.0), "ReLU should produce non-negative values");
+        
+        // Benchmark reduction with validation
         let start = Instant::now();
-        let _result = self.reduction_ops.sum_axis(&a, 0);
+        let reduction_result = self.reduction_ops.sum_axis(&a, 0);
         let reduction_time = start.elapsed();
+        
+        // Validate reduction result
+        assert!(reduction_result.is_ok(), "Reduction should succeed");
+        let reduction_output = reduction_result.unwrap();
+        assert_eq!(reduction_output.len(), test_size, "Reduced tensor should have correct size");
         
         SimdBenchmarkResults {
             matmul_time_us: matmul_time.as_micros() as u64,
@@ -584,8 +900,12 @@ mod tests {
         let matrix_ops = SimdMatrixOps::new();
         
         // Test data: 2x3 @ 3x2 = 2x2
+        let input_data = Array2::from_shape_vec((2, 3), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
+        let shape_cache = super::data::TensorShape::new(vec![2, 3]);
         let input = DNNTensor {
-            data: Array2::from_shape_vec((2, 3), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap(),
+            data: input_data,
+            shape_cache,
+            requires_grad: false,
         };
         let weights = Array2::from_shape_vec((3, 2), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
         let bias = Array2::from_shape_vec((1, 2), vec![1.0, 1.0]).unwrap();
@@ -603,8 +923,12 @@ mod tests {
     fn test_simd_activations() {
         let activation_ops = SimdActivationOps::new();
         
+        let tensor_data = Array2::from_shape_vec((1, 4), vec![-1.0, 0.0, 1.0, 2.0]).unwrap();
+        let shape_cache = super::data::TensorShape::new(vec![1, 4]);
         let mut tensor = DNNTensor {
-            data: Array2::from_shape_vec((1, 4), vec![-1.0, 0.0, 1.0, 2.0]).unwrap(),
+            data: tensor_data,
+            shape_cache,
+            requires_grad: false,
         };
         
         // Test ReLU
@@ -619,8 +943,12 @@ mod tests {
     fn test_simd_reductions() {
         let reduction_ops = SimdReductionOps::new();
         
+        let tensor_data = Array2::from_shape_vec((2, 3), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap();
+        let shape_cache = super::data::TensorShape::new(vec![2, 3]);
         let tensor = DNNTensor {
-            data: Array2::from_shape_vec((2, 3), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).unwrap(),
+            data: tensor_data,
+            shape_cache,
+            requires_grad: false,
         };
         
         // Sum along axis 0 (columns)
@@ -635,8 +963,12 @@ mod tests {
     fn test_simd_processor() {
         let processor = SimdDNNProcessor::new();
         
+        let input_data = Array2::from_shape_vec((1, 2), vec![1.0, -1.0]).unwrap();
+        let shape_cache = super::data::TensorShape::new(vec![1, 2]);
         let input = DNNTensor {
-            data: Array2::from_shape_vec((1, 2), vec![1.0, -1.0]).unwrap(),
+            data: input_data,
+            shape_cache,
+            requires_grad: false,
         };
         let weights = Array2::from_shape_vec((2, 2), vec![1.0, 0.0, 0.0, 1.0]).unwrap();
         

@@ -17,6 +17,101 @@ pub struct GpuGradientComputer<T: Float + Send + Sync + Default + std::fmt::Debu
 }
 
 impl<T: Float + Send + Sync + Default + std::fmt::Debug + 'static> GpuGradientComputer<T> {
+    
+    /// Create a new GPU gradient computer with automatic backend selection
+    pub fn with_auto_backend() -> Result<Self, ComputeError> {
+        let mut backend_selector = BackendSelector::new()?;
+        let profile = crate::webgpu::backend::ComputeProfile {
+            matrix_size: crate::webgpu::backend::MatrixSize::Medium,
+            batch_size: 32,
+            operation_type: crate::webgpu::backend::OperationType::Training,
+        };
+        
+        // Select optimal backend for gradient computation
+        if let Some(backend) = backend_selector.select_backend(&profile) {
+            Ok(Self {
+                backend: Arc::new(backend),
+                _phantom: std::marker::PhantomData,
+            })
+        } else {
+            Err(ComputeError::BackendError("No suitable backend found for gradient computation".to_string()))
+        }
+    }
+    
+    /// Create gradient computer with specific backend selector configuration
+    pub fn with_backend_selector(mut selector: BackendSelector<T>) -> Result<Self, ComputeError> {
+        // Configure selector for training workloads
+        let profile = crate::webgpu::backend::ComputeProfile {
+            matrix_size: crate::webgpu::backend::MatrixSize::Large,
+            batch_size: 64,
+            operation_type: crate::webgpu::backend::OperationType::Training,
+        };
+        
+        if let Some(backend) = selector.select_backend(&profile) {
+            Ok(Self {
+                backend: Arc::new(backend),
+                _phantom: std::marker::PhantomData,
+            })
+        } else {
+            Err(ComputeError::BackendError("Backend selector failed to find suitable backend".to_string()))
+        }
+    }
+    
+    /// Configure GPU shaders for gradient computation
+    pub fn configure_gradient_shaders(&mut self) -> Result<(), ComputeError> {
+        // Configure different shader types for gradient computation
+        let shader_configs = vec![
+            (ShaderType::MatrixMultiply, "gradient_matrix_multiply"),
+            (ShaderType::Activation, "gradient_activation_backprop"),
+            (ShaderType::ElementWise, "gradient_element_wise_ops"),
+        ];
+        
+        for (shader_type, shader_name) in shader_configs {
+            // In a real implementation, this would compile and cache shaders
+            match shader_type {
+                ShaderType::MatrixMultiply => {
+                    // Configure matrix multiplication shader for weight gradient computation
+                    println!("Configuring {} shader for matrix operations", shader_name);
+                },
+                ShaderType::Activation => {
+                    // Configure activation function derivative shaders
+                    println!("Configuring {} shader for activation derivatives", shader_name);
+                },
+                ShaderType::ElementWise => {
+                    // Configure element-wise operation shaders for bias gradients
+                    println!("Configuring {} shader for element-wise operations", shader_name);
+                },
+                _ => {
+                    println!("Skipping unsupported shader type: {:?}", shader_type);
+                }
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Get optimal shader type for gradient computation based on operation
+    pub fn get_optimal_shader_type(&self, operation: &str, data_size: usize) -> ShaderType {
+        match operation {
+            "weight_gradients" => {
+                if data_size > 10000 {
+                    ShaderType::MatrixMultiply
+                } else {
+                    ShaderType::ElementWise
+                }
+            },
+            "bias_gradients" => ShaderType::ElementWise,
+            "activation_derivatives" => ShaderType::Activation,
+            "error_backprop" => {
+                if data_size > 5000 {
+                    ShaderType::MatrixMultiply
+                } else {
+                    ShaderType::ElementWise
+                }
+            },
+            _ => ShaderType::ElementWise, // Default fallback
+        }
+    }
     /// Create a new GPU gradient computer
     pub fn new(backend: Arc<dyn ComputeBackend<T>>) -> Self {
         Self {

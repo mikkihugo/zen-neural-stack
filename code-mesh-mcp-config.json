@@ -1,0 +1,14 @@
+{
+  "description": "MCP configuration for code-mesh to use zen-swarm coordination",
+  "usage": "code-mesh --mcp-config code-mesh-mcp-config.json",
+  "servers": {
+    "zen-swarm": {
+      "command": "npx",
+      "args": ["zen-swarm", "mcp", "start", "--daemon-port", "9001"],
+      "env": {
+        "ZEN_SWARM_REPO_PATH": ".",
+        "ZEN_SWARM_CLIENT": "code-mesh"
+      }
+    }
+  }
+}

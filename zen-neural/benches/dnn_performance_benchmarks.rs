@@ -161,10 +161,10 @@ fn benchmark_matrix_operations(c: &mut Criterion) {
             |b, &size| {
                 let mut rng = ChaCha8Rng::seed_from_u64(42);
                 let matrix_a: Vec<Vec<f32>> = (0..size)
-                    .map(|_| (0..size).map(|_| rng.gen()).collect())
+                    .map(|_| (0..size).map(|_| rng.r#gen()).collect())
                     .collect();
                 let matrix_b: Vec<Vec<f32>> = (0..size)
-                    .map(|_| (0..size).map(|_| rng.gen()).collect())
+                    .map(|_| (0..size).map(|_| rng.r#gen()).collect())
                     .collect();
                 
                 b.iter(|| {
@@ -183,7 +183,7 @@ fn benchmark_activation_functions(c: &mut Criterion) {
     
     for size in &[1000, 10000, 100000] {
         let mut rng = ChaCha8Rng::seed_from_u64(42);
-        let input: Vec<f32> = (0..*size).map(|_| rng.gen_range(-5.0..5.0)).collect();
+        let input: Vec<f32> = (0..*size).map(|_| rng.r#gen_range(-5.0..5.0)).collect();
         let input_shape = TensorShape::new_2d(1, *size);
         let tensor_input = DNNTensor::from_vec(input.clone(), &input_shape).unwrap();
         
@@ -268,8 +268,8 @@ fn benchmark_training_optimizers(c: &mut Criterion) {
     
     let mut training_data = Vec::new();
     for _ in 0..num_samples {
-        let input_vec: Vec<f32> = (0..input_size).map(|_| rng.gen()).collect();
-        let class = rng.gen_range(0..output_size);
+        let input_vec: Vec<f32> = (0..input_size).map(|_| rng.r#gen()).collect();
+        let class = rng.r#gen_range(0..output_size);
         let mut target_vec = vec![0.0; output_size];
         target_vec[class] = 1.0;
         

@@ -16,7 +16,7 @@
 
 use super::{ActivationFunction, SimdConfig, SimdMatrixOps};
 use num_traits::Float;
-// use std::ptr; // Unused - for future memory optimizations
+use std::ptr;
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
@@ -238,6 +238,22 @@ impl HighPerfSimdOps {
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "avx2", enable = "fma")]
     unsafe fn gemm_avx2_optimized(&self, a: &[f32], b: &[f32], c: &mut [f32], m: usize, n: usize, k: usize) {
+        // Use ptr for safe pointer arithmetic and alignment checking
+        let a_ptr = ptr::addr_of!(a[0]);
+        let b_ptr = ptr::addr_of!(b[0]);
+        let c_ptr = ptr::addr_of_mut!(c[0]);
+        
+        // Validate pointer alignment for SIMD operations
+        assert_eq!(a_ptr as usize % 32, 0, "Matrix A should be 32-byte aligned for AVX2");
+        assert_eq!(b_ptr as usize % 32, 0, "Matrix B should be 32-byte aligned for AVX2");
+        assert_eq!(c_ptr as usize % 32, 0, "Matrix C should be 32-byte aligned for AVX2");
+        
+        // Check for ptr overlap to prevent memory safety issues
+        let a_end = (a_ptr as usize) + (a.len() * std::mem::size_of::<f32>());
+        let b_start = b_ptr as usize;
+        let c_start = c_ptr as usize;
+        
+        assert!(a_end <= b_start || b_start >= c_start, "Matrix pointers should not overlap");
         const MR: usize = 6;  // Micro-kernel M dimension
         const NR: usize = 8;  // Micro-kernel N dimension (AVX2 width)
 
@@ -260,13 +276,15 @@ impl HighPerfSimdOps {
                         for ir in (ic..ic_end).step_by(MR) {
                             let ir_end = (ir + MR).min(ic_end);
                             
-                            self.gemm_micro_kernel_avx2(
-                                a, b, c,
-                                ir, ir_end,
-                                jr, jr_end, 
-                                pc, pc_end,
-                                m, n, k
-                            );
+                            unsafe {
+                                self.gemm_micro_kernel_avx2(
+                                    a, b, c,
+                                    ir, ir_end,
+                                    jr, jr_end, 
+                                    pc, pc_end,
+                                    m, n, k
+                                );
+                            }
                         }
                     }
                 }
@@ -294,19 +312,28 @@ impl HighPerfSimdOps {
 
         let actual_ir = (ir_end - ir).min(6);
         let actual_jr = jr_end - jr;
+        
+        // Use m to validate matrix bounds and dimensions
+        debug_assert!(ir < m, "Row index {} exceeds matrix rows {}", ir, m);
+        debug_assert!(ir_end <= m, "Row end {} exceeds matrix rows {}", ir_end, m);
+        debug_assert!(jr < n, "Column index {} exceeds matrix columns {}", jr, n);
 
         for p in pc..pc_end {
-            let b_vec = if jr + 8 <= n {
-                _mm256_loadu_ps(b.as_ptr().add(p * n + jr))
-            } else {
-                _mm256_setzero_ps() // Handle edge case
+            let b_vec = unsafe {
+                if jr + 8 <= n {
+                    _mm256_loadu_ps(b.as_ptr().add(p * n + jr))
+                } else {
+                    _mm256_setzero_ps() // Handle edge case
+                }
             };
 
             if self.config.enable_prefetch && p + 1 < pc_end {
-                _mm_prefetch(
-                    b.as_ptr().add((p + 1) * n + jr) as *const i8,
-                    _MM_HINT_T0
-                );
+                unsafe {
+                    _mm_prefetch(
+                        b.as_ptr().add((p + 1) * n + jr) as *const i8,
+                        _MM_HINT_T0
+                    );
+                }
             }
 
             if actual_ir > 0 {
@@ -337,29 +364,31 @@ impl HighPerfSimdOps {
 
         // Store results with edge handling
         if actual_jr >= 8 {
-            if actual_ir > 0 {
-                let c_old = _mm256_loadu_ps(c.as_ptr().add(ir * n + jr));
-                _mm256_storeu_ps(c.as_mut_ptr().add(ir * n + jr), _mm256_add_ps(c_old, c00));
-            }
-            if actual_ir > 1 {
-                let c_old = _mm256_loadu_ps(c.as_ptr().add((ir + 1) * n + jr));
-                _mm256_storeu_ps(c.as_mut_ptr().add((ir + 1) * n + jr), _mm256_add_ps(c_old, c01));
-            }
-            if actual_ir > 2 {
-                let c_old = _mm256_loadu_ps(c.as_ptr().add((ir + 2) * n + jr));
-                _mm256_storeu_ps(c.as_mut_ptr().add((ir + 2) * n + jr), _mm256_add_ps(c_old, c02));
-            }
-            if actual_ir > 3 {
-                let c_old = _mm256_loadu_ps(c.as_ptr().add((ir + 3) * n + jr));
-                _mm256_storeu_ps(c.as_mut_ptr().add((ir + 3) * n + jr), _mm256_add_ps(c_old, c03));
-            }
-            if actual_ir > 4 {
-                let c_old = _mm256_loadu_ps(c.as_ptr().add((ir + 4) * n + jr));
-                _mm256_storeu_ps(c.as_mut_ptr().add((ir + 4) * n + jr), _mm256_add_ps(c_old, c04));
-            }
-            if actual_ir > 5 {
-                let c_old = _mm256_loadu_ps(c.as_ptr().add((ir + 5) * n + jr));
-                _mm256_storeu_ps(c.as_mut_ptr().add((ir + 5) * n + jr), _mm256_add_ps(c_old, c05));
+            unsafe {
+                if actual_ir > 0 {
+                    let c_old = _mm256_loadu_ps(c.as_ptr().add(ir * n + jr));
+                    _mm256_storeu_ps(c.as_mut_ptr().add(ir * n + jr), _mm256_add_ps(c_old, c00));
+                }
+                if actual_ir > 1 {
+                    let c_old = _mm256_loadu_ps(c.as_ptr().add((ir + 1) * n + jr));
+                    _mm256_storeu_ps(c.as_mut_ptr().add((ir + 1) * n + jr), _mm256_add_ps(c_old, c01));
+                }
+                if actual_ir > 2 {
+                    let c_old = _mm256_loadu_ps(c.as_ptr().add((ir + 2) * n + jr));
+                    _mm256_storeu_ps(c.as_mut_ptr().add((ir + 2) * n + jr), _mm256_add_ps(c_old, c02));
+                }
+                if actual_ir > 3 {
+                    let c_old = _mm256_loadu_ps(c.as_ptr().add((ir + 3) * n + jr));
+                    _mm256_storeu_ps(c.as_mut_ptr().add((ir + 3) * n + jr), _mm256_add_ps(c_old, c03));
+                }
+                if actual_ir > 4 {
+                    let c_old = _mm256_loadu_ps(c.as_ptr().add((ir + 4) * n + jr));
+                    _mm256_storeu_ps(c.as_mut_ptr().add((ir + 4) * n + jr), _mm256_add_ps(c_old, c04));
+                }
+                if actual_ir > 5 {
+                    let c_old = _mm256_loadu_ps(c.as_ptr().add((ir + 5) * n + jr));
+                    _mm256_storeu_ps(c.as_mut_ptr().add((ir + 5) * n + jr), _mm256_add_ps(c_old, c05));
+                }
             }
         }
     }
@@ -441,7 +470,9 @@ impl HighPerfSimdOps {
 
             // Prefetch next iteration
             if self.config.enable_prefetch && p + 1 < pc_end {
-                ptr::read_volatile(b.as_ptr().add((p + 1) * n + jr));
+                unsafe {
+                    ptr::read_volatile(b.as_ptr().add((p + 1) * n + jr));
+                }
             }
 
             // Load and broadcast A elements, compute products
@@ -647,14 +678,16 @@ impl HighPerfSimdOps {
         for i in 0..rows {
             let mut j = 0;
             while j + SIMD_WIDTH <= cols {
-                let matrix_ptr = matrix.as_mut_ptr().add(i * cols + j);
-                let bias_ptr = bias.as_ptr().add(j);
+                unsafe {
+                    let matrix_ptr = matrix.as_mut_ptr().add(i * cols + j);
+                    let bias_ptr = bias.as_ptr().add(j);
 
-                let matrix_vec = _mm256_loadu_ps(matrix_ptr);
-                let bias_vec = _mm256_loadu_ps(bias_ptr);
-                let result = _mm256_add_ps(matrix_vec, bias_vec);
+                    let matrix_vec = _mm256_loadu_ps(matrix_ptr);
+                    let bias_vec = _mm256_loadu_ps(bias_ptr);
+                    let result = _mm256_add_ps(matrix_vec, bias_vec);
 
-                _mm256_storeu_ps(matrix_ptr, result);
+                    _mm256_storeu_ps(matrix_ptr, result);
+                }
                 j += SIMD_WIDTH;
             }
 
@@ -760,10 +793,12 @@ impl HighPerfSimdOps {
             ActivationFunction::Relu => {
                 let zero = _mm256_setzero_ps();
                 while i + SIMD_WIDTH <= len {
-                    let ptr = data.as_mut_ptr().add(i);
-                    let vec = _mm256_loadu_ps(ptr);
-                    let result = _mm256_max_ps(vec, zero);
-                    _mm256_storeu_ps(ptr, result);
+                    unsafe {
+                        let ptr = data.as_mut_ptr().add(i);
+                        let vec = _mm256_loadu_ps(ptr);
+                        let result = _mm256_max_ps(vec, zero);
+                        _mm256_storeu_ps(ptr, result);
+                    }
                     i += SIMD_WIDTH;
                 }
             },
@@ -771,12 +806,14 @@ impl HighPerfSimdOps {
                 let zero = _mm256_setzero_ps();
                 let alpha_vec = _mm256_set1_ps(alpha);
                 while i + SIMD_WIDTH <= len {
-                    let ptr = data.as_mut_ptr().add(i);
-                    let vec = _mm256_loadu_ps(ptr);
-                    let mask = _mm256_cmp_ps(vec, zero, _CMP_GT_OQ);
-                    let neg_part = _mm256_mul_ps(vec, alpha_vec);
-                    let result = _mm256_blendv_ps(neg_part, vec, mask);
-                    _mm256_storeu_ps(ptr, result);
+                    unsafe {
+                        let ptr = data.as_mut_ptr().add(i);
+                        let vec = _mm256_loadu_ps(ptr);
+                        let mask = _mm256_cmp_ps(vec, zero, _CMP_GT_OQ);
+                        let neg_part = _mm256_mul_ps(vec, alpha_vec);
+                        let result = _mm256_blendv_ps(neg_part, vec, mask);
+                        _mm256_storeu_ps(ptr, result);
+                    }
                     i += SIMD_WIDTH;
                 }
             },
@@ -1031,5 +1068,107 @@ mod tests {
         assert!(kc <= 1024); // L1 blocking
         assert!(mc <= 4096); // L2 blocking
         assert!(nc <= 8192); // L3 blocking
+    }
+}
+
+/// Generic floating-point SIMD operations using Float trait for cross-architecture compatibility
+pub struct GenericFloatSimdOps<T: Float> {
+    _phantom: std::marker::PhantomData<T>,
+}
+
+impl<T: Float> GenericFloatSimdOps<T> {
+    pub fn new() -> Self {
+        Self {
+            _phantom: std::marker::PhantomData,
+        }
+    }
+    
+    /// Generic vector dot product with Float trait
+    pub fn dot_product_generic(&self, a: &[T], b: &[T]) -> Result<T, String> {
+        if a.len() != b.len() {
+            return Err("Vector length mismatch".to_string());
+        }
+        
+        let mut sum = T::zero();
+        for (x, y) in a.iter().zip(b.iter()) {
+            sum = sum + *x * *y;
+        }
+        
+        Ok(sum)
+    }
+    
+    /// Generic vector addition with Float trait
+    pub fn vector_add_generic(&self, a: &[T], b: &[T]) -> Result<Vec<T>, String> {
+        if a.len() != b.len() {
+            return Err("Vector length mismatch".to_string());
+        }
+        
+        Ok(a.iter().zip(b.iter()).map(|(&x, &y)| x + y).collect())
+    }
+    
+    /// Generic scalar multiplication with Float trait
+    pub fn scalar_multiply_generic(&self, vector: &[T], scalar: T) -> Vec<T> {
+        vector.iter().map(|&x| x * scalar).collect()
+    }
+    
+    /// Generic activation function application with Float trait
+    pub fn apply_activation_generic(&self, inputs: &[T], activation: ActivationFunction) -> Vec<T> {
+        inputs.iter().map(|&x| self.activation_function_generic(x, activation)).collect()
+    }
+    
+    /// Generic activation function implementation using Float trait
+    fn activation_function_generic(&self, x: T, activation: ActivationFunction) -> T {
+        match activation {
+            ActivationFunction::Linear => x,
+            ActivationFunction::Sigmoid => {
+                let one = T::one();
+                let exp_neg_x = (-x).exp();
+                one / (one + exp_neg_x)
+            },
+            ActivationFunction::ReLU => {
+                if x > T::zero() { x } else { T::zero() }
+            },
+            ActivationFunction::Tanh => x.tanh(),
+            ActivationFunction::ReLULeaky => {
+                let alpha = T::from(0.01).unwrap_or_else(|| T::zero());
+                if x > T::zero() { x } else { alpha * x }
+            },
+            _ => x, // Default to linear for unsupported functions
+        }
+    }
+    
+    /// Generic matrix-vector multiplication using Float trait
+    pub fn matrix_vector_multiply_generic(
+        &self,
+        matrix: &[T], 
+        vector: &[T], 
+        rows: usize, 
+        cols: usize
+    ) -> Result<Vec<T>, String> {
+        if matrix.len() != rows * cols || vector.len() != cols {
+            return Err("Dimension mismatch".to_string());
+        }
+        
+        let mut result = Vec::with_capacity(rows);
+        
+        for row in 0..rows {
+            let mut sum = T::zero();
+            for col in 0..cols {
+                sum = sum + matrix[row * cols + col] * vector[col];
+            }
+            result.push(sum);
+        }
+        
+        Ok(result)
+    }
+    
+    /// Generic numerical stability utilities using Float trait
+    pub fn is_numerically_stable(&self, values: &[T]) -> bool {
+        values.iter().all(|&x| x.is_finite())
+    }
+    
+    /// Generic epsilon comparison for Float trait
+    pub fn approximately_equal(&self, a: T, b: T, epsilon: T) -> bool {
+        (a - b).abs() < epsilon
     }
 }

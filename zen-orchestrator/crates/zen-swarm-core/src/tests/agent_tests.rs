@@ -2,7 +2,6 @@
 
 use crate::agent::*;
 use crate::task::{Task, TaskResult, TaskStatus};
-use crate::error::Result;
 
 #[cfg(test)]
 use crate::MockAgent;

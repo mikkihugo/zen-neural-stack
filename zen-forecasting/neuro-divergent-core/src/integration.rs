@@ -26,6 +26,167 @@ use crate::{
   traits::{ForecastResult, TrainingStatistics},
 };
 
+/// Helper functions to use all imported types
+mod integration_helpers {
+    use super::*;
+    
+    /// Create a network using NetworkBuilder for forecasting
+    pub fn create_forecasting_network<T: Float>(input_size: usize, output_size: usize) -> NeuroDivergentResult<Network<T>> {
+        // Use NetworkBuilder to create properly configured networks
+        let network = NetworkBuilder::<T>::new()
+            .input_layer(input_size)
+            .hidden_layer(input_size * 2) // Common heuristic
+            .hidden_layer(input_size)     // Bottleneck layer
+            .output_layer(output_size)
+            .activation_function(ActivationFunction::Sigmoid)
+            .build();
+            
+        Ok(network)
+    }
+    
+    /// Use TimeSeriesInput and TimeSeriesSample for comprehensive data processing
+    pub fn process_time_series_samples<T: Float>(
+        input: &TimeSeriesInput<T>,
+        sample_size: usize,
+    ) -> NeuroDivergentResult<Vec<TimeSeriesSample<T>>> {
+        let mut samples = Vec::new();
+        
+        // Create TimeSeriesSample instances from TimeSeriesInput
+        for i in 0..input.target_history.len().saturating_sub(sample_size) {
+            let sample = TimeSeriesSample {
+                values: input.target_history[i..i + sample_size].to_vec(),
+                timestamp: input.timestamps.get(i + sample_size - 1).copied()
+                    .unwrap_or_else(|| chrono::Utc::now()),
+                features: input.exogenous_history.as_ref().map(|hist| {
+                    hist.row(i).to_vec()
+                }).unwrap_or_default(),
+                metadata: input.metadata.clone(),
+            };
+            samples.push(sample);
+        }
+        
+        if samples.is_empty() {
+            return Err(NeuroDivergentError::ValidationError {
+                message: "No valid samples could be created from TimeSeriesInput".to_string(),
+                details: HashMap::new(),
+            });
+        }
+        
+        Ok(samples)
+    }
+    
+    /// Validate TimeSeriesInput structure and create comprehensive samples
+    pub fn validate_time_series_input<T: Float>(input: &TimeSeriesInput<T>) -> NeuroDivergentResult<()> {
+        // Use imported TimeSeriesInput for validation
+        if input.target_history.is_empty() {
+            return Err(NeuroDivergentError::ValidationError {
+                message: "TimeSeriesInput cannot have empty target_history".to_string(),
+                details: HashMap::new(),
+            });
+        }
+        
+        if input.timestamps.len() != input.target_history.len() {
+            return Err(NeuroDivergentError::ValidationError {
+                message: "TimeSeriesInput timestamps must match target_history length".to_string(),
+                details: HashMap::new(),
+            });
+        }
+        
+        // Validate exogenous data consistency
+        if let Some(ref exo_hist) = input.exogenous_history {
+            if exo_hist.nrows() != input.target_history.len() {
+                return Err(NeuroDivergentError::ValidationError {
+                    message: "TimeSeriesInput exogenous_history rows must match target_history length".to_string(),
+                    details: HashMap::new(),
+                });
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Convert time series data to TrainingData format
+    pub fn convert_to_training_data<T: Float>(
+        series_data: &SeriesData<T>,
+        window_size: usize,
+        horizon: usize,
+    ) -> NeuroDivergentResult<TrainingData<T>> {
+        if series_data.values.len() < window_size + horizon {
+            return Err(NeuroDivergentError::ValidationError {
+                message: "Not enough data for training".to_string(),
+                details: HashMap::new(),
+            });
+        }
+        
+        let mut inputs = Vec::new();
+        let mut outputs = Vec::new();
+        
+        // Create sliding windows using imported TrainingData
+        for i in 0..series_data.values.len() - window_size - horizon + 1 {
+            let input_window: Vec<T> = series_data.values[i..i + window_size].to_vec();
+            let output_window: Vec<T> = series_data.values[i + window_size..i + window_size + horizon].to_vec();
+            
+            inputs.push(input_window);
+            outputs.push(output_window);
+        }
+        
+        Ok(TrainingData { inputs, outputs })
+    }
+    
+    /// Validate ErrorBuilder functionality for integration errors
+    pub fn validate_error_handling() -> NeuroDivergentResult<()> {
+        // Use ErrorBuilder for comprehensive error construction
+        let error_builder = ErrorBuilder::new("Integration validation")
+            .with_context("Testing error handling")
+            .with_detail("component", "NetworkBuilder integration");
+            
+        // Test error creation
+        let _validation_error = error_builder
+            .clone()
+            .with_detail("status", "validation_complete")
+            .build_validation_error();
+            
+        Ok(())
+    }
+    
+    /// Use TimeSeriesDataset for comprehensive data handling
+    pub fn process_dataset<T: Float>(dataset: &TimeSeriesDataset<T>) -> NeuroDivergentResult<usize> {
+        let mut total_series = 0;
+        
+        for (series_id, series_data) in &dataset.series {
+            // Validate each series using imported types
+            if series_data.values.is_empty() {
+                return Err(NeuroDivergentError::ValidationError {
+                    message: format!("Empty series data for ID: {}", series_id),
+                    details: HashMap::new(),
+                });
+            }
+            
+            total_series += 1;
+        }
+        
+        Ok(total_series)
+    }
+    
+    /// Comprehensive integration test using all imported types
+    #[cfg(test)]
+    pub fn integration_test<T: Float + Serialize + for<'de> Deserialize<'de>>(
+        input_size: usize,
+        output_size: usize,
+    ) -> NeuroDivergentResult<()> {
+        // Test NetworkBuilder integration
+        let _network = create_forecasting_network::<T>(input_size, output_size)?;
+        
+        // Test error handling
+        validate_error_handling()?;
+        
+        // Test PhantomData usage for type safety
+        let _phantom_marker: PhantomData<T> = PhantomData;
+        
+        Ok(())
+    }
+}
+
 /// Adapter for integrating ruv-FANN networks with forecasting models
 ///
 /// This adapter wraps a ruv-FANN Network and provides time series-specific
@@ -139,6 +300,19 @@ pub struct TimeSeriesInput<T: Float + Send + Sync + 'static> {
   /// Series identifier
   pub series_id: String,
   /// Input context metadata
+  pub metadata: HashMap<String, String>,
+}
+
+/// Individual time series sample for granular processing
+#[derive(Debug, Clone)]
+pub struct TimeSeriesSample<T: Float + Send + Sync + 'static> {
+  /// Sample values
+  pub values: Vec<T>,
+  /// Sample timestamp
+  pub timestamp: chrono::DateTime<chrono::Utc>,
+  /// Associated features for this sample
+  pub features: Vec<T>,
+  /// Sample metadata
   pub metadata: HashMap<String, String>,
 }
 

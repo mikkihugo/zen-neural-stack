@@ -97,27 +97,27 @@ impl BenchmarkRunner {
         // neural network library performance (slower, more memory usage)
         
         let small_network_baseline = JavaScriptBaseline {
-            forward_pass_ns: 50_000 + rng.gen_range(0..10_000), // ~50-60μs
-            training_step_ns: 200_000 + rng.gen_range(0..50_000), // ~200-250μs
-            memory_usage_bytes: 10_485_760 + rng.gen_range(0..2_097_152), // ~10-12MB
-            matrix_multiply_ns: 25_000 + rng.gen_range(0..5_000), // ~25-30μs
-            activation_function_ns: 5_000 + rng.gen_range(0..1_000), // ~5-6μs
+            forward_pass_ns: 50_000 + rng.r#gen_range(0..10_000), // ~50-60μs
+            training_step_ns: 200_000 + rng.r#gen_range(0..50_000), // ~200-250μs
+            memory_usage_bytes: 10_485_760 + rng.r#gen_range(0..2_097_152), // ~10-12MB
+            matrix_multiply_ns: 25_000 + rng.r#gen_range(0..5_000), // ~25-30μs
+            activation_function_ns: 5_000 + rng.r#gen_range(0..1_000), // ~5-6μs
         };
         
         let medium_network_baseline = JavaScriptBaseline {
-            forward_pass_ns: 150_000 + rng.gen_range(0..20_000), // ~150-170μs
-            training_step_ns: 800_000 + rng.gen_range(0..100_000), // ~800-900μs
-            memory_usage_bytes: 52_428_800 + rng.gen_range(0..10_485_760), // ~50-60MB
-            matrix_multiply_ns: 100_000 + rng.gen_range(0..20_000), // ~100-120μs
-            activation_function_ns: 15_000 + rng.gen_range(0..3_000), // ~15-18μs
+            forward_pass_ns: 150_000 + rng.r#gen_range(0..20_000), // ~150-170μs
+            training_step_ns: 800_000 + rng.r#gen_range(0..100_000), // ~800-900μs
+            memory_usage_bytes: 52_428_800 + rng.r#gen_range(0..10_485_760), // ~50-60MB
+            matrix_multiply_ns: 100_000 + rng.r#gen_range(0..20_000), // ~100-120μs
+            activation_function_ns: 15_000 + rng.r#gen_range(0..3_000), // ~15-18μs
         };
         
         let large_network_baseline = JavaScriptBaseline {
-            forward_pass_ns: 500_000 + rng.gen_range(0..50_000), // ~500-550μs
-            training_step_ns: 2_000_000 + rng.gen_range(0..200_000), // ~2-2.2ms
-            memory_usage_bytes: 209_715_200 + rng.gen_range(0..41_943_040), // ~200-240MB
-            matrix_multiply_ns: 400_000 + rng.gen_range(0..50_000), // ~400-450μs
-            activation_function_ns: 50_000 + rng.gen_range(0..10_000), // ~50-60μs
+            forward_pass_ns: 500_000 + rng.r#gen_range(0..50_000), // ~500-550μs
+            training_step_ns: 2_000_000 + rng.r#gen_range(0..200_000), // ~2-2.2ms
+            memory_usage_bytes: 209_715_200 + rng.r#gen_range(0..41_943_040), // ~200-240MB
+            matrix_multiply_ns: 400_000 + rng.r#gen_range(0..50_000), // ~400-450μs
+            activation_function_ns: 50_000 + rng.r#gen_range(0..10_000), // ~50-60μs
         };
         
         self.javascript_baselines.insert("small_network".to_string(), small_network_baseline);

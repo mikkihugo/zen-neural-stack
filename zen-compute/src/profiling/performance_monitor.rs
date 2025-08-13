@@ -470,10 +470,18 @@ mod tests {
   fn test_performance_monitor() {
     let monitor = PerformanceMonitor::new();
 
-    // Test basic timing
+    // Test basic timing with validation
     {
-      let _timer = monitor.time(CounterType::KernelExecution);
+      let timer = monitor.time(CounterType::KernelExecution);
+      let start_time = std::time::Instant::now();
       thread::sleep(Duration::from_millis(10));
+      let elapsed = start_time.elapsed();
+      
+      // Validate timer is tracking time
+      assert!(elapsed >= Duration::from_millis(9), 
+        "Timer should track at least 9ms, got: {:?}", elapsed);
+      
+      drop(timer); // Explicit drop to complete timing
     }
 
     let stats = monitor.stats(&CounterType::KernelExecution).unwrap();

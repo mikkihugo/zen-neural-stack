@@ -244,7 +244,17 @@ mod tests {
         assert_eq!(stats.buffer_count, 0);
         assert_eq!(stats.total_allocated, 0);
 
-        let _buffer = manager.allocate("test", 50).unwrap();
+        // Allocate buffer and validate its properties
+        let buffer = manager.allocate("test", 50).unwrap();
+        
+        // Verify buffer properties
+        assert_eq!(buffer.size(), 50, "Buffer should have requested size");
+        assert!(!buffer.is_empty(), "Buffer should not be empty");
+        
+        // Verify buffer can be accessed safely
+        let buffer_slice = unsafe { buffer.as_slice() };
+        assert_eq!(buffer_slice.len(), 50, "Buffer slice should match allocated size");
+        
         let stats = manager.get_stats();
         assert_eq!(stats.buffer_count, 1);
         assert!(stats.total_allocated > 0);

@@ -186,7 +186,7 @@ fn test_task_error_scenarios() {
     use crate::task::{Task, TaskStatus, TaskResult};
     
     // Create task with error result
-    let task = Task::new("error-task", "compute");
+    let _task = Task::new("error-task", "compute");
     let error_result = TaskResult::failure("Task failed due to error");
     
     assert_eq!(error_result.status, TaskStatus::Failed);

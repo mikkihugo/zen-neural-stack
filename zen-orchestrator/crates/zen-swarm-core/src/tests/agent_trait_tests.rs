@@ -1,7 +1,7 @@
 //! Tests for Agent trait implementations
 
-use crate::agent::{Agent, AgentId, AgentStatus, AgentMetadata, HealthStatus};
-use crate::error::{Result, SwarmError};
+use crate::agent::{Agent, AgentStatus, AgentMetadata, HealthStatus};
+use crate::error::SwarmError;
 use crate::task::Task;
 use async_trait::async_trait;
 

@@ -64,6 +64,7 @@ pub struct AsyncSwarm {
     agents: Arc<RwLock<HashMap<AgentId, DynamicAgent>>>,
     topology: Arc<Mutex<Topology>>,
     task_queue: Arc<Mutex<Vec<Task>>>,
+    task_storage: Arc<RwLock<HashMap<TaskId, Task>>>,
     task_assignments: Arc<RwLock<HashMap<TaskId, AgentId>>>,
     agent_loads: Arc<RwLock<HashMap<AgentId, usize>>>,
     health_check_handle: Option<tokio::task::JoinHandle<()>>,
@@ -80,6 +81,7 @@ impl AsyncSwarm {
             config,
             agents: Arc::new(RwLock::new(HashMap::new())),
             task_queue: Arc::new(Mutex::new(Vec::new())),
+            task_storage: Arc::new(RwLock::new(HashMap::new())),
             task_assignments: Arc::new(RwLock::new(HashMap::new())),
             agent_loads: Arc::new(RwLock::new(HashMap::new())),
             health_check_handle: None,
@@ -220,6 +222,11 @@ impl AsyncSwarm {
             if let Ok(Some(agent_id)) = self.select_agent_for_task(&task).await {
                 let task_id = task.id.clone();
 
+                // Store the actual task for processing
+                let mut task_storage = self.task_storage.write().await;
+                task_storage.insert(task_id.clone(), task);
+                drop(task_storage);
+
                 // Assign task to agent
                 let mut task_assignments = self.task_assignments.write().await;
                 task_assignments.insert(task_id.clone(), agent_id.clone());
@@ -229,6 +236,8 @@ impl AsyncSwarm {
                 let mut agent_loads = self.agent_loads.write().await;
                 if let Some(load) = agent_loads.get_mut(&agent_id) {
                     *load += 1;
+                } else {
+                    agent_loads.insert(agent_id.clone(), 1);
                 }
                 drop(agent_loads);
 
@@ -417,16 +426,24 @@ impl AsyncSwarm {
             }
             
             let agents = self.agents.clone();
+            let task_storage = self.task_storage.clone();
             let task_timeout = Duration::from_millis(self.config.task_timeout_ms);
             
             futures.push(async move {
                 let result = timeout(task_timeout, async {
+                    // Get the actual task from storage
+                    let task = {
+                        let mut storage = task_storage.write().await;
+                        storage.remove(&task_id).ok_or_else(|| {
+                            SwarmError::Custom(format!("Task {} not found in storage", task_id))
+                        })?
+                    };
+                    
+                    // Process the task with the agent
                     let mut agents = agents.write().await;
                     if let Some(agent) = agents.get_mut(&agent_id) {
-                        // In a real implementation, we would get the task and process it
-                        // For now, just simulate processing
-                        tokio::time::sleep(Duration::from_millis(10)).await;
-                        Ok(())
+                        // Process the actual task using the agent
+                        agent.process_task(task).await.map(|_| ())
                     } else {
                         Err(SwarmError::AgentNotFound { id: agent_id.to_string() })
                     }

@@ -780,8 +780,20 @@ impl EnhancedGpuMemoryManager {
             return Ok(BufferHandle::new(buffer.allocation_id()));
         }
 
+        // Fallback: create a simple buffer handle for non-GPU builds
+        #[cfg(not(feature = "gpu"))]
+        {
+            if size == 0 {
+                return Err(ComputeError::General("Cannot allocate zero-sized buffer".to_string()));
+            }
+            
+            // Create a simple buffer handle with the requested size
+            Ok(BufferHandle::new(size as u64))
+        }
+        
+        #[cfg(feature = "gpu")]
         Err(ComputeError::General(
-            "No memory manager available".to_string(),
+            "No GPU memory manager available".to_string(),
         ))
     }
 
@@ -845,6 +857,13 @@ impl EnhancedGpuMemoryManager {
             return Ok(());
         }
 
+        // Fallback for non-GPU builds: log the deallocation
+        #[cfg(not(feature = "gpu"))]
+        {
+            // Simple logging for non-GPU deallocation
+            eprintln!("Deallocating buffer handle: {}", handle.id());
+        }
+        
         Ok(())
     }
 

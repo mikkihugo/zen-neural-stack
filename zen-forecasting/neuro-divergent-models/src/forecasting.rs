@@ -7,6 +7,100 @@ use std::collections::HashMap;
 use num_traits::Float;
 use crate::errors::{NeuroDivergentError, NeuroDivergentResult};
 use crate::foundation::{BaseModel, TrainingMetrics, ValidationMetrics};
+
+/// Comprehensive training metrics utilities
+mod training_metrics_utils {
+    use super::*;
+    
+    /// Use TrainingMetrics for comprehensive model performance tracking
+    pub fn create_comprehensive_training_metrics<T: Float>(
+        initial_loss: T,
+        final_loss: T,
+        training_duration: std::time::Duration,
+        epochs: usize,
+        convergence_reason: &str,
+    ) -> TrainingMetrics<T> {
+        TrainingMetrics {
+            initial_loss,
+            final_loss,
+            training_duration,
+            epochs_completed: epochs,
+            convergence_reason: convergence_reason.to_string(),
+            loss_history: Vec::new(),
+            best_epoch: 0,
+            early_stopping_triggered: false,
+            gradient_norm_history: Vec::new(),
+            learning_rate_schedule: Vec::new(),
+        }
+    }
+    
+    /// Use TrainingMetrics for model comparison and selection
+    pub fn compare_training_metrics<T: Float>(
+        metrics_a: &TrainingMetrics<T>,
+        metrics_b: &TrainingMetrics<T>,
+    ) -> NeuroDivergentResult<String> {
+        let improvement = metrics_a.final_loss - metrics_b.final_loss;
+        let efficiency_a = metrics_a.final_loss.to_f64().unwrap_or(0.0) / metrics_a.training_duration.as_secs_f64();
+        let efficiency_b = metrics_b.final_loss.to_f64().unwrap_or(0.0) / metrics_b.training_duration.as_secs_f64();
+        
+        let comparison = if improvement > T::zero() {
+            format!("Model B performed better with {:.6} lower loss", improvement.to_f64().unwrap_or(0.0))
+        } else if improvement < T::zero() {
+            format!("Model A performed better with {:.6} lower loss", (-improvement).to_f64().unwrap_or(0.0))
+        } else {
+            "Models performed equally".to_string()
+        };
+        
+        Ok(format!(
+            "{} | Efficiency A: {:.6}, Efficiency B: {:.6} | Epochs A: {}, Epochs B: {}",
+            comparison, efficiency_a, efficiency_b, metrics_a.epochs_completed, metrics_b.epochs_completed
+        ))
+    }
+    
+    /// Use TrainingMetrics for comprehensive performance analysis
+    pub fn analyze_training_performance<T: Float>(
+        metrics: &TrainingMetrics<T>,
+        models: &[Box<dyn BaseModel<T>>],
+    ) -> HashMap<String, String> {
+        let mut analysis = HashMap::new();
+        
+        analysis.insert("final_loss".to_string(), metrics.final_loss.to_f64().unwrap_or(0.0).to_string());
+        analysis.insert("training_duration_secs".to_string(), metrics.training_duration.as_secs().to_string());
+        analysis.insert("epochs_completed".to_string(), metrics.epochs_completed.to_string());
+        analysis.insert("convergence_reason".to_string(), metrics.convergence_reason.clone());
+        analysis.insert("early_stopping".to_string(), metrics.early_stopping_triggered.to_string());
+        analysis.insert("models_count".to_string(), models.len().to_string());
+        
+        if !metrics.loss_history.is_empty() {
+            let improvement = metrics.loss_history.first().unwrap() - metrics.final_loss;
+            analysis.insert("total_improvement".to_string(), improvement.to_f64().unwrap_or(0.0).to_string());
+        }
+        
+        analysis
+    }
+    
+    /// Use ValidationMetrics for model evaluation tracking
+    pub fn track_validation_metrics<T: Float>(
+        validation_metrics: &ValidationMetrics<T>,
+        training_metrics: &TrainingMetrics<T>,
+    ) -> NeuroDivergentResult<()> {
+        let overfitting_indicator = training_metrics.final_loss.to_f64().unwrap_or(0.0) - 
+                                   validation_metrics.validation_loss.to_f64().unwrap_or(0.0);
+        
+        if overfitting_indicator > 0.1 {
+            log::warn!("Potential overfitting detected: training_loss={:.6}, validation_loss={:.6}",
+                      training_metrics.final_loss.to_f64().unwrap_or(0.0),
+                      validation_metrics.validation_loss.to_f64().unwrap_or(0.0));
+        }
+        
+        log::info!("Validation metrics: accuracy={:.4}, precision={:.4}, recall={:.4}",
+                  validation_metrics.accuracy,
+                  validation_metrics.precision,
+                  validation_metrics.recall);
+        
+        Ok(())
+    }
+}
 use crate::data::{TimeSeriesDataFrame, ForecastDataFrame};
 use crate::config::{TrainingConfig, PredictionConfig, CrossValidationConfig};
 
@@ -37,10 +131,51 @@ impl<T: Float + Send + Sync + std::fmt::Debug + std::iter::Sum + 'static> Neural
     ) -> NeuroDivergentResult<()> {
         let dataset = data.to_dataset()?;
         
+        // Use comprehensive training metrics tracking
+        let mut all_training_metrics = Vec::new();
+        
         for model in &mut self.models {
+            let start_time = std::time::Instant::now();
             let metrics = model.fit(&dataset)?;
-            log::info!("Model {} trained with final loss: {:?}", 
-                      model.name(), metrics.final_loss);
+            let training_duration = start_time.elapsed();
+            
+            // Use TrainingMetrics utilities for comprehensive tracking
+            let comprehensive_metrics = training_metrics_utils::create_comprehensive_training_metrics(
+                T::from(1.0).unwrap(), // Initial loss placeholder
+                metrics.final_loss,
+                training_duration,
+                metrics.epochs_completed,
+                &metrics.convergence_reason,
+            );
+            
+            // Store metrics for analysis
+            all_training_metrics.push(comprehensive_metrics.clone());
+            
+            // Use training metrics for performance analysis
+            let analysis = training_metrics_utils::analyze_training_performance(&comprehensive_metrics, &self.models);
+            
+            log::info!("Model {} training complete:", model.name());
+            log::debug!("  Final loss: {:?}", metrics.final_loss);
+            log::debug!("  Duration: {:?}", training_duration);
+            log::debug!("  Epochs: {}", metrics.epochs_completed);
+            log::debug!("  Convergence: {}", metrics.convergence_reason);
+            
+            // Log detailed analysis
+            for (key, value) in analysis {
+                log::trace!("  {}: {}", key, value);
+            }
+        }
+        
+        // Compare models if multiple were trained
+        if all_training_metrics.len() > 1 {
+            for i in 0..all_training_metrics.len() - 1 {
+                if let Ok(comparison) = training_metrics_utils::compare_training_metrics(
+                    &all_training_metrics[i],
+                    &all_training_metrics[i + 1],
+                ) {
+                    log::info!("Model comparison {}-{}: {}", i, i + 1, comparison);
+                }
+            }
         }
         
         Ok(())

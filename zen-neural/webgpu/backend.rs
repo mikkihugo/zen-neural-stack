@@ -124,18 +124,25 @@ where
     fn clone(&self) -> Self {
         // Clone the backend selector by creating a new one
         // This is a simplified clone that recreates backends
-        Self::new()
+        Self::new().unwrap_or_else(|_| Self::default())
     }
 }
 
 impl<T: Float + std::fmt::Debug + Send + Sync + 'static> Default for BackendSelector<T> {
     fn default() -> Self {
-        Self::new()
+        Self::new().unwrap_or_else(|_| {
+            // Fallback implementation if initialization fails
+            Self {
+                backends: Vec::new(),
+                performance_cache: HashMap::new(),
+                fallback_chain: vec![BackendType::Cpu],
+            }
+        })
     }
 }
 
 impl<T: Float + std::fmt::Debug + Send + Sync + 'static> BackendSelector<T> {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, super::error::ComputeError> {
         let mut backends = Vec::new();
 
         // Try to initialize backends in order of preference
@@ -157,11 +164,11 @@ impl<T: Float + std::fmt::Debug + Send + Sync + 'static> BackendSelector<T> {
             backends.push(Box::new(cpu) as Box<dyn ComputeBackend<T>>);
         }
 
-        Self {
+        Ok(Self {
             backends,
             performance_cache: HashMap::new(),
             fallback_chain: vec![BackendType::WebGPU, BackendType::Simd, BackendType::Cpu],
-        }
+        })
     }
 
     /// Get available backend types
@@ -180,7 +187,7 @@ impl<T: Float + std::fmt::Debug + Send + Sync + 'static> BackendSelector<T> {
     }
 
     /// Set the active backend
-    pub fn set_backend(&mut self, backend_type: BackendType) {
+    pub fn set_backend(&mut self, backend_type: BackendType) -> Result<(), super::error::ComputeError> {
         // Find the backend and move it to the front if available
         if let Some(pos) = self
             .backends
@@ -190,12 +197,58 @@ impl<T: Float + std::fmt::Debug + Send + Sync + 'static> BackendSelector<T> {
             // Move the selected backend to the front
             let backend = self.backends.remove(pos);
             self.backends.insert(0, backend);
+            Ok(())
+        } else {
+            Err(super::error::ComputeError::BackendError(
+                format!("Backend {:?} not available", backend_type)
+            ))
         }
-        // If backend not available, it will gracefully fall back to available ones
     }
 
-    /// Select optimal backend for given problem size
+    /// Select optimal backend for given problem size (legacy interface)
     pub fn select_optimal_backend(&mut self, rows: usize, cols: usize) -> BackendType {
+        self.select_optimal_backend_internal(rows, cols)
+    }
+    
+    /// Select optimal backend with proper error handling
+    pub fn select_optimal_backend_internal(&mut self, rows: usize, cols: usize) -> BackendType {
+        // Convert from the data structure used in compute_context
+        let dims = super::compute_context::MatrixDims { rows, cols };
+        self.select_optimal_backend_by_dims(&dims).unwrap_or(self.get_current_backend())
+    }
+    
+    /// Select optimal backend by matrix dimensions
+    pub fn select_optimal_backend_by_dims(
+        &mut self, 
+        dims: &super::compute_context::MatrixDims
+    ) -> Result<BackendType, super::error::ComputeError> {
+        let rows = dims.rows;
+        let cols = dims.cols;
+        let matrix_size = if rows > 1000 || cols > 1000 {
+            MatrixSize::Large
+        } else if rows > 100 || cols > 100 {
+            MatrixSize::Medium
+        } else {
+            MatrixSize::Small
+        };
+
+        let profile = ComputeProfile {
+            matrix_size,
+            batch_size: 1,
+            operation_type: OperationType::Inference,
+        };
+
+        // Use existing selection logic
+        if let Some(backend) = self.select_backend(&profile) {
+            Ok(backend.backend_type())
+        } else {
+            // Fallback to first available backend
+            Ok(self.get_current_backend())
+        }
+    }
+    
+    /// Legacy select backend method implementation
+    fn select_optimal_backend_legacy_impl(&mut self, rows: usize, cols: usize) -> BackendType {
         let matrix_size = if rows > 1000 || cols > 1000 {
             MatrixSize::Large
         } else if rows > 100 || cols > 100 {
@@ -258,6 +311,11 @@ impl<T: Float + std::fmt::Debug + Send + Sync + 'static> BackendSelector<T> {
 
     pub fn capabilities(&self) -> Vec<BackendCapabilities> {
         self.backends.iter().map(|b| b.capabilities()).collect()
+    }
+    
+    /// Select optimal backend for given problem size (legacy method)
+    pub fn select_optimal_backend_legacy(&mut self, rows: usize, cols: usize) -> BackendType {
+        self.select_optimal_backend_legacy_impl(rows, cols)
     }
 }
 

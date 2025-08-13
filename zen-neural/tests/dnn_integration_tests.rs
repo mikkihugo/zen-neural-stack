@@ -433,22 +433,51 @@ async fn test_performance_comparison_forward_pass() {
   let rust_input =
     DNNTensor::from_vec(input_vec.clone(), &input_shape).unwrap();
 
-  // Benchmark Rust implementation
+  // Benchmark Rust implementation with validation
   let rust_start = Instant::now();
-  for _ in 0..num_iterations {
-    let _output = rust_model
+  let mut rust_outputs = Vec::new();
+  for i in 0..num_iterations {
+    let output = rust_model
       .forward(&rust_input, DNNTrainingMode::Inference)
       .await
       .unwrap();
+    
+    // Validate output periodically to ensure correctness
+    if i % 100 == 0 {
+      assert!(!output.data.is_empty(), "Rust model should produce non-empty output");
+      assert!(output.data.iter().all(|&x| x.is_finite()), "All outputs should be finite");
+    }
+    
+    if i == 0 {
+      rust_outputs = output.data.clone(); // Store first output for comparison
+    }
   }
   let rust_time = rust_start.elapsed();
 
-  // Benchmark JavaScript-style implementation
+  // Benchmark JavaScript-style implementation with validation
   let js_start = Instant::now();
-  for _ in 0..num_iterations {
-    let _output = js_model.forward_pass(input_vec.clone());
+  let mut js_outputs = Vec::new();
+  for i in 0..num_iterations {
+    let output = js_model.forward_pass(input_vec.clone());
+    
+    // Validate output periodically
+    if i % 100 == 0 {
+      assert!(!output.is_empty(), "JS model should produce non-empty output");
+      assert!(output.iter().all(|&x| x.is_finite()), "All JS outputs should be finite");
+    }
+    
+    if i == 0 {
+      js_outputs = output; // Store first output for comparison
+    }
   }
   let js_time = js_start.elapsed();
+  
+  // Validate outputs are reasonably similar (within tolerance)
+  assert_eq!(rust_outputs.len(), js_outputs.len(), "Output dimensions should match");
+  for (r, j) in rust_outputs.iter().zip(js_outputs.iter()) {
+    let diff = (r - j).abs();
+    assert!(diff < 0.1, "Rust and JS outputs should be similar: {} vs {}", r, j);
+  }
 
   // Calculate performance ratio
   let speedup_ratio = js_time.as_nanos() as f64 / rust_time.as_nanos() as f64;
@@ -506,7 +535,7 @@ async fn test_performance_comparison_training() {
   for _ in 0..num_samples {
     let input_vec: Vec<f32> =
       (0..input_size).map(|_| rng.r#gen::<f32>()).collect();
-    let class = rng.gen_range(0..output_size);
+    let class = rng.r#gen_range(0..output_size);
     let mut target_vec = vec![0.0; output_size];
     target_vec[class] = 1.0;
 
@@ -863,7 +892,7 @@ async fn test_comprehensive_integration() {
 
   for _ in 0..100 {
     let input_vec: Vec<f32> = (0..784).map(|_| rng.r#gen::<f32>()).collect();
-    let class = rng.gen_range(0..10);
+    let class = rng.r#gen_range(0..10);
     let mut target_vec = vec![0.0; 10];
     target_vec[class] = 1.0;
 

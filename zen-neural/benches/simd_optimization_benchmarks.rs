@@ -418,6 +418,7 @@ fn benchmark_batch_processing_simd(c: &mut Criterion) {
       BenchmarkId::new("batch_parallel_simd", batch_size),
       &batch_size,
       |b, _| {
+        #[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
         use rayon::prelude::*;
 
         b.iter(|| {

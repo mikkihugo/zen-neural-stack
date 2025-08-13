@@ -1,4 +1,24 @@
-# CUDA-Rust-WASM 🚀
+# Zen-Compute 🚀
+
+## 🎯 **Quick Start - GPU Backend Usage**
+
+```bash
+# Default build (CPU + WebGPU only)
+cargo build
+
+# Enable CUDA backend
+cargo build --features cuda-backend
+
+# Enable all GPU backends
+cargo build --features cuda-backend,opencl-backend,vulkan
+
+# See full usage guide
+cat ../GPU_BACKEND_USAGE.md
+```
+
+---
+
+# CUDA-Rust-WASM 🚀 (Original)
 
 [![Crates.io](https://img.shields.io/crates/v/cuda-rust-wasm.svg)](https://crates.io/crates/cuda-rust-wasm)
 [![npm version](https://badge.fury.io/js/cuda-wasm.svg)](https://badge.fury.io/js/cuda-wasm)

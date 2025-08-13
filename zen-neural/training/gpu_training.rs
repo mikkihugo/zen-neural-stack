@@ -126,6 +126,45 @@ pub struct GpuPerformanceStats {
 
 #[cfg(feature = "gpu")]
 impl<T: Float + Send + Sync + Default + std::fmt::Debug + 'static> GpuAdam<T> {
+    
+    /// Create a new GPU Adam optimizer with automatic backend selection
+    pub fn with_auto_backend(learning_rate: T) -> Result<Self, ComputeError> {
+        let mut backend_selector = BackendSelector::new()?;
+        let profile = ComputeProfile {
+            matrix_size: MatrixSize::Large,
+            batch_size: 128,
+            operation_type: OperationType::Training,
+        };
+        
+        // Select optimal backend for training workload
+        let webgpu_backend = if let Some(backend) = backend_selector.select_backend(&profile) {
+            Some(Arc::new(backend))
+        } else {
+            None
+        };
+        
+        let compute_context = ComputeContext::new()?;
+        
+        Ok(Self {
+            learning_rate,
+            beta1: T::from(0.9).unwrap(),
+            beta2: T::from(0.999).unwrap(),
+            epsilon: T::from(1e-8).unwrap(),
+            weight_decay: T::zero(),
+            error_function: Box::new(MseError),
+            compute_context,
+            webgpu_backend,
+            m_weights_gpu: None,
+            v_weights_gpu: None,
+            m_biases_gpu: None,
+            v_biases_gpu: None,
+            step: 0,
+            gpu_stats: GpuPerformanceStats::default(),
+            moment_estimates: None,
+            callback: None,
+        })
+    }
+    
     /// Create a new GPU Adam optimizer
     pub fn new(learning_rate: T) -> Result<Self, ComputeError> {
         let compute_context = ComputeContext::new()?;

@@ -47,7 +47,7 @@
  */
 
 use ndarray::{Array1, Array2, Axis};
-use num_traits::{Float, Zero, One};
+use num_traits::Float;
 use rand::distributions::{Distribution, Uniform};
 use rand_distr::Normal;
 use rand::{Rng, SeedableRng};
@@ -58,7 +58,8 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 
 use super::data::{DNNTensor, TensorShape, TensorOps};
 use super::{DNNError, DNNTrainingMode, ActivationType, WeightInitialization};
@@ -190,6 +191,343 @@ impl Default for DenseLayerConfig {
             apply_activation: false, // Activation handled by separate layer by default
         }
     }
+}
+
+/// Float-based numerical utilities for dense layer operations
+pub struct FloatLayerUtils;
+
+impl FloatLayerUtils {
+    /// Compute layer output statistics using Float trait
+    pub fn compute_layer_stats<F: Float>(values: &[F]) -> LayerStatistics<F> {
+        if values.is_empty() {
+            return LayerStatistics {
+                mean: F::zero(),
+                variance: F::zero(),
+                min: F::zero(),
+                max: F::zero(),
+                l2_norm: F::zero(),
+            };
+        }
+        
+        let len = F::from(values.len()).unwrap_or(F::one());
+        let sum = values.iter().copied().fold(F::zero(), |acc, x| acc + x);
+        let mean = sum / len;
+        
+        let variance = values.iter()
+            .map(|&x| (x - mean) * (x - mean))
+            .fold(F::zero(), |acc, x| acc + x) / len;
+            
+        let min = values.iter().copied().fold(F::infinity(), |a, b| a.min(b));
+        let max = values.iter().copied().fold(F::neg_infinity(), |a, b| a.max(b));
+        
+        let l2_norm = values.iter()
+            .map(|&x| x * x)
+            .fold(F::zero(), |acc, x| acc + x)
+            .sqrt();
+        
+        LayerStatistics {
+            mean,
+            variance,
+            min,
+            max,
+            l2_norm,
+        }
+    }
+    
+    /// Apply numerical stability checks using Float operations with epsilon-based clamping
+    pub fn ensure_numerical_stability<F: Float>(value: F, epsilon: F) -> F {
+        if value.is_nan() {
+            epsilon // Use epsilon as fallback for NaN values
+        } else if value.is_infinite() {
+            if value > F::zero() { 
+                F::from(1000.0).unwrap_or(F::one()) 
+            } else { 
+                F::from(-1000.0).unwrap_or(-F::one())
+            }
+        } else {
+            // Clamp very small values using epsilon threshold
+            if value.abs() < epsilon {
+                if value >= F::zero() {
+                    epsilon
+                } else {
+                    -epsilon
+                }
+            } else {
+                // Standard range clamping
+                value.max(-F::from(1000.0).unwrap_or(-F::one()))
+                     .min(F::from(1000.0).unwrap_or(F::one()))
+            }
+        }
+    }
+    
+    /// Initialize weights using Float trait for generic precision
+    pub fn init_weights_float<F: Float>(
+        shape: (usize, usize),
+        init_type: &WeightInitialization
+    ) -> Result<Vec<F>, DNNError> {
+        let total_size = shape.0 * shape.1;
+        let mut weights = Vec::with_capacity(total_size);
+        
+        match init_type {
+            WeightInitialization::He => {
+                let fan_in = F::from(shape.0).unwrap_or(F::one());
+                let std_dev = (F::from(2.0).unwrap_or(F::one()) / fan_in).sqrt();
+                
+                for i in 0..total_size {
+                    // Box-Muller transformation for normal distribution
+                    let u1 = F::from((i + 1) as f64 / (total_size + 1) as f64).unwrap_or(F::from(0.5).unwrap_or(F::one()));
+                    let u2 = F::from((i * 2 + 1) as f64 / (total_size * 2 + 1) as f64).unwrap_or(F::from(0.5).unwrap_or(F::one()));
+                    
+                    // Proper Box-Muller transformation: z = sqrt(-2*ln(u1)) * cos(2*pi*u2)
+                    let ln_u1 = u1.ln();
+                    let two_pi_u2 = F::from(2.0 * std::f64::consts::PI).unwrap_or(F::from(6.28).unwrap_or(F::one())) * u2;
+                    let z = (F::from(-2.0).unwrap_or(-F::one() - F::one()) * ln_u1).sqrt() * two_pi_u2.cos();
+                    
+                    let normal_val = z * std_dev;
+                    weights.push(Self::ensure_numerical_stability(normal_val, F::from(1e-8).unwrap_or(F::epsilon())));
+                }
+            },
+            WeightInitialization::Xavier => {
+                let fan_in = F::from(shape.0).unwrap_or(F::one());
+                let fan_out = F::from(shape.1).unwrap_or(F::one());
+                let std_dev = (F::from(2.0).unwrap_or(F::one()) / (fan_in + fan_out)).sqrt();
+                
+                for _ in 0..total_size {
+                    let normal_val = F::from(0.1).unwrap_or(F::epsilon()) * std_dev; // Simplified
+                    weights.push(Self::ensure_numerical_stability(normal_val, F::from(1e-8).unwrap_or(F::epsilon())));
+                }
+            },
+            _ => {
+                for _ in 0..total_size {
+                    weights.push(F::from(0.01).unwrap_or(F::epsilon())); // Small default
+                }
+            }
+        }
+        
+        Ok(weights)
+    }
+    
+    /// Initialize weights with proper RNG for reproducible results
+    pub fn init_weights_with_rng<R: Rng>(
+        shape: (usize, usize),
+        init_type: &WeightInitialization,
+        rng: &mut R
+    ) -> Array2<f32> {
+        use rand::distributions::{Distribution, Uniform};
+        use rand_distr::Normal;
+        
+        let (rows, cols) = shape;
+        let mut data = vec![0.0f32; rows * cols];
+        
+        match init_type {
+            WeightInitialization::He => {
+                let fan_in = rows as f32;
+                let std_dev = (2.0 / fan_in).sqrt();
+                let normal = Normal::new(0.0, std_dev as f64).unwrap();
+                
+                for val in data.iter_mut() {
+                    *val = normal.sample(rng) as f32;
+                }
+            },
+            WeightInitialization::Xavier => {
+                let fan_in = rows as f32;
+                let fan_out = cols as f32;
+                let std_dev = (2.0 / (fan_in + fan_out)).sqrt();
+                let normal = Normal::new(0.0, std_dev as f64).unwrap();
+                
+                for val in data.iter_mut() {
+                    *val = normal.sample(rng) as f32;
+                }
+            },
+            WeightInitialization::LeCun => {
+                let fan_in = rows as f32;
+                let std_dev = (1.0 / fan_in).sqrt();
+                let normal = Normal::new(0.0, std_dev as f64).unwrap();
+                
+                for val in data.iter_mut() {
+                    *val = normal.sample(rng) as f32;
+                }
+            },
+            WeightInitialization::Normal { mean, std } => {
+                let normal = Normal::new(*mean as f64, *std as f64).unwrap();
+                for val in data.iter_mut() {
+                    *val = normal.sample(rng) as f32;
+                }
+            },
+            WeightInitialization::Uniform { min, max } => {
+                let uniform = Uniform::new(*min, *max);
+                for val in data.iter_mut() {
+                    *val = uniform.sample(rng);
+                }
+            },
+        }
+        
+        Array2::from_shape_vec((rows, cols), data).unwrap()
+    }
+    
+    /// Generate random dropout mask using Rng
+    pub fn generate_dropout_mask<R: Rng>(
+        shape: (usize, usize), 
+        dropout_rate: f32,
+        rng: &mut R
+    ) -> Array2<f32> {
+        let (rows, cols) = shape;
+        let mut mask = Array2::ones((rows, cols));
+        let keep_prob = 1.0 - dropout_rate;
+        
+        for val in mask.iter_mut() {
+            if rng.sample::<f32, _>(rand::distributions::Standard) >= keep_prob {
+                *val = 0.0; // Drop this neuron
+            } else {
+                *val = 1.0 / keep_prob; // Scale remaining neurons
+            }
+        }
+        
+        mask
+    }
+    
+    /// Add gaussian noise using Rng for data augmentation
+    pub fn add_noise_to_weights<R: Rng>(
+        weights: &mut Array2<f32>,
+        noise_std: f32,
+        rng: &mut R
+    ) {
+        use rand_distr::Normal;
+        let normal = Normal::new(0.0, noise_std as f64).unwrap();
+        
+        for val in weights.iter_mut() {
+            *val += normal.sample(rng) as f32;
+        }
+    }
+    
+    /// Create random layer configuration for neural architecture search
+    pub fn random_layer_config<R: Rng>(
+        min_units: usize,
+        max_units: usize,
+        rng: &mut R
+    ) -> DenseLayerConfig {
+        use rand::seq::SliceRandom;
+        use rand::distributions::{Distribution, Uniform};
+        
+        let units_dist = Uniform::new_inclusive(min_units, max_units);
+        let units = units_dist.sample(rng);
+        
+        let activations = [
+            ActivationType::ReLU,
+            ActivationType::Tanh, 
+            ActivationType::Sigmoid,
+            ActivationType::GELU,
+            ActivationType::Swish,
+        ];
+        let activation = *activations.choose(rng).unwrap_or(&ActivationType::ReLU);
+        
+        let initializations = [
+            WeightInitialization::He,
+            WeightInitialization::Xavier,
+            WeightInitialization::LeCun,
+        ];
+        let weight_init = initializations.choose(rng).unwrap_or(&WeightInitialization::He).clone();
+        
+        let use_bias = rng.sample::<f32, _>(rand::distributions::Standard) < 0.8;
+        let apply_activation = rng.sample::<f32, _>(rand::distributions::Standard) < 0.2;
+        let seed_val: u64 = rng.sample::<u64, _>(rand::distributions::Standard);
+        
+        DenseLayerConfig {
+            units,
+            activation,
+            use_bias,
+            weight_init,
+            seed: Some(seed_val),
+            apply_activation,
+        }
+    }
+    
+    /// Create optimized tensor shape for layer operations
+    pub fn create_layer_tensor_shape(input_dim: usize, output_dim: usize, batch_size: usize) -> TensorShape {
+        if batch_size > 1 {
+            TensorShape::new(vec![batch_size, output_dim])
+        } else {
+            TensorShape::new(vec![input_dim, output_dim])
+        }
+    }
+    
+    /// Validate TensorShape compatibility for dense layer operations
+    pub fn validate_dense_layer_shapes(
+        input_shape: &TensorShape,
+        weight_shape: &TensorShape,
+        bias_shape: Option<&TensorShape>
+    ) -> Result<TensorShape, DNNError> {
+        let input_dims = input_shape.dimensions();
+        let weight_dims = weight_shape.dimensions();
+        
+        // Dense layer: input [batch, input_features] @ weights [input_features, output_features]
+        if input_dims.len() != 2 || weight_dims.len() != 2 {
+            return Err(DNNError::DimensionMismatch(
+                "Dense layer requires 2D input and weight tensors".to_string()
+            ));
+        }
+        
+        if input_dims[1] != weight_dims[0] {
+            return Err(DNNError::DimensionMismatch(
+                format!(
+                    "Input features {} must match weight input dimension {}",
+                    input_dims[1], weight_dims[0]
+                )
+            ));
+        }
+        
+        // Validate bias shape if provided
+        if let Some(bias_shape) = bias_shape {
+            let bias_dims = bias_shape.dimensions();
+            if bias_dims.len() != 2 || bias_dims[0] != 1 || bias_dims[1] != weight_dims[1] {
+                return Err(DNNError::DimensionMismatch(
+                    format!(
+                        "Bias shape {:?} must be [1, {}] to match output features",
+                        bias_dims, weight_dims[1]
+                    )
+                ));
+            }
+        }
+        
+        // Output shape: [batch_size, output_features]
+        Ok(TensorShape::new(vec![input_dims[0], weight_dims[1]]))
+    }
+    
+    /// Optimize TensorShape for memory layout based on layer configuration
+    pub fn optimize_tensor_layout(
+        shape: &TensorShape, 
+        layer_type: &str,
+        batch_size: usize
+    ) -> TensorShape {
+        let dims = shape.dimensions();
+        
+        match layer_type {
+            "dense" | "linear" => {
+                // Optimize for cache-friendly matrix multiplication
+                if dims.len() == 2 && batch_size > 1 {
+                    // Ensure batch dimension comes first for better memory access patterns
+                    TensorShape::new(vec![batch_size, dims[1] / batch_size])
+                } else {
+                    shape.clone()
+                }
+            },
+            "activation" => {
+                // Activations preserve shape but may optimize for vectorization
+                TensorShape::new(dims.to_vec())
+            },
+            _ => shape.clone()
+        }
+    }
+}
+
+/// Statistics computed using Float trait operations
+#[derive(Debug, Clone)]
+pub struct LayerStatistics<F: Float> {
+    pub mean: F,
+    pub variance: F,
+    pub min: F,
+    pub max: F,
+    pub l2_norm: F,
 }
 
 impl DenseLayer {

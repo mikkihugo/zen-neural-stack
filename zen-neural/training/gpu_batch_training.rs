@@ -18,6 +18,27 @@ pub struct BatchGpuTrainer<T: Float + Send + Sync + Default + std::fmt::Debug + 
 }
 
 impl<T: Float + Send + Sync + Default + std::fmt::Debug + 'static> BatchGpuTrainer<T> {
+    /// Create a new batch GPU trainer with automatic backend selection
+    pub fn with_auto_backend(batch_size: usize) -> Result<Self, ComputeError> {
+        let mut backend_selector = BackendSelector::new()?;
+        let profile = crate::webgpu::backend::ComputeProfile {
+            matrix_size: crate::webgpu::backend::MatrixSize::Large,
+            batch_size,
+            operation_type: crate::webgpu::backend::OperationType::Training,
+        };
+        
+        // Select optimal backend for batch training
+        if let Some(backend) = backend_selector.select_backend(&profile) {
+            Ok(Self {
+                backend: Arc::new(backend),
+                batch_size,
+                _phantom: std::marker::PhantomData,
+            })
+        } else {
+            Err(ComputeError::BackendError("No suitable backend found for batch training".to_string()))
+        }
+    }
+    
     /// Create a new batch GPU trainer
     pub fn new(backend: Arc<dyn ComputeBackend<T>>, batch_size: usize) -> Self {
         Self {

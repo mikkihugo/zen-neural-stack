@@ -80,6 +80,10 @@ flate2 = { version = "1.1.2", optional = true }
 # Additional dependencies for our implementation  
 num_cpus = { version = "1.16", optional = true }
 
+# Concurrent processing dependencies
+crossbeam-channel = { version = "0.5.12", optional = true }
+crossbeam-utils = { version = "0.8.20", optional = true }
+
 # GPU acceleration dependencies
 wgpu = { version = "26.0.1", optional = true }
 futures = { version = "0.3.31", optional = true }
@@ -127,13 +131,15 @@ chrono = { version = "0.4.41", features = ["serde"] }
 # Lightweight default for faster development builds
 default = ["std", "serde", "parallel", "logging"]
 # Full feature set (use for production builds)
-full = ["std", "serde", "parallel", "binary", "compression", "logging", "io", "gnn", "simd"]
+full = ["std", "serde", "parallel", "concurrent", "binary", "compression", "logging", "io", "gnn", "simd"]
 # Development-optimized features (minimal dependencies for fast builds)
 dev-fast = ["std", "serde", "logging"]
 std = []
 serde = ["dep:serde", "dep:serde_json"]
 parallel = ["dep:rayon", "dep:num_cpus", "std"]
 logging = ["dep:log", "std"]
+# Concurrent neural network operations
+concurrent = ["parallel", "dep:crossbeam-channel", "dep:crossbeam-utils", "dep:tokio", "dep:uuid", "std"]
 simd = ["parallel", "dep:num_cpus"]
 simd-avx2 = ["simd"]
 simd-neon = ["simd"]
@@ -168,6 +174,9 @@ test-all = ["gpu", "gnn"]
 test-core = ["std", "parallel"]
 test-gpu = ["gpu", "webgpu"]
 test-no-external = []  # For tests that don't require external crates
+
+# Debug and profiling features
+backtrace = ["std"]  # Enable backtrace support in error handling
 
 [[example]]
 name = "basic_usage"

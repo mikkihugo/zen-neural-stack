@@ -1,0 +1,21 @@
+{
+  "name": "zen-swarm-code-mesh-provider",
+  "version": "1.0.0",
+  "description": "Zen-swarm provider integration for code-mesh CLI tool",
+  "main": "index.js",
+  "type": "module",
+  "keywords": ["code-mesh", "provider", "zen-swarm", "ai", "multi-llm"],
+  "author": "Zen Neural Stack",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.18.0",
+    "uuid": "^10.0.0",
+    "node-fetch": "^3.3.2"
+  },
+  "peerDependencies": {
+    "code-mesh-core": ">=1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

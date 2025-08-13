@@ -30,7 +30,7 @@ fn generate_test_data(
     let input_data: Vec<f32> =
       (0..input_dim).map(|_| rng.r#gen::<f32>()).collect();
 
-    let class = rng.gen_range(0..output_dim);
+    let class = rng.r#gen_range(0..output_dim);
     let mut target_data = vec![0.0; output_dim];
     target_data[class] = 1.0;
 

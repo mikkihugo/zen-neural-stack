@@ -5,7 +5,8 @@ use chrono::{DateTime, Utc, Duration};
 use ndarray::{Array2, Array1};
 use polars::prelude::*;
 use proptest::prelude::*;
-use rayon::prelude::*;
+#[allow(unused_imports)] // False positive: used by parallel iterators when parallel feature is enabled
+        use rayon::prelude::*;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use std::collections::HashMap;

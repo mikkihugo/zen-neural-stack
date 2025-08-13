@@ -250,13 +250,13 @@ impl<T: Float> CandidateNeuron<T> {
         let weights: Vec<T> = (0..num_inputs)
             .map(|_| {
                 let w: f64 =
-                    rng.gen_range(min_weight.to_f64().unwrap()..=max_weight.to_f64().unwrap());
+                    rng.r#gen_range(min_weight.to_f64().unwrap()..=max_weight.to_f64().unwrap());
                 T::from(w).unwrap()
             })
             .collect();
 
         let bias_val: f64 =
-            rng.gen_range(min_weight.to_f64().unwrap()..=max_weight.to_f64().unwrap());
+            rng.r#gen_range(min_weight.to_f64().unwrap()..=max_weight.to_f64().unwrap());
         let bias = T::from(bias_val).unwrap();
 
         Self {
@@ -634,10 +634,11 @@ impl<T: Float> CascadeTrainer<T> {
 
         self.metrics.candidate_training_time += start_time.elapsed();
 
-        #[cfg(feature = "logging")]
-        debug!(
-            "Best candidate correlation: {}",
-            best_candidate.correlation.to_f64().unwrap_or(0.0)
+        cascade_logging::log_candidate_evaluation(
+            0, // Best candidate index
+            best_candidate.activation,
+            best_candidate.correlation,
+            best_candidate.training_history.len(),
         );
 
         Ok(best_candidate)
@@ -1075,6 +1076,7 @@ where
         &mut self,
         candidates: &mut [CandidateNeuron<T>],
     ) -> Result<(), RuvFannError> {
+        #[allow(unused_imports)] // False positive: used by par_iter_mut() when parallel feature is enabled
         use rayon::prelude::*;
         use std::sync::Arc;
 

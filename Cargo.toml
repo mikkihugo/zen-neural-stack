@@ -92,7 +92,7 @@ hyper = "1.6.1"
 pin-project = "1.1.8"
 no-std-compat = "0.4.1"
 heapless = "0.8.0"
-getrandom = { version = "0.2.15", features = ["js"] }
+getrandom = { version = "0.3.3", features = ["js"] }
 shared_memory = "0.12.4"
 tungstenite = "0.27.0"
 tokio-tungstenite = "0.27.0"

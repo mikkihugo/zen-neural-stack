@@ -83,7 +83,7 @@ dashmap = "5.5.3"
 chrono = { version = "0.4.39", features = ["serde"] }  # Pin compatible version
 
 # Web server and networking - using compatible versions
-axum = "0.7.9"
+axum = "0.8.4"
 tower = "0.5.2"  # Latest available version
 tower-service = "0.3"
 hyper = "1.6.1"

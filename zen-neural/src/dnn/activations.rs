@@ -57,9 +57,8 @@
  * @version 1.0.0-alpha.1
  * @since 2025-01-14
  */
-
 use ndarray::{Array1, Array2, Axis};
-use num_traits::{Float, Zero};
+// Removed unused import: use num_traits::Float;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -553,7 +552,7 @@ pub struct ActivationUtils;
 impl ActivationUtils {
     /// Create a zero-initialized bias vector for activation layers
     pub fn create_zero_bias(size: usize) -> Array1<f32> {
-        Array1::from_elem(size, Float::zero())
+        Array1::from_elem(size, 0.0f32)
     }
     
     /// Apply activation function along a specific axis (for advanced operations)

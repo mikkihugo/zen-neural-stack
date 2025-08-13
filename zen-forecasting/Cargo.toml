@@ -61,7 +61,7 @@ neuro-divergent-models = { path = "neuro-divergent-models", optional = true }
 neuro-divergent-registry = { path = "neuro-divergent-registry", optional = true }
 
 # zen-neural dependency
-zen-neural = { path = "../zen-neural", features = ["zen-storage"] }
+zen-neural = { path = "../zen-neural" }
 
 [dev-dependencies]
 approx = "0.5.1"

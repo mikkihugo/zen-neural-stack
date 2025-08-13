@@ -1119,21 +1119,35 @@ impl<T: Float> GenericFloatSimdOps<T> {
     /// Generic activation function implementation using Float trait
     fn activation_function_generic(&self, x: T, activation: ActivationFunction) -> T {
         match activation {
-            ActivationFunction::Linear => x,
             ActivationFunction::Sigmoid => {
                 let one = T::one();
                 let exp_neg_x = (-x).exp();
                 one / (one + exp_neg_x)
             },
-            ActivationFunction::ReLU => {
+            ActivationFunction::Relu => {
                 if x > T::zero() { x } else { T::zero() }
             },
             ActivationFunction::Tanh => x.tanh(),
-            ActivationFunction::ReLULeaky => {
-                let alpha = T::from(0.01).unwrap_or_else(|| T::zero());
-                if x > T::zero() { x } else { alpha * x }
+            ActivationFunction::LeakyRelu(alpha) => {
+                let alpha_t = T::from(alpha).unwrap_or_else(|| T::zero());
+                if x > T::zero() { x } else { alpha_t * x }
             },
-            _ => x, // Default to linear for unsupported functions
+            ActivationFunction::Gelu => {
+                // GELU approximation: 0.5 * x * (1 + tanh(sqrt(2/π) * (x + 0.044715 * x^3)))
+                let sqrt_2_over_pi = T::from(0.7978845608).unwrap_or_else(|| T::one());
+                let coeff = T::from(0.044715).unwrap_or_else(|| T::zero());
+                let x_cubed = x * x * x;
+                let inner = sqrt_2_over_pi * (x + coeff * x_cubed);
+                let half = T::from(0.5).unwrap_or_else(|| T::one());
+                half * x * (T::one() + inner.tanh())
+            },
+            ActivationFunction::Swish => {
+                // Swish: x * sigmoid(x)
+                let one = T::one();
+                let exp_neg_x = (-x).exp();
+                let sigmoid = one / (one + exp_neg_x);
+                x * sigmoid
+            }
         }
     }
     

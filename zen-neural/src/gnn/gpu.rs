@@ -149,7 +149,7 @@ struct GpuKernelParams {
  */
 pub struct GPUGraphProcessor {
     /// WebGPU backend for device access
-    backend: Arc<WebGPUBackend>,
+    backend: Arc<crate::webgpu::WebGPUBackend<f32>>,
     
     /// GNN configuration
     config: GNNConfig,
@@ -254,10 +254,10 @@ impl GPUGraphProcessor {
      * @return Initialized GPU processor ready for graph processing
      */
     pub async fn new(
-        backend: Arc<WebGPUBackend>,
+        backend: Arc<crate::webgpu::WebGPUBackend<f32>>,
         config: &GNNConfig,
     ) -> Result<Self, GNNError> {
-        let device = backend.device();
+        let device = &backend.device;
         
         // Create bind group layouts
         let bind_group_layouts = Self::create_bind_group_layouts(device).await?;
@@ -625,7 +625,9 @@ impl GPUGraphProcessor {
                 push_constant_ranges: &[],
             })),
             module: &message_passing_module,
-            entry_point: "main",
+            entry_point: Some("main"),
+            cache: None,
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
         });
         
         let aggregation = device.create_compute_pipeline(&ComputePipelineDescriptor {
@@ -636,7 +638,9 @@ impl GPUGraphProcessor {
                 push_constant_ranges: &[],
             })),
             module: &aggregation_module,
-            entry_point: "main",
+            entry_point: Some("main"),
+            cache: None,
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
         });
         
         let node_update = device.create_compute_pipeline(&ComputePipelineDescriptor {
@@ -647,7 +651,9 @@ impl GPUGraphProcessor {
                 push_constant_ranges: &[],
             })),
             module: &node_update_module,
-            entry_point: "main",
+            entry_point: Some("main"),
+            cache: None,
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
         });
         
         let activation = device.create_compute_pipeline(&ComputePipelineDescriptor {
@@ -658,7 +664,9 @@ impl GPUGraphProcessor {
                 push_constant_ranges: &[],
             })),
             module: &activation_module,
-            entry_point: "main",
+            entry_point: Some("main"),
+            cache: None,
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
         });
         
         // Placeholder for dropout pipeline
@@ -700,8 +708,8 @@ impl GPUGraphProcessor {
     
     /// Upload graph data to GPU buffers
     async fn upload_graph_data(&mut self, graph_data: &GraphData) -> Result<GPUGraphBuffers, GNNError> {
-        let device = self.backend.device();
-        let queue = self.backend.queue();
+        let device = &self.backend.device;
+        let queue = &self.backend.queue;
         
         // Create graph header
         let max_degree = graph_data.adjacency_list.forward_adj
@@ -801,8 +809,8 @@ impl GPUGraphProcessor {
         gpu_buffers: &GPUGraphBuffers,
         _layer_idx: usize,
     ) -> Result<Buffer, GNNError> {
-        let device = self.backend.device();
-        let queue = self.backend.queue();
+        let device = &self.backend.device;
+        let queue = &self.backend.queue;
         
         // Create message buffer
         let num_edges = gpu_buffers.get_num_edges().await?;
@@ -868,6 +876,7 @@ impl GPUGraphProcessor {
         {
             let mut compute_pass = encoder.begin_compute_pass(&ComputePassDescriptor {
                 label: Some("GNN Message Passing Pass"),
+                timestamp_writes: None,
             });
             
             compute_pass.set_pipeline(&self.pipelines.message_passing);
@@ -890,8 +899,8 @@ impl GPUGraphProcessor {
         messages: &Buffer,
         gpu_buffers: &GPUGraphBuffers,
     ) -> Result<Buffer, GNNError> {
-        let device = self.backend.device();
-        let queue = self.backend.queue();
+        let device = &self.backend.device;
+        let queue = &self.backend.queue;
         
         // Create aggregation result buffer
         let num_nodes = gpu_buffers.get_num_nodes().await?;
@@ -953,6 +962,7 @@ impl GPUGraphProcessor {
         {
             let mut compute_pass = encoder.begin_compute_pass(&ComputePassDescriptor {
                 label: Some("GNN Aggregation Pass"),
+                timestamp_writes: None,
             });
             
             compute_pass.set_pipeline(&self.pipelines.aggregation);
@@ -976,8 +986,8 @@ impl GPUGraphProcessor {
         aggregated_messages: &Buffer,
         _layer_idx: usize,
     ) -> Result<Buffer, GNNError> {
-        let device = self.backend.device();
-        let queue = self.backend.queue();
+        let device = &self.backend.device;
+        let queue = &self.backend.queue;
         
         // Create updated features buffer (same size as current)
         let buffer_size = current_features.size();
@@ -1038,6 +1048,7 @@ impl GPUGraphProcessor {
         {
             let mut compute_pass = encoder.begin_compute_pass(&ComputePassDescriptor {
                 label: Some("GNN Node Update Pass"),
+                timestamp_writes: None,
             });
             
             compute_pass.set_pipeline(&self.pipelines.node_update);
@@ -1057,8 +1068,8 @@ impl GPUGraphProcessor {
     
     /// Apply activation function on GPU
     async fn apply_activation_gpu(&mut self, input: &Buffer) -> Result<Buffer, GNNError> {
-        let device = self.backend.device();
-        let queue = self.backend.queue();
+        let device = &self.backend.device;
+        let queue = &self.backend.queue;
         
         // Create output buffer
         let buffer_size = input.size();
@@ -1115,6 +1126,7 @@ impl GPUGraphProcessor {
         {
             let mut compute_pass = encoder.begin_compute_pass(&ComputePassDescriptor {
                 label: Some("GNN Activation Pass"),
+                timestamp_writes: None,
             });
             
             compute_pass.set_pipeline(&self.pipelines.activation);
@@ -1134,8 +1146,8 @@ impl GPUGraphProcessor {
     
     /// Download node features from GPU to CPU
     async fn download_node_features(&self, buffer: &Buffer, num_nodes: usize) -> Result<NodeFeatures, GNNError> {
-        let device = self.backend.device();
-        let queue = self.backend.queue();
+        let device = &self.backend.device;
+        let queue = &self.backend.queue;
         
         let feature_dim = self.config.hidden_dimensions;
         let total_size = num_nodes * feature_dim * 4; // 4 bytes per f32
@@ -1158,11 +1170,11 @@ impl GPUGraphProcessor {
         
         // Map and read data
         let buffer_slice = staging_buffer.slice(..);
-        let (sender, receiver) = futures_intrusive::channel::shared::oneshot_channel();
+        let (sender, receiver) = futures::channel::oneshot::channel();
         buffer_slice.map_async(wgpu::MapMode::Read, move |v| sender.send(v).unwrap());
         
-        device.poll(wgpu::Maintain::wait()).panic_on_timeout();
-        receiver.receive().await.unwrap().map_err(|e| {
+        device.poll();
+        receiver.await.unwrap().map_err(|e| {
             GNNError::InvalidInput(format!("Failed to map GPU buffer: {:?}", e))
         })?;
         

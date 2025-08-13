@@ -31,7 +31,6 @@
  * @version 1.0.0-alpha.1
  * @since 2024-08-11
  */
-
 use std::mem::{size_of, align_of};
 use std::ptr::{self, NonNull};
 use std::alloc::{alloc, dealloc, Layout};
@@ -289,7 +288,10 @@ impl<T> Drop for CacheAlignedArray<T> {
 
 /// Memory layout optimized for SIMD operations
 #[derive(Debug)]
-pub struct SimdOptimizedLayout<T> {
+pub struct SimdOptimizedLayout<T>
+where
+    T: Copy + Default,
+{
     /// Data aligned for SIMD operations
     data: NonNull<T>,
     /// Number of SIMD lanes
@@ -451,7 +453,10 @@ where
     }
 }
 
-impl<T> Drop for SimdOptimizedLayout<T> {
+impl<T> Drop for SimdOptimizedLayout<T>
+where
+    T: Copy + Default,
+{
     fn drop(&mut self) {
         unsafe {
             // Drop all elements (including padding)
@@ -613,7 +618,7 @@ impl MemoryLayoutManager {
                     MemoryLayout::Contiguous
                 }
             }
-            TensorType::Int32 | TensorType::UInt32 => {
+            TensorType::Int32 | TensorType::UInt8 => {
                 MemoryLayout::ContiguousAligned(self.cache_config.l1_cache_line_size)
             }
             _ => MemoryLayout::Contiguous,
@@ -643,7 +648,7 @@ impl MemoryLayoutManager {
             }
             MemoryLayout::ArrayOfStructures => {
                 // Consider converting to SoA for better vectorization
-                if tensor_type.is_simd_compatible() {
+                if tensor_type.is_neural_compatible() {
                     Ok(MemoryLayout::StructureOfArrays)
                 } else {
                     Ok(current.clone())
@@ -892,8 +897,8 @@ impl MemoryHierarchy {
 
 unsafe impl<T: Send> Send for CacheAlignedArray<T> {}
 unsafe impl<T: Sync> Sync for CacheAlignedArray<T> {}
-unsafe impl<T: Send> Send for SimdOptimizedLayout<T> {}
-unsafe impl<T: Sync> Sync for SimdOptimizedLayout<T> {}
+unsafe impl<T: Send + Copy + Default> Send for SimdOptimizedLayout<T> {}
+unsafe impl<T: Sync + Copy + Default> Sync for SimdOptimizedLayout<T> {}
 unsafe impl<T: Send> Send for GraphMemoryLayout<T> {}
 unsafe impl<T: Sync> Sync for GraphMemoryLayout<T> {}
 

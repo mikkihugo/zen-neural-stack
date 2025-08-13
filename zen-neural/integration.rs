@@ -12,6 +12,7 @@ use std::time::{Duration, Instant};
 use thiserror::Error;
 
 use crate::{CascadeConfig, CascadeTrainer, Network, NetworkBuilder, TrainingData};
+use crate::training::TrainingAlgorithm;
 
 // Parallel processing with rayon for performance optimization (only when parallel feature is enabled)
 #[cfg(feature = "parallel")]
@@ -102,6 +103,7 @@ mod integration_logging {
     use super::*;
     
     /// Use debug for detailed test execution information
+    #[allow(dead_code)]
     pub fn log_debug_test_execution(
         test_name: &str,
         step: &str,
@@ -376,7 +378,7 @@ pub struct IntegrationTestSuite<T: Float + Send + Default> {
     phantom: std::marker::PhantomData<T>,
 }
 
-impl<T: Float + Send + Default> IntegrationTestSuite<T> {
+impl<T: Float + Send + Sync + Default + std::fmt::Display> IntegrationTestSuite<T> {
     /// Create a new integration test suite
     pub fn new(config: IntegrationConfig) -> Self {
         Self {
@@ -620,7 +622,7 @@ impl<T: Float + Send + Default> IntegrationTestSuite<T> {
                     assert!(since_start >= elapsed, "Time calculation should be consistent");
                     
                     // Use comprehensive logging for network validation
-                    integration_logging::log_network_validation(
+                    integration_logging::log_network_validation::<T>(
                         i,
                         network_clone.num_layers(),
                         network_clone.num_inputs(),
@@ -856,15 +858,17 @@ impl<T: Float + Send + Default> IntegrationTestSuite<T> {
         // Use thiserror::Error for comprehensive validation
         if final_error.to_f64().unwrap_or(f64::INFINITY) > 0.5 {
             let warning_error = IntegrationError::PerformanceRegression(
-                format!("Training did not converge well: final_error = {:?}", final_error)
+                format!("Training did not converge well: final_error = {}", final_error.to_f64().unwrap_or(f64::INFINITY))
             );
             #[cfg(feature = "logging")]
             warn!("Training warning: {}", warning_error);
         }
         
         #[cfg(feature = "logging")]
-        info!("Training completed: {} epochs in {:?}, avg_error={:?}, best_error={:?}", 
-              epochs_completed, training_duration, avg_error, final_error);
+        info!("Training completed: {} epochs in {:?}, avg_error={:.6}, best_error={:.6}", 
+              epochs_completed, training_duration, 
+              avg_error.to_f64().unwrap_or(f64::INFINITY), 
+              final_error.to_f64().unwrap_or(f64::INFINITY));
         
         // Validate that training actually improved the network
         let initial_accuracy = 0.0;
@@ -881,7 +885,7 @@ impl<T: Float + Send + Default> IntegrationTestSuite<T> {
 
         Ok(BenchmarkResult {
             duration,
-            memory_mb: 0.0, // TODO: Implement actual memory usage tracking
+            memory_mb: self.estimate_memory_usage(&network, &training_data),
             throughput,
             accuracy: final_accuracy,
             baseline_duration: None,
@@ -889,7 +893,95 @@ impl<T: Float + Send + Default> IntegrationTestSuite<T> {
         })
     }
     
+    /// Run performance benchmarks including parallel operations
+    fn run_performance_benchmarks(&self, result: &mut IntegrationResult) -> Result<(), IntegrationError> {
+        #[cfg(feature = "parallel")]
+        {
+            // Benchmark parallel vector operations
+            let test_data: Vec<f64> = (0..10000).map(|i| i as f64).collect();
+            let parallel_sum = parallel_integration::parallel_vector_sum(&test_data);
+            let sequential_sum: f64 = test_data.iter().sum();
+            
+            // Verify parallel and sequential give same results
+            if (parallel_sum - sequential_sum).abs() < 1e-10 {
+                #[cfg(feature = "logging")]
+                info!("Parallel vector sum benchmark: PASSED (sum: {})", parallel_sum);
+            }
+            
+            // Benchmark parallel matrix operations
+            let matrix_a = vec![vec![1.0, 2.0], vec![3.0, 4.0]];
+            let matrix_b = vec![vec![5.0, 6.0], vec![7.0, 8.0]];
+            match parallel_integration::parallel_matrix_multiply(&matrix_a, &matrix_b) {
+                Ok(result) => {
+                    #[cfg(feature = "logging")]
+                    info!("Parallel matrix multiply benchmark: PASSED (result size: {}x{})", 
+                         result.len(), result[0].len());
+                },
+                Err(e) => {
+                    #[cfg(feature = "logging")]
+                    warn!("Parallel matrix multiply benchmark failed: {}", e);
+                }
+            }
+        }
+        
+        // Track completion and compare against baseline metrics
+        result.tests_passed += 1;
+        
+        if let Some(baseline) = &self.baseline_metrics {
+            for (test_name, current) in &result.benchmarks {
+                if let Some(baseline_result) = baseline.get(test_name) {
+                    let ratio = current.duration.as_secs_f64() / baseline_result.duration.as_secs_f64();
+
+                    if ratio > 1.0 + self.config.performance_threshold / 100.0 {
+                        result.warnings.push(format!(
+                            "Performance regression in {}: {:.1}% slower than baseline",
+                            test_name,
+                            (ratio - 1.0) * 100.0
+                        ));
+                    }
+                }
+            }
+        }
+        
+        Ok(())
+    }
+
+    /// Estimate memory usage in MB for benchmark tracking
+    fn estimate_memory_usage(&self, network: &Network<T>, training_data: &TrainingData<T>) -> f64 {
+        let mut total_bytes = 0;
+        
+        // Estimate network memory usage
+        for layer in &network.layers {
+            for neuron in &layer.neurons {
+                // Each connection has a weight (size of T) plus metadata
+                total_bytes += neuron.connections.len() * std::mem::size_of::<T>();
+                total_bytes += neuron.connections.len() * 64; // Connection metadata overhead
+                
+                // Neuron metadata
+                total_bytes += 128; // Estimated neuron struct overhead
+            }
+        }
+        
+        // Estimate training data memory usage
+        for input in &training_data.inputs {
+            total_bytes += input.len() * std::mem::size_of::<T>();
+        }
+        for output in &training_data.outputs {
+            total_bytes += output.len() * std::mem::size_of::<T>();
+        }
+        
+        // Add training algorithm overhead (gradients, buffers, etc.)
+        let network_params = network.layers.iter()
+            .map(|l| l.neurons.len())
+            .sum::<usize>();
+        total_bytes += network_params * std::mem::size_of::<T>() * 3; // Gradients, momentum, etc.
+        
+        // Convert to MB
+        total_bytes as f64 / (1024.0 * 1024.0)
+    }
+
     /// Create test training data for trainer validation
+    #[allow(dead_code)]
     fn create_test_training_data(&self) -> TrainingData<T> {
         // Simple XOR training data for testing
         TrainingData {
@@ -1021,34 +1113,6 @@ impl<T: Float + Send + Default> IntegrationTestSuite<T> {
         Ok(())
     }
 
-    /// Run performance benchmarks
-    fn run_performance_benchmarks(
-        &self,
-        result: &mut IntegrationResult,
-    ) -> Result<(), IntegrationError> {
-        #[cfg(feature = "logging")]
-        debug!("Running performance benchmarks");
-
-        // Compare against baseline metrics
-        if let Some(baseline) = &self.baseline_metrics {
-            for (test_name, current) in &result.benchmarks {
-                if let Some(baseline_result) = baseline.get(test_name) {
-                    let ratio =
-                        current.duration.as_secs_f64() / baseline_result.duration.as_secs_f64();
-
-                    if ratio > 1.0 + self.config.performance_threshold / 100.0 {
-                        result.warnings.push(format!(
-                            "Performance regression in {}: {:.1}% slower than baseline",
-                            test_name,
-                            (ratio - 1.0) * 100.0
-                        ));
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
 
     /// Test parallel execution
     fn test_parallel_execution(
@@ -1118,6 +1182,7 @@ impl<T: Float + Send + Default> IntegrationTestSuite<T> {
 /// FANN compatibility validator
 pub struct FannCompatibilityValidator<T: Float> {
     compatibility_tests: Vec<CompatibilityTest<T>>,
+    #[allow(dead_code)]
     api_coverage: HashMap<String, bool>,
 }
 

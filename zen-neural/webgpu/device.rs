@@ -55,8 +55,8 @@ impl GpuDevice {
         let instance = ::wgpu::Instance::new(::wgpu::InstanceDescriptor {
             backends: ::wgpu::Backends::all(),
             flags: ::wgpu::InstanceFlags::default(),
-            dx12_shader_compiler: ::wgpu::Dx12Compiler::default(),
-            gles_minor_version: ::wgpu::Gles3MinorVersion::Automatic,
+            memory_budget_thresholds: Default::default(),
+            backend_options: Default::default(),
         });
 
         // Request adapter with high performance preference
@@ -67,11 +67,9 @@ impl GpuDevice {
                 force_fallback_adapter: false,
             })
             .await
-            .ok_or_else(|| {
-                ComputeError::InitializationError(
-                    "Failed to find suitable WebGPU adapter".to_string(),
-                )
-            })?;
+            .ok_or(ComputeError::InitializationError(
+                "Failed to find suitable WebGPU adapter".to_string(),
+            ))?;
 
         // Get adapter info for optimization decisions
         let adapter_info = adapter.get_info();
@@ -93,6 +91,8 @@ impl GpuDevice {
                     label: Some("ruv-FANN GPU Device"),
                     required_features,
                     required_limits: required_limits.clone(),
+                    memory_hints: wgpu::MemoryHints::Performance,
+                    trace: None,
                 },
                 None,
             )
@@ -153,7 +153,7 @@ impl GpuDevice {
 
     /// Wait for all submitted work to complete
     pub fn wait(&self) {
-        self.device.poll(::wgpu::Maintain::Wait);
+        self.device.poll(());
     }
 
     /// Check device features for optimization decisions

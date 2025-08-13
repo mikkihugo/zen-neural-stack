@@ -493,7 +493,7 @@ pub struct GNNTrainer {
     
     /// GPU backend (if enabled)
     #[cfg(feature = "gpu")]
-    gpu_backend: Option<Arc<WebGPUBackend>>,
+    gpu_backend: Option<Arc<crate::webgpu::WebGPUBackend<f32>>>,
     
     /// Distributed backend (if enabled)
     #[cfg(feature = "zen-distributed")]
@@ -520,7 +520,7 @@ struct OptimizerState {
 
 /// Current training state
 #[derive(Debug, Clone)]
-struct TrainingState {
+pub struct TrainingState {
     /// Current epoch
     epoch: u32,
     /// Best validation metric value

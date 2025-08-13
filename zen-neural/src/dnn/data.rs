@@ -20,7 +20,6 @@
  * @version 1.0.0-alpha.1
  * @since 2025-01-14
  */
-
 use ndarray::{Array1, Array2, Axis, Dimension};
 use num_traits::Float;
 use std::fmt;
@@ -253,6 +252,7 @@ impl DimensionUtils {
  * to neural network operations, including shape validation, batch handling,
  * and memory optimization.
  */
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct DNNTensor {
     /// Underlying ndarray data (always 2D: [batch_size, features])
@@ -427,6 +427,11 @@ impl TensorShape {
     /// Check if the shape is empty
     pub fn is_empty(&self) -> bool {
         self.dims.is_empty()
+    }
+    
+    /// Get the dimensions as a slice
+    pub fn dimensions(&self) -> &[usize] {
+        &self.dims
     }
     
     /// Create a 2D tensor shape
@@ -606,6 +611,88 @@ impl TensorOps {
         DNNTensor::new(result)
     }
     
+    /// Element-wise subtraction with broadcasting
+    pub fn subtract_broadcast(a: &DNNTensor, b: &Array1<f32>) -> Result<DNNTensor, DNNError> {
+        if a.feature_dim() != b.len() {
+            return Err(DNNError::DimensionMismatch(
+                format!("Cannot broadcast subtract: tensor features {} vs array length {}",
+                       a.feature_dim(), b.len())
+            ));
+        }
+        
+        // Broadcast subtraction: each row of a minus b
+        let mut result = a.data.clone();
+        for mut row in result.rows_mut() {
+            row -= b;
+        }
+        
+        DNNTensor::new(result)
+    }
+    
+    /// Element-wise multiplication with broadcasting
+    pub fn multiply_broadcast(a: &DNNTensor, b: &Array1<f32>) -> Result<DNNTensor, DNNError> {
+        if a.feature_dim() != b.len() {
+            return Err(DNNError::DimensionMismatch(
+                format!("Cannot broadcast multiply: tensor features {} vs array length {}",
+                       a.feature_dim(), b.len())
+            ));
+        }
+        
+        // Broadcast multiplication: each row of a multiplied by b
+        let mut result = a.data.clone();
+        for mut row in result.rows_mut() {
+            row *= b;
+        }
+        
+        DNNTensor::new(result)
+    }
+    
+    /// Get a single batch sample (row) from a tensor
+    pub fn get_batch_sample(tensor: &DNNTensor, batch_idx: usize) -> Result<Array1<f32>, DNNError> {
+        if batch_idx >= tensor.batch_size() {
+            return Err(DNNError::InvalidInput(
+                format!("Batch index {} exceeds batch size {}", batch_idx, tensor.batch_size())
+            ));
+        }
+        
+        Ok(tensor.data.row(batch_idx).to_owned())
+    }
+    
+    /// Compute mean of a 1D array (sample)
+    pub fn compute_sample_mean(sample: &Array1<f32>) -> Result<f32, DNNError> {
+        if sample.is_empty() {
+            return Err(DNNError::InvalidInput("Cannot compute mean of empty sample".to_string()));
+        }
+        
+        Ok(sample.mean().unwrap())
+    }
+    
+    /// Compute variance of a 1D array (sample) given its mean
+    pub fn compute_sample_variance(sample: &Array1<f32>, mean: f32) -> Result<f32, DNNError> {
+        if sample.is_empty() {
+            return Err(DNNError::InvalidInput("Cannot compute variance of empty sample".to_string()));
+        }
+        
+        let variance = sample.iter()
+            .map(|&x| (x - mean).powi(2))
+            .sum::<f32>() / sample.len() as f32;
+            
+        Ok(variance)
+    }
+    
+    /// Scale a specific batch sample (row) in-place
+    pub fn scale_sample_inplace(tensor: &mut DNNTensor, batch_idx: usize, scale: f32) -> Result<(), DNNError> {
+        if batch_idx >= tensor.batch_size() {
+            return Err(DNNError::InvalidInput(
+                format!("Batch index {} exceeds batch size {}", batch_idx, tensor.batch_size())
+            ));
+        }
+        
+        let mut row = tensor.data.row_mut(batch_idx);
+        row *= scale;
+        Ok(())
+    }
+    
     /// Element-wise multiplication
     pub fn multiply(a: &DNNTensor, b: &DNNTensor) -> Result<DNNTensor, DNNError> {
         if a.shape() != b.shape() {
@@ -722,7 +809,7 @@ impl TensorOps {
         
         // Create batches
         let mut batches = Vec::new();
-        let total_batches = (total_samples + batch_size - 1) / batch_size; // Ceiling division
+        let total_batches = total_samples.div_ceil(batch_size);
         
         for (batch_idx, chunk) in indices.chunks(batch_size).enumerate() {
             let batch_inputs = Self::select_rows(inputs, chunk)?;
@@ -767,6 +854,7 @@ impl TensorOps {
  * 
  * Reduces allocation overhead during training by reusing tensor buffers.
  */
+#[derive(Debug)]
 pub struct TensorPool {
     /// Pool of available tensors by shape
     available: std::collections::HashMap<TensorShape, Vec<DNNTensor>>,

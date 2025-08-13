@@ -79,7 +79,7 @@
 
 use std::collections::HashMap;
 
-use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis, s};
+use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis, concatenate, s};
 use ndarray_rand::RandomExt;
 use rand::distributions::Uniform;
 use num_traits::{Float, Zero};

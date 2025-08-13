@@ -400,7 +400,7 @@ impl ConcurrentDNNModel {
     ) -> Result<DNNTensor, DNNError> {
         let batch_size = input.batch_size();
         let chunk_size = self.inference_config.parallel_batch_size;
-        let num_chunks = (batch_size + chunk_size - 1) / chunk_size;
+        let num_chunks = batch_size.div_ceil(chunk_size);
         
         // Split input into chunks
         let input_chunks = self.split_tensor_into_chunks(input, chunk_size)?;

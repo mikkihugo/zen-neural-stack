@@ -1,7 +1,7 @@
 [package]
 name = "zen-neural"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 rust-version = "1.88"
 authors = ["mikkihugo"]
 description = "High-performance neural networks with THE COLLECTIVE integration and Borg coordination"
@@ -96,10 +96,7 @@ async-trait = "0.1.88"
 ndarray = { version = "0.16.1", features = ["serde"] }
 ndarray-rand = "0.15.0"
 
-# Zen Neural Stack storage integration
-surrealdb = { version = "2.3.7", features = ["kv-mem", "protocol-ws", "protocol-http"], optional = true }
-async-stream = { version = "0.3.6", optional = true }
-uuid = { version = "1.11.0", features = ["v4"], optional = true }
+# Removed distributed/storage dependencies - handled by TypeScript orchestration layer
 
 # WASM dependencies
 wasm-bindgen = { version = "0.2.100", optional = true }
@@ -128,18 +125,24 @@ anyhow = "1.0.98"
 chrono = { version = "0.4.41", features = ["serde"] }
 
 [features]
-# Lightweight default for faster development builds
-default = ["std", "serde", "parallel", "logging"]
-# Full feature set (use for production builds)
-full = ["std", "serde", "parallel", "concurrent", "binary", "compression", "logging", "io", "gnn", "simd"]
+# Minimal embedded/WASM build (no parallel processing)
+default = ["std", "serde", "logging"]
+# Desktop/laptop development (parallel enabled)
+desktop = ["default", "parallel", "simd"]  
+# Server/production build (all features)
+server = ["desktop", "concurrent", "binary", "compression", "io", "gnn", "gpu"]
+# Full feature set (everything enabled)
+full = ["server", "wasm-gpu", "unstable-avx512"]
 # Development-optimized features (minimal dependencies for fast builds)
 dev-fast = ["std", "serde", "logging"]
+# Embedded systems (minimal footprint)
+embedded = ["no_std", "serde"]
 std = []
 serde = ["dep:serde", "dep:serde_json"]
 parallel = ["dep:rayon", "dep:num_cpus", "std"]
 logging = ["dep:log", "std"]
 # Concurrent neural network operations
-concurrent = ["parallel", "dep:crossbeam-channel", "dep:crossbeam-utils", "dep:tokio", "dep:uuid", "std"]
+concurrent = ["parallel", "dep:crossbeam-channel", "dep:crossbeam-utils", "dep:tokio", "std"]
 simd = ["parallel", "dep:num_cpus"]
 simd-avx2 = ["simd"]
 simd-neon = ["simd"]
@@ -164,10 +167,8 @@ wasm-gpu = ["webgpu", "wasm"]
 gnn = ["std"]
 gnn-gpu = ["gnn", "gpu"]
 
-# Zen Neural Stack integrations
-zen-storage = ["dep:surrealdb", "dep:async-stream", "dep:bincode", "dep:uuid"]
-zen-distributed = ["zen-storage", "dep:tokio"]
-zen-collective = ["zen-distributed"]
+# Removed zen-storage, zen-distributed, zen-collective features
+# These capabilities are now handled by the claude-code-zen TypeScript orchestration layer
 
 # Test configurations
 test-all = ["gpu", "gnn"]

@@ -45,7 +45,6 @@
  * @version 1.0.0-alpha.1
  * @since 2025-01-14
  */
-
 use ndarray::{Array1, Array2, Axis};
 use num_traits::Float;
 use rand::distributions::{Distribution, Uniform};
@@ -874,7 +873,7 @@ impl DNNLayer for DenseLayer {
         if self.config.use_bias && gradients.len() > 1 {
             if let Some(ref mut bias) = self.bias {
                 let bias_grad = gradients[1].row(0);
-                *bias = bias.clone() - learning_rate * bias_grad;
+                *bias = bias.clone() - learning_rate * bias_grad.to_owned();
             }
         }
         

@@ -224,7 +224,7 @@ impl ModelRegistry {
       let mut by_category = self.by_category.write();
       by_category
         .entry(descriptor.info.category)
-        .or_insert_with(Vec::new)
+        .or_default()
         .push(name.clone());
     }
 
@@ -235,7 +235,7 @@ impl ModelRegistry {
       {
         by_capability
           .entry(capability)
-          .or_insert_with(Vec::new)
+          .or_default()
           .push(name.clone());
       }
     }
@@ -254,7 +254,7 @@ impl ModelRegistry {
       for tag in &descriptor.tags {
         tags
           .entry(tag.clone())
-          .or_insert_with(Vec::new)
+          .or_default()
           .push(name.clone());
       }
     }
@@ -357,7 +357,7 @@ impl ModelRegistry {
     // Update statistics
     self.update_stats();
 
-    log::info!("Unregistered model '{}'", name);
+    log::info!("Unregistered model '{name}'");
     Ok(())
   }
 
@@ -512,7 +512,7 @@ impl ModelRegistry {
     // Update statistics
     self.update_stats();
 
-    log::info!("Registered plugin '{}'", name);
+    log::info!("Registered plugin '{name}'");
     Ok(())
   }
 
@@ -521,7 +521,7 @@ impl ModelRegistry {
     let plugin = {
       let mut plugins = self.plugins.write();
       plugins.remove(name).ok_or_else(|| {
-        RegistryError::PluginError(format!("Plugin '{}' not found", name))
+        RegistryError::PluginError(format!("Plugin '{name}' not found"))
       })?
     };
 
@@ -540,7 +540,7 @@ impl ModelRegistry {
     // Update statistics
     self.update_stats();
 
-    log::info!("Unregistered plugin '{}'", name);
+    log::info!("Unregistered plugin '{name}'");
     Ok(())
   }
 
@@ -681,7 +681,7 @@ impl ModelRegistry {
     // Index by name
     search_index
       .entry(name.to_lowercase())
-      .or_insert_with(Vec::new)
+      .or_default()
       .push(name.to_string());
 
     // Index by category
@@ -689,24 +689,24 @@ impl ModelRegistry {
       format!("category:{:?}", descriptor.info.category).to_lowercase();
     search_index
       .entry(category_key)
-      .or_insert_with(Vec::new)
+      .or_default()
       .push(name.to_string());
 
     // Index by tags
     for tag in &descriptor.tags {
-      let tag_key = format!("tag:{}", tag).to_lowercase();
+      let tag_key = format!("tag:{tag}").to_lowercase();
       search_index
         .entry(tag_key)
-        .or_insert_with(Vec::new)
+        .or_default()
         .push(name.to_string());
     }
 
     // Index by capabilities
     for capability in self.extract_capabilities(&descriptor.info.capabilities) {
-      let cap_key = format!("capability:{}", capability).to_lowercase();
+      let cap_key = format!("capability:{capability}").to_lowercase();
       search_index
         .entry(cap_key)
-        .or_insert_with(Vec::new)
+        .or_default()
         .push(name.to_string());
     }
   }

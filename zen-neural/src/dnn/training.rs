@@ -48,7 +48,6 @@
  * @version 1.0.0-alpha.1
  * @since 2025-01-14
  */
-
 use std::collections::HashMap;
 use ndarray::{Array1, Array2, Axis};
 
@@ -254,6 +253,7 @@ pub enum TrainingMetric {
  * This replaces and significantly enhances the JavaScript training loops
  * with better memory management, parallel processing, and advanced algorithms.
  */
+#[derive(Debug)]
 pub struct DNNTrainer {
     /// Training configuration
     config: DNNTrainingConfig,
@@ -561,7 +561,7 @@ impl DNNTrainer {
         for (layer_idx, layer) in model.layers.iter_mut().enumerate().rev() {
             grad_output = layer.backward(inputs, &grad_output).await
                 .map_err(|e| DNNError::TrainingError(
-                    format!("Backward pass failed at layer {}: {}", layer_idx, e)
+                    format!("Backward pass failed at layer {layer_idx}: {e}")
                 ))?;
         }
         
@@ -767,7 +767,7 @@ struct EpochMetrics {
 /**
  * Base trait for all optimizers.
  */
-pub trait DNNOptimizer: Send + Sync {
+pub trait DNNOptimizer: Send + Sync + std::fmt::Debug {
     /// Update parameters using gradients
     fn update(
         &mut self,
@@ -816,12 +816,11 @@ impl DNNOptimizer for SGDOptimizer {
         let param_id = parameters.as_ptr() as usize;
         
         // Initialize velocity if not exists
-        if !self.velocity.contains_key(&param_id) {
-            let velocities: Vec<Array2<f32>> = parameters.iter()
+        self.velocity.entry(param_id).or_insert_with(|| {
+            parameters.iter()
                 .map(|param| Array2::zeros(param.raw_dim()))
-                .collect();
-            self.velocity.insert(param_id, velocities);
-        }
+                .collect()
+        });
         
         let velocities = self.velocity.get_mut(&param_id).unwrap();
         let mut updated_params = Vec::new();
@@ -899,16 +898,18 @@ impl DNNOptimizer for AdamOptimizer {
         let param_id = parameters.as_ptr() as usize;
         
         // Initialize moments if not exists
-        if !self.m.contains_key(&param_id) {
-            let m_init: Vec<Array2<f32>> = parameters.iter()
+        self.m.entry(param_id).or_insert_with(|| {
+            parameters.iter()
                 .map(|param| Array2::zeros(param.raw_dim()))
-                .collect();
-            let v_init: Vec<Array2<f32>> = parameters.iter()
+                .collect()
+        });
+        
+        
+        self.v.entry(param_id).or_insert_with(|| {
+            parameters.iter()
                 .map(|param| Array2::zeros(param.raw_dim()))
-                .collect();
-            self.m.insert(param_id, m_init);
-            self.v.insert(param_id, v_init);
-        }
+                .collect()
+        });
         
         let m_params = self.m.get_mut(&param_id).unwrap();
         let v_params = self.v.get_mut(&param_id).unwrap();
@@ -992,12 +993,11 @@ impl DNNOptimizer for RMSpropOptimizer {
         // Simplified RMSprop implementation
         let param_id = parameters.as_ptr() as usize;
         
-        if !self.v.contains_key(&param_id) {
-            let v_init: Vec<Array2<f32>> = parameters.iter()
+        self.v.entry(param_id).or_insert_with(|| {
+            parameters.iter()
                 .map(|param| Array2::zeros(param.raw_dim()))
-                .collect();
-            self.v.insert(param_id, v_init);
-        }
+                .collect()
+        });
         
         let v_params = self.v.get_mut(&param_id).unwrap();
         let mut updated_params = Vec::new();
@@ -1060,12 +1060,11 @@ impl DNNOptimizer for AdaGradOptimizer {
         // Simplified AdaGrad implementation
         let param_id = parameters.as_ptr() as usize;
         
-        if !self.g.contains_key(&param_id) {
-            let g_init: Vec<Array2<f32>> = parameters.iter()
+        self.g.entry(param_id).or_insert_with(|| {
+            parameters.iter()
                 .map(|param| Array2::zeros(param.raw_dim()))
-                .collect();
-            self.g.insert(param_id, g_init);
-        }
+                .collect()
+        });
         
         let g_params = self.g.get_mut(&param_id).unwrap();
         let mut updated_params = Vec::new();
@@ -1104,7 +1103,7 @@ impl DNNOptimizer for AdaGradOptimizer {
 
 // === LEARNING RATE SCHEDULERS ===
 
-pub trait LRScheduler: Send + Sync {
+pub trait LRScheduler: Send + Sync + std::fmt::Debug {
     fn step(&mut self, metric: Option<f32>);
     fn get_lr(&self) -> f32;
     fn reset(&mut self);
@@ -1273,7 +1272,7 @@ impl LRScheduler for ReduceLROnPlateauScheduler {
 /**
  * Base trait for loss functions.
  */
-pub trait DNNLoss: Send + Sync {
+pub trait DNNLoss: Send + Sync + std::fmt::Debug {
     /// Compute loss value
     fn compute(&self, predictions: &DNNTensor, targets: &DNNTensor) -> Result<f32, DNNError>;
     
@@ -1286,6 +1285,12 @@ pub trait DNNLoss: Send + Sync {
  */
 #[derive(Debug, Clone)]
 pub struct MSELoss;
+
+impl Default for MSELoss {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl MSELoss {
     pub fn new() -> Self {
@@ -1313,6 +1318,12 @@ impl DNNLoss for MSELoss {
  */
 #[derive(Debug, Clone)]
 pub struct CrossEntropyLoss;
+
+impl Default for CrossEntropyLoss {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl CrossEntropyLoss {
     pub fn new() -> Self {
@@ -1359,6 +1370,12 @@ impl DNNLoss for CrossEntropyLoss {
 #[derive(Debug, Clone)]
 pub struct BinaryCrossEntropyLoss;
 
+impl Default for BinaryCrossEntropyLoss {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BinaryCrossEntropyLoss {
     pub fn new() -> Self {
         Self
@@ -1395,6 +1412,12 @@ pub struct MAELoss;
 impl MAELoss {
     pub fn new() -> Self {
         Self
+    }
+}
+
+impl Default for MAELoss {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -1489,7 +1512,7 @@ impl TrainingAnalytics {
         let entropy = Self::compute_entropy(&class_probabilities);
         
         Ok(BatchProcessingResult {
-            batch_id: batch.metadata.batch_id,
+            batch_id: batch.metadata.batch_idx as u32,
             batch_size,
             feature_count,
             input_statistics: InputStatistics {

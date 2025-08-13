@@ -99,6 +99,13 @@ impl X86SimdOps {
     }
     
     /// AVX2 vectorized ReLU implementation
+    /// 
+    /// # Safety
+    /// 
+    /// This function requires AVX2 support and the caller must ensure:
+    /// - The target CPU supports AVX2 instructions
+    /// - The data slice has valid alignment for SIMD operations
+    /// - No concurrent access to the data slice during execution
     #[target_feature(enable = "avx2")]
     pub unsafe fn avx2_relu(&self, data: &mut [f32]) {
         if !self.capabilities.has_avx2 {
@@ -110,9 +117,11 @@ impl X86SimdOps {
         
         // Process 8 elements at a time (256-bit AVX2)
         while i + 8 <= data.len() {
-            let chunk = _mm256_loadu_ps(data.as_ptr().add(i));
-            let result = _mm256_max_ps(chunk, zeros);
-            _mm256_storeu_ps(data.as_mut_ptr().add(i), result);
+            unsafe {
+                let chunk = _mm256_loadu_ps(data.as_ptr().add(i));
+                let result = _mm256_max_ps(chunk, zeros);
+                _mm256_storeu_ps(data.as_mut_ptr().add(i), result);
+            }
             i += 8;
         }
         
@@ -123,6 +132,14 @@ impl X86SimdOps {
     }
     
     /// AVX2 vectorized dot product
+    /// 
+    /// # Safety
+    /// 
+    /// This function requires AVX2 support and the caller must ensure:
+    /// - The target CPU supports AVX2 instructions  
+    /// - Both input slices have valid memory alignment
+    /// - Slices remain valid for the duration of the operation
+    /// - No data races on the input slices during computation
     #[target_feature(enable = "avx2")]
     pub unsafe fn avx2_dot_product(&self, a: &[f32], b: &[f32]) -> f32 {
         if !self.capabilities.has_avx2 || a.len() != b.len() {
@@ -134,16 +151,20 @@ impl X86SimdOps {
         
         // Process 8 elements at a time
         while i + 8 <= a.len() {
-            let a_chunk = _mm256_loadu_ps(a.as_ptr().add(i));
-            let b_chunk = _mm256_loadu_ps(b.as_ptr().add(i));
-            let product = _mm256_mul_ps(a_chunk, b_chunk);
-            sum = _mm256_add_ps(sum, product);
+            unsafe {
+                let a_chunk = _mm256_loadu_ps(a.as_ptr().add(i));
+                let b_chunk = _mm256_loadu_ps(b.as_ptr().add(i));
+                let product = _mm256_mul_ps(a_chunk, b_chunk);
+                sum = _mm256_add_ps(sum, product);
+            }
             i += 8;
         }
         
         // Horizontal sum of the vector
         let sum_arr = [0.0f32; 8];
-        _mm256_storeu_ps(sum_arr.as_ptr() as *mut f32, sum);
+        unsafe {
+            _mm256_storeu_ps(sum_arr.as_ptr() as *mut f32, sum);
+        }
         let mut total = sum_arr.iter().sum::<f32>();
         
         // Handle remaining elements
@@ -211,38 +232,6 @@ impl X86SimdOps {
         }
     }
     
-    /// AVX2 vectorized sigmoid approximation using polynomial
-    #[target_feature(enable = "avx2")]
-    pub unsafe fn avx2_sigmoid_approx(&self, data: &mut [f32]) {
-        if !self.capabilities.has_avx2 {
-            return; // Fallback to scalar
-        }
-        
-        let ones = _mm256_set1_ps(1.0);
-        let mut i = 0;
-        
-        // Process 8 elements at a time
-        while i + 8 <= data.len() {
-            let x = _mm256_loadu_ps(data.as_ptr().add(i));
-            
-            // Sigmoid approximation: 1 / (1 + exp(-x))
-            // Using fast exp approximation for SIMD
-            let neg_x = _mm256_sub_ps(_mm256_setzero_ps(), x);
-            // Use neg_x to compute proper exponential approximation
-            let exp_neg_x = simd_fast_exp_avx2(neg_x); // Use the negated x for exponential
-            let denom = _mm256_add_ps(ones, exp_neg_x);
-            let result = _mm256_div_ps(ones, denom);
-            
-            _mm256_storeu_ps(data.as_mut_ptr().add(i), result);
-            i += 8;
-        }
-        
-        // Handle remaining elements with scalar operations
-        for val in &mut data[i..] {
-            *val = 1.0 / (1.0 + (-*val).exp());
-        }
-    }
-    
     /// Fast exponential approximation using AVX2 for SIMD sigmoid computation
     #[target_feature(enable = "avx2")]
     unsafe fn simd_fast_exp_avx2(x: __m256) -> __m256 {
@@ -268,6 +257,38 @@ impl X86SimdOps {
                             _mm256_add_ps(term2, term3)));
         
         result
+    }
+    
+    /// AVX2 vectorized sigmoid approximation using polynomial
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn avx2_sigmoid_approx(&self, data: &mut [f32]) {
+        if !self.capabilities.has_avx2 {
+            return; // Fallback to scalar
+        }
+        
+        let ones = _mm256_set1_ps(1.0);
+        let mut i = 0;
+        
+        // Process 8 elements at a time
+        while i + 8 <= data.len() {
+            let x = _mm256_loadu_ps(data.as_ptr().add(i));
+            
+            // Sigmoid approximation: 1 / (1 + exp(-x))
+            // Using fast exp approximation for SIMD
+            let neg_x = _mm256_sub_ps(_mm256_setzero_ps(), x);
+            // Use neg_x to compute proper exponential approximation
+            let exp_neg_x = Self::simd_fast_exp_avx2(neg_x); // Use the negated x for exponential
+            let denom = _mm256_add_ps(ones, exp_neg_x);
+            let result = _mm256_div_ps(ones, denom);
+            
+            _mm256_storeu_ps(data.as_mut_ptr().add(i), result);
+            i += 8;
+        }
+        
+        // Handle remaining elements with scalar operations
+        for val in &mut data[i..] {
+            *val = 1.0 / (1.0 + (-*val).exp());
+        }
     }
     
     /// Check if data is properly aligned for AVX operations (32-byte alignment)
@@ -451,7 +472,7 @@ impl SimdActivationOps {
         // Use ndarray's parallel iterator for automatic SIMD
         #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| *x = if *x > 0.0 { *x } else { 0.0 });
+            tensor.data.map_inplace(|x| *x = if *x > 0.0 { *x } else { 0.0 });
         }
         
         #[cfg(not(feature = "parallel"))]
@@ -464,7 +485,7 @@ impl SimdActivationOps {
     fn leaky_relu_inplace(&self, tensor: &mut DNNTensor, alpha: f32) {
         #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| *x = if *x > 0.0 { *x } else { alpha * *x });
+            tensor.data.map_inplace(|x| *x = if *x > 0.0 { *x } else { alpha * *x });
         }
         
         #[cfg(not(feature = "parallel"))]
@@ -477,7 +498,7 @@ impl SimdActivationOps {
     fn sigmoid_inplace(&self, tensor: &mut DNNTensor) {
         #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| *x = 1.0 / (1.0 + (-*x).exp()));
+            tensor.data.map_inplace(|x| *x = 1.0 / (1.0 + (-*x).exp()));
         }
         
         #[cfg(not(feature = "parallel"))]
@@ -490,7 +511,7 @@ impl SimdActivationOps {
     fn tanh_inplace(&self, tensor: &mut DNNTensor) {
         #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| *x = x.tanh());
+            tensor.data.map_inplace(|x| *x = x.tanh());
         }
         
         #[cfg(not(feature = "parallel"))]
@@ -506,7 +527,7 @@ impl SimdActivationOps {
         
         #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| {
+            tensor.data.map_inplace(|x| {
                 let inner = SQRT_2_OVER_PI * (*x + GELU_COEFF * x.powi(3));
                 *x = 0.5 * *x * (1.0 + inner.tanh())
             });
@@ -525,7 +546,7 @@ impl SimdActivationOps {
     fn swish_inplace(&self, tensor: &mut DNNTensor) {
         #[cfg(feature = "parallel")]
         {
-            tensor.data.par_map_inplace(|x| *x = *x * (1.0 / (1.0 + (-*x).exp())));
+            tensor.data.map_inplace(|x| *x = *x * (1.0 / (1.0 + (-*x).exp())));
         }
         
         #[cfg(not(feature = "parallel"))]
@@ -545,12 +566,12 @@ impl SimdActivationOps {
             let max_val = row.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
             
             // Subtract max and exponentiate
-            row.map_inplace(|x| (*x - max_val).exp());
+            row.map_inplace(|x| *x = (*x - max_val).exp());
             
             // Normalize by sum
             let sum: f32 = row.sum();
             if sum > 0.0 {
-                row.map_inplace(|x| *x / sum);
+                row.map_inplace(|x| *x = *x / sum);
             }
         }
     }
@@ -623,7 +644,7 @@ impl SimdReductionOps {
             let mut result = tensor.data.clone();
             for mut row in result.axis_iter_mut(Axis(0)) {
                 row -= &mean.data.row(0);
-                row.map_inplace(|x| x.powi(2));
+                row.map_inplace(|x| *x = x.powi(2));
             }
             result
         } else {
@@ -631,7 +652,7 @@ impl SimdReductionOps {
             let mut result = tensor.data.clone();
             for mut col in result.axis_iter_mut(Axis(1)) {
                 col -= &mean.data.column(0);
-                col.map_inplace(|x| x.powi(2));
+                col.map_inplace(|x| *x = x.powi(2));
             }
             result
         };
@@ -833,8 +854,8 @@ impl SimdDNNProcessor {
         // Validate matrix multiplication result
         assert!(matmul_result.is_ok(), "Matrix multiplication should succeed");
         let matmul_output = matmul_result.unwrap();
-        assert_eq!(matmul_output.rows(), test_size, "Output should have correct number of rows");
-        assert_eq!(matmul_output.cols(), test_size, "Output should have correct number of columns");
+        assert_eq!(matmul_output.data.nrows(), test_size, "Output should have correct number of rows");
+        assert_eq!(matmul_output.data.ncols(), test_size, "Output should have correct number of columns");
         
         // Benchmark activation with validation
         let mut test_tensor = a.clone();
@@ -855,7 +876,7 @@ impl SimdDNNProcessor {
         // Validate reduction result
         assert!(reduction_result.is_ok(), "Reduction should succeed");
         let reduction_output = reduction_result.unwrap();
-        assert_eq!(reduction_output.len(), test_size, "Reduced tensor should have correct size");
+        assert_eq!(reduction_output.data.len(), test_size, "Reduced tensor should have correct size");
         
         SimdBenchmarkResults {
             matmul_time_us: matmul_time.as_micros() as u64,

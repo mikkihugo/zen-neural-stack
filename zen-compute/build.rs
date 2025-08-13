@@ -16,9 +16,9 @@ fn main() {
   let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
   
   // Validate build environment and log configuration
-  println!("cargo:warning=Building for target_arch: {}, target_os: {}, profile: {}", target_arch, target_os, profile);
+  println!("cargo:warning=Building for target_arch: {target_arch}, target_os: {target_os}, profile: {profile}");
   println!("cargo:warning=Build output directory: {}", out_dir.display());
-  println!("cargo:warning=Target environment: {}", target_env);
+  println!("cargo:warning=Target environment: {target_env}");
   
   // Ensure output directory is accessible
   if !out_dir.exists() {
@@ -30,7 +30,7 @@ fn main() {
     "wasm32" => println!("cargo:warning=WebAssembly target detected - enabling WASM optimizations"),
     "x86_64" => println!("cargo:warning=x86_64 target detected - enabling AVX optimizations"),
     "aarch64" => println!("cargo:warning=ARM64 target detected - enabling NEON optimizations"),
-    arch => println!("cargo:warning=Unknown architecture: {} - using default optimizations", arch),
+    arch => println!("cargo:warning=Unknown architecture: {arch} - using default optimizations"),
   }
 
   println!("cargo:rerun-if-changed=build.rs");
@@ -175,7 +175,7 @@ fn configure_native_build(target_os: &str, target_arch: &str, profile: &str) {
 
 fn configure_gpu_backends(target_os: &str, target_arch: &str) {
   // Use target_os for OS-specific GPU backend selection
-  println!("cargo:warning=Configuring GPU backends for OS: {}, architecture: {}", target_os, target_arch);
+  println!("cargo:warning=Configuring GPU backends for OS: {target_os}, architecture: {target_arch}");
   
   match target_os {
     "windows" => {
@@ -201,7 +201,7 @@ fn configure_gpu_backends(target_os: &str, target_arch: &str) {
       }
     }
     _ => {
-      println!("cargo:warning=Unknown OS {} - using generic GPU backend configuration", target_os);
+      println!("cargo:warning=Unknown OS {target_os} - using generic GPU backend configuration");
     }
   }
   
@@ -220,7 +220,7 @@ fn configure_gpu_backends(target_os: &str, target_arch: &str) {
       println!("cargo:rustc-cfg=webgpu_backend");
     }
     _ => {
-      println!("cargo:warning=Architecture {} - using generic GPU configuration", target_arch);
+      println!("cargo:warning=Architecture {target_arch} - using generic GPU configuration");
     }
   }
 
@@ -355,19 +355,19 @@ fn find_cuda_installation() -> Option<PathBuf> {
   
   // Check environment variable first with enhanced validation
   if let Ok(cuda_path) = env::var("CUDA_PATH") {
-    println!("cargo:warning=Found CUDA_PATH environment variable: {}", cuda_path);
+    println!("cargo:warning=Found CUDA_PATH environment variable: {cuda_path}");
     let path = PathBuf::from(&cuda_path);
     if validate_cuda_installation(&path) {
       println!("cargo:warning=CUDA_PATH installation validated successfully");
       return Some(path);
     } else {
-      println!("cargo:warning=CUDA_PATH installation validation failed: {}", cuda_path);
+      println!("cargo:warning=CUDA_PATH installation validation failed: {cuda_path}");
     }
   }
 
   // Check CUDA_HOME alternative
   if let Ok(cuda_home) = env::var("CUDA_HOME") {
-    println!("cargo:warning=Found CUDA_HOME environment variable: {}", cuda_home);
+    println!("cargo:warning=Found CUDA_HOME environment variable: {cuda_home}");
     let path = PathBuf::from(&cuda_home);
     if validate_cuda_installation(&path) {
       println!("cargo:warning=CUDA_HOME installation validated successfully");
@@ -377,7 +377,7 @@ fn find_cuda_installation() -> Option<PathBuf> {
 
   // Get target OS for platform-specific search
   let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
-  println!("cargo:warning=Searching CUDA installations for OS: {}", target_os);
+  println!("cargo:warning=Searching CUDA installations for OS: {target_os}");
 
   // Platform-specific common CUDA installation paths
   let common_paths = match target_os.as_str() {
@@ -419,7 +419,7 @@ fn find_cuda_installation() -> Option<PathBuf> {
   };
 
   for path_str in &common_paths {
-    println!("cargo:warning=Checking CUDA path: {}", path_str);
+    println!("cargo:warning=Checking CUDA path: {path_str}");
     let path = PathBuf::from(path_str);
     if validate_cuda_installation(&path) {
       println!("cargo:warning=Found valid CUDA installation at: {}", path.display());
@@ -453,7 +453,7 @@ fn find_cuda_installation() -> Option<PathBuf> {
     {
       let path_str = String::from_utf8_lossy(&output.stdout);
       let path_str = path_str.trim();
-      println!("cargo:warning=pkg-config reported CUDA root: {}", path_str);
+      println!("cargo:warning=pkg-config reported CUDA root: {path_str}");
       let path = PathBuf::from(path_str);
       if validate_cuda_installation(&path) {
         println!("cargo:warning=pkg-config CUDA installation validated");
@@ -561,7 +561,7 @@ fn validate_cuda_installation(cuda_path: &Path) -> bool {
         // Also check for versioned libraries
         if !lib_file.exists() {
           // Try to find versioned variants
-          let lib_pattern = format!("{}.*", lib);
+          let lib_pattern = format!("{lib}.*");
           if !find_library_with_pattern(&lib_dir, &lib_pattern) {
             continue; // Allow missing libcuda.so as it's driver-dependent
           }
@@ -670,7 +670,7 @@ fn detect_cuda_version(cuda_path: &Path) -> Option<f32> {
     
     // Parse version from output like "Cuda compilation tools, release 11.8, V11.8.89"
     if let Some(version) = parse_nvcc_version(&version_str) {
-      println!("cargo:warning=Successfully detected CUDA version: {}", version);
+      println!("cargo:warning=Successfully detected CUDA version: {version}");
       return Some(version);
     }
   } else {
@@ -743,7 +743,7 @@ fn parse_nvcc_version(version_str: &str) -> Option<f32> {
     if word.chars().all(|c| c.is_ascii_digit() || c == '.') && word.contains('.') {
       if let Ok(version) = word.parse::<f32>() {
         // Reasonable CUDA version range check
-        if version >= 9.0 && version <= 15.0 {
+        if (9.0..=15.0).contains(&version) {
           return Some(version);
         }
       }
@@ -761,7 +761,7 @@ fn try_alternative_version_detection(cuda_path: &Path) -> Option<f32> {
     if version_path.exists() {
       if let Ok(content) = std::fs::read_to_string(&version_path) {
         if let Some(version) = extract_version_from_text(&content) {
-          println!("cargo:warning=Found CUDA version {} in {}", version, version_file);
+          println!("cargo:warning=Found CUDA version {version} in {version_file}");
           return Some(version);
         }
       }
@@ -771,7 +771,7 @@ fn try_alternative_version_detection(cuda_path: &Path) -> Option<f32> {
   // Method 2: Parse directory name for version
   if let Some(dir_name) = cuda_path.file_name().and_then(|n| n.to_str()) {
     if let Some(version) = extract_version_from_text(dir_name) {
-      println!("cargo:warning=Inferred CUDA version {} from directory name: {}", version, dir_name);
+      println!("cargo:warning=Inferred CUDA version {version} from directory name: {dir_name}");
       return Some(version);
     }
   }
@@ -781,7 +781,7 @@ fn try_alternative_version_detection(cuda_path: &Path) -> Option<f32> {
   if runtime_header.exists() {
     if let Ok(content) = std::fs::read_to_string(&runtime_header) {
       if let Some(version) = extract_version_from_cuda_header(&content) {
-        println!("cargo:warning=Found CUDA version {} in cuda_runtime_api.h", version);
+        println!("cargo:warning=Found CUDA version {version} in cuda_runtime_api.h");
         return Some(version);
       }
     }
@@ -798,14 +798,14 @@ fn try_alternative_version_detection(cuda_path: &Path) -> Option<f32> {
       };
       
       if let Some(version) = extract_version_from_libraries(&lib_dir) {
-        println!("cargo:warning=Inferred CUDA version {} from library files", version);
+        println!("cargo:warning=Inferred CUDA version {version} from library files");
         return Some(version);
       }
     }
     "windows" => {
       let lib_dir = cuda_path.join("lib").join("x64");
       if let Some(version) = extract_version_from_libraries(&lib_dir) {
-        println!("cargo:warning=Inferred CUDA version {} from library files", version);
+        println!("cargo:warning=Inferred CUDA version {version} from library files");
         return Some(version);
       }
     }
@@ -855,7 +855,7 @@ fn find_version_in_text(text: &str, _pattern: &str) -> Option<f32> {
     if char == 'v' || char == 'V' {
       let after_v = &text[i + 1..];
       if let Some(version) = extract_first_version_number(after_v) {
-        if version >= 9.0 && version <= 15.0 {
+        if (9.0..=15.0).contains(&version) {
           return Some(version);
         }
       }
@@ -991,7 +991,7 @@ fn extract_version_from_filename(filename: &str) -> Option<f32> {
       // Try to parse as version
       if version_str.contains('.') {
         if let Ok(version) = version_str.parse::<f32>() {
-          if version >= 9.0 && version <= 15.0 {
+          if (9.0..=15.0).contains(&version) {
             return Some(version);
           }
         }
@@ -1009,27 +1009,27 @@ fn find_opencl_installation() -> Option<PathBuf> {
   // Check environment variables with validation
   for env_var in &["OPENCL_ROOT", "OPENCL_PATH", "OCL_ROOT"] {
     if let Ok(opencl_path) = env::var(env_var) {
-      println!("cargo:warning=Found {} environment variable: {}", env_var, opencl_path);
+      println!("cargo:warning=Found {env_var} environment variable: {opencl_path}");
       let path = PathBuf::from(&opencl_path);
       if validate_opencl_installation(&path) {
-        println!("cargo:warning={} installation validated successfully", env_var);
+        println!("cargo:warning={env_var} installation validated successfully");
         return Some(path);
       } else {
-        println!("cargo:warning={} installation validation failed: {}", env_var, opencl_path);
+        println!("cargo:warning={env_var} installation validation failed: {opencl_path}");
       }
     }
   }
 
   // Get target OS for platform-specific search
   let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
-  println!("cargo:warning=Searching OpenCL installations for OS: {}", target_os);
+  println!("cargo:warning=Searching OpenCL installations for OS: {target_os}");
 
   match target_os.as_str() {
     "windows" => find_opencl_windows(),
     "macos" => find_opencl_macos(),
     "linux" => find_opencl_linux(),
     _ => {
-      println!("cargo:warning=Unknown OS for OpenCL detection: {}", target_os);
+      println!("cargo:warning=Unknown OS for OpenCL detection: {target_os}");
       None
     }
   }
@@ -1067,7 +1067,7 @@ fn find_opencl_windows() -> Option<PathBuf> {
   ];
   
   for path_str in &vendor_paths {
-    println!("cargo:warning=Checking Windows OpenCL path: {}", path_str);
+    println!("cargo:warning=Checking Windows OpenCL path: {path_str}");
     let path = PathBuf::from(path_str);
     if validate_opencl_installation(&path) {
       println!("cargo:warning=Found valid OpenCL installation at: {}", path.display());
@@ -1084,7 +1084,7 @@ fn find_opencl_windows() -> Option<PathBuf> {
   for sys_path in &system_paths {
     let opencl_dll = PathBuf::from(sys_path).join("OpenCL.dll");
     if opencl_dll.exists() {
-      println!("cargo:warning=Found OpenCL.dll in system directory: {}", sys_path);
+      println!("cargo:warning=Found OpenCL.dll in system directory: {sys_path}");
       return Some(PathBuf::from(sys_path));
     }
   }
@@ -1105,7 +1105,7 @@ fn find_opencl_macos() -> Option<PathBuf> {
   ];
   
   for framework_path_str in &framework_paths {
-    println!("cargo:warning=Checking macOS OpenCL framework: {}", framework_path_str);
+    println!("cargo:warning=Checking macOS OpenCL framework: {framework_path_str}");
     let framework_path = PathBuf::from(framework_path_str);
     if validate_opencl_installation(&framework_path) {
       println!("cargo:warning=Found valid OpenCL framework at: {}", framework_path.display());
@@ -1170,7 +1170,7 @@ fn find_opencl_linux() -> Option<PathBuf> {
   ];
   
   for path_str in &vendor_paths {
-    println!("cargo:warning=Checking Linux OpenCL path: {}", path_str);
+    println!("cargo:warning=Checking Linux OpenCL path: {path_str}");
     let path = PathBuf::from(path_str);
     if validate_opencl_installation(&path) {
       println!("cargo:warning=Found valid OpenCL installation at: {}", path.display());
@@ -1299,7 +1299,7 @@ fn find_opencl_via_icd_registry() -> Option<PathBuf> {
         for entry in entries.flatten() {
           if let Some(name) = entry.file_name().to_str() {
             if name.ends_with(".icd") {
-              println!("cargo:warning=Found OpenCL ICD file: {}", name);
+              println!("cargo:warning=Found OpenCL ICD file: {name}");
               // Try to read the ICD file to get library path
               if let Ok(icd_content) = std::fs::read_to_string(entry.path()) {
                 let lib_path_str = icd_content.trim();
@@ -1328,27 +1328,27 @@ fn find_vulkan_installation() -> Option<PathBuf> {
   // Check environment variables with validation
   for env_var in &["VULKAN_SDK", "VK_SDK_PATH", "VULKAN_PATH"] {
     if let Ok(vulkan_path) = env::var(env_var) {
-      println!("cargo:warning=Found {} environment variable: {}", env_var, vulkan_path);
+      println!("cargo:warning=Found {env_var} environment variable: {vulkan_path}");
       let path = PathBuf::from(&vulkan_path);
       if validate_vulkan_installation(&path) {
-        println!("cargo:warning={} installation validated successfully", env_var);
+        println!("cargo:warning={env_var} installation validated successfully");
         return Some(path);
       } else {
-        println!("cargo:warning={} installation validation failed: {}", env_var, vulkan_path);
+        println!("cargo:warning={env_var} installation validation failed: {vulkan_path}");
       }
     }
   }
 
   // Get target OS for platform-specific search
   let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
-  println!("cargo:warning=Searching Vulkan installations for OS: {}", target_os);
+  println!("cargo:warning=Searching Vulkan installations for OS: {target_os}");
 
   match target_os.as_str() {
     "windows" => find_vulkan_windows(),
     "macos" => find_vulkan_macos(), 
     "linux" => find_vulkan_linux(),
     _ => {
-      println!("cargo:warning=Unknown OS for Vulkan detection: {}", target_os);
+      println!("cargo:warning=Unknown OS for Vulkan detection: {target_os}");
       None
     }
   }
@@ -1385,7 +1385,7 @@ fn find_vulkan_windows() -> Option<PathBuf> {
   ];
   
   for path_str in &sdk_paths {
-    println!("cargo:warning=Checking Windows Vulkan path: {}", path_str);
+    println!("cargo:warning=Checking Windows Vulkan path: {path_str}");
     let path = PathBuf::from(path_str);
     if validate_vulkan_installation(&path) {
       println!("cargo:warning=Found valid Vulkan installation at: {}", path.display());
@@ -1402,7 +1402,7 @@ fn find_vulkan_windows() -> Option<PathBuf> {
   for sys_path in &system_paths {
     let vulkan_dll = PathBuf::from(sys_path).join("vulkan-1.dll");
     if vulkan_dll.exists() {
-      println!("cargo:warning=Found vulkan-1.dll in system directory: {}", sys_path);
+      println!("cargo:warning=Found vulkan-1.dll in system directory: {sys_path}");
       return Some(PathBuf::from(sys_path));
     }
   }
@@ -1444,7 +1444,7 @@ fn find_vulkan_macos() -> Option<PathBuf> {
   ];
   
   for path_str in &sdk_paths {
-    println!("cargo:warning=Checking macOS Vulkan path: {}", path_str);
+    println!("cargo:warning=Checking macOS Vulkan path: {path_str}");
     let path = PathBuf::from(path_str);
     if validate_vulkan_installation(&path) {
       println!("cargo:warning=Found valid Vulkan installation at: {}", path.display());
@@ -1523,7 +1523,7 @@ fn find_vulkan_linux() -> Option<PathBuf> {
       path_str.to_string()
     };
     
-    println!("cargo:warning=Checking Linux Vulkan path: {}", expanded_path);
+    println!("cargo:warning=Checking Linux Vulkan path: {expanded_path}");
     let path = PathBuf::from(&expanded_path);
     if validate_vulkan_installation(&path) {
       println!("cargo:warning=Found valid Vulkan installation at: {}", path.display());
@@ -1546,7 +1546,7 @@ fn find_vulkan_linux() -> Option<PathBuf> {
     {
       let path_str = String::from_utf8_lossy(&output.stdout);
       let path_str = path_str.trim();
-      println!("cargo:warning=pkg-config reported Vulkan libdir: {}", path_str);
+      println!("cargo:warning=pkg-config reported Vulkan libdir: {path_str}");
       let path = PathBuf::from(path_str);
       if path.exists() {
         if let Some(parent) = path.parent() {

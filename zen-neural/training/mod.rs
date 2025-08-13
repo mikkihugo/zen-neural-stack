@@ -111,7 +111,7 @@ impl<T: Float + Send + Sync> ParallelTrainingEngine<T> {
                     .map(|(&p, &t)| (p - t) * (p - t))
                     .fold(T::zero(), |acc, x| acc + x)
             })
-            .sum();
+            .reduce(|| T::zero(), |acc, x| acc + x);
         
         let sample_count = T::from(predictions.len()).unwrap_or(T::one());
         Ok(total_error / sample_count)
@@ -222,7 +222,7 @@ impl<T: Float + Send + Sync> ParallelTrainingEngine<T> {
             .par_iter()
             .map(|sample| {
                 // Example preprocessing: normalization
-                let sum: T = sample.iter().cloned().sum();
+                let sum: T = sample.iter().cloned().fold(T::zero(), |acc, x| acc + x);
                 let mean = sum / T::from(sample.len()).unwrap_or(T::one());
                 
                 sample.iter()

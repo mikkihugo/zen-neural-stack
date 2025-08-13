@@ -44,9 +44,12 @@ pub mod wasm_gpu_bridge;
 // Re-export main types
 pub use backend::{BackendSelector, ComputeProfile};
 pub use compute_context::{ComputeContext, ComputePerformanceStats, DaaCoordinationMetrics};
-pub use error::ComputeError;
+pub use error::{ComputeError, ComputeResult};
 pub use fallback::FallbackManager;
 pub use memory::{BufferHandle, MemoryStats};
+
+// WebGPUError alias for compatibility
+pub type WebGPUError = ComputeError;
 
 // Re-export enhanced memory management
 pub use buffer_pool::{

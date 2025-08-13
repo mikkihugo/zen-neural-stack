@@ -76,17 +76,12 @@
  * @see zen-forecasting/neuro-divergent-models/src/layers.rs Existing Dense layer foundation
  * @see src/gnn/mod.rs GNN architecture template
  */
-
 use std::collections::HashMap;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "zen-storage")]
-use crate::storage::ZenUnifiedStorage;
-
-#[cfg(feature = "zen-distributed")]
-use crate::distributed::{DistributedZenNetwork, DistributionStrategy};
+// Removed zen-storage and zen-distributed imports - handled by TypeScript orchestration layer
 
 #[cfg(feature = "gpu")]
 use crate::webgpu::{WebGPUBackend, ComputeContext};
@@ -118,13 +113,8 @@ pub mod training;
 #[cfg(feature = "gpu")]
 pub mod gpu;
 
-/// Integration with zen-neural storage for model persistence
-#[cfg(feature = "zen-storage")]
-pub mod storage;
-
-/// Distributed DNN training across multiple nodes
-#[cfg(feature = "zen-distributed")]
-pub mod distributed;
+/// Storage handled by claude-code-zen TypeScript server
+/// Distributed coordination handled by zen-swarm Rust crates
 
 /// Utility functions for model analysis and debugging
 pub mod utils;
@@ -199,12 +189,13 @@ pub use concurrent::{
  * ```
  */
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ZenDNNModel {
     /// Model configuration containing hyperparameters and architecture settings
     pub config: DNNConfig,
     
     /// Stack of neural network layers (dense, activation, regularization)
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub layers: Vec<Box<dyn DNNLayer>>,
     
     /// Input tensor shape [batch_size, input_features]
@@ -215,17 +206,13 @@ pub struct ZenDNNModel {
     
     /// Optional GPU backend for acceleration
     #[cfg(feature = "gpu")]
-    pub gpu_backend: Option<Arc<WebGPUBackend>>,
+    pub gpu_backend: Option<std::sync::Arc<crate::webgpu::WebGPUBackend>>,
     
-    /// Optional storage backend for persistence
-    #[cfg(feature = "zen-storage")]
-    pub storage: Option<Arc<DNNStorage>>,
-    
-    /// Optional distributed network for scaling
-    #[cfg(feature = "zen-distributed")]
-    pub distributed: Option<Arc<DistributedDNNNetwork>>,
+    // Storage: claude-code-zen TypeScript server handles persistence
+    // Distribution: zen-swarm Rust crates handle coordination patterns
     
     /// Training state and optimizer
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub trainer: Option<DNNTrainer>,
     
     /// Model compilation state
@@ -470,7 +457,7 @@ impl ZenDNNModel {
             let output_dim = layer.compile(current_dim)
                 .map_err(|e| DNNError::CompilationError {
                     layer_index: layer_idx,
-                    message: format!("Failed to compile layer: {}", e),
+                    message: format!("Failed to compile layer: {e}"),
                 })?;
             current_dim = output_dim;
         }
@@ -581,8 +568,7 @@ impl ZenDNNModel {
         if input_shape.len() != 2 {
             return Err(DNNError::InvalidInput(
                 format!(
-                    "Input tensor must be 2D [batch_size, features], got shape: {:?}",
-                    input_shape
+                    "Input tensor must be 2D [batch_size, features], got shape: {input_shape:?}"
                 )
             ));
         }
@@ -761,19 +747,7 @@ impl DNNModelBuilder {
                 None
             },
             
-            #[cfg(feature = "zen-storage")]
-            storage: if self.storage_enabled {
-                Some(std::sync::Arc::new(DNNStorage::new().expect("Failed to initialize storage backend")))
-            } else {
-                None
-            },
-            
-            #[cfg(feature = "zen-distributed")]
-            distributed: if self.distributed_enabled {
-                Some(std::sync::Arc::new(DistributedDNNNetwork::new().expect("Failed to initialize distributed backend")))
-            } else {
-                None
-            },
+            // Storage and distribution handled by external layers
             
             trainer: None,
             compiled: false,

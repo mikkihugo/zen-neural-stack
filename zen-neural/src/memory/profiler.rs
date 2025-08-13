@@ -30,7 +30,6 @@
  * @version 1.0.0-alpha.1
  * @since 2024-08-11
  */
-
 use std::collections::{HashMap, VecDeque};
 use std::time::{Instant, Duration};
 use std::sync::{Arc, Mutex, atomic::{AtomicUsize, AtomicU64, Ordering}};
@@ -111,7 +110,7 @@ pub struct MemoryUsage {
 
 /// Detailed allocation information
 #[derive(Debug, Clone)]
-struct AllocationInfo {
+pub struct AllocationInfo {
     /// Size of the allocation
     size: usize,
     /// Timestamp of allocation
@@ -690,7 +689,7 @@ impl fmt::Display for ProfileReport {
             writeln!(f, "Component Breakdown:")?;
             for (component, (count, size)) in &self.component_breakdown {
                 writeln!(f, "  {}: {} allocations, {} bytes (avg: {} bytes)", 
-                        component, count, size, size / count.max(1))?; // Fixed division result and syntax
+                        component, count, size, size / count.max(&1))?; // Fixed division result and syntax
             }
             writeln!(f)?;
         }
@@ -789,7 +788,7 @@ mod tests {
             ..ProfileReport::default()
         };
         
-        let display_string = format!("{}", report);
+        let display_string = format!("{report}");
         assert!(display_string.contains("Memory Profiling Report"));
         assert!(display_string.contains("Total Allocated: 2048"));
         assert!(display_string.contains("Potential Memory Leaks: 2"));

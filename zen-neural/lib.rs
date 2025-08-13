@@ -119,8 +119,6 @@ pub mod mock_types;
 /// - **Training Infrastructure**: Comprehensive training orchestration
 /// - **Memory Management**: Tensor pooling and efficient batch processing
 /// - **GPU Acceleration**: WebGPU support for large-scale networks (optional)
-/// - **Distributed Training**: Multi-node coordination (optional)
-/// - **Persistent Storage**: Model checkpointing and versioning (optional)
 /// 
 /// ## Performance vs JavaScript:
 /// - **Matrix Operations**: 10-100x speedup from SIMD vs nested loops
@@ -133,10 +131,9 @@ pub mod mock_types;
 /// The DNN module integrates seamlessly with existing zen-neural infrastructure:
 /// - Uses same activation function enums where applicable
 /// - Compatible with WebGPU backend for GPU acceleration
-/// - Shares storage and distributed coordination systems
 /// - Maintains consistent error handling patterns
 pub mod dnn {
-    //! Deep Neural Network implementation module
+    /// Deep Neural Network implementation module
     pub use crate::src::dnn::*;
 }
 
@@ -144,12 +141,6 @@ pub mod dnn {
 mod src {
     #[cfg(feature = "gnn")]
     pub mod gnn;
-    
-    #[cfg(feature = "zen-storage")]
-    pub mod storage;
-    
-    #[cfg(feature = "zen-distributed")]
-    pub mod distributed;
     
     // Zero-allocation memory management system
     pub mod memory;
@@ -165,30 +156,30 @@ mod src {
 /// This module provides convenient access to all DNN functionality without
 /// needing to import from individual submodules. Similar to the GNN API pattern.
 pub mod dnn_api {
-    //! Complete Deep Neural Network API
-    //!
-    //! Provides easy access to all DNN components including models, layers,
-    //! optimizers, loss functions, and training infrastructure.
-    //!
-    //! ## Quick Examples:
-    //!
-    //! ```rust,no_run
-    //! use zen_neural::dnn_api::*;
-    //!
-    //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-    //! // Create and train a model
-    //! let mut model = ZenDNNModel::builder()
-    //!     .input_dim(784)
-    //!     .add_dense_layer(128, ActivationType::ReLU)
-    //!     .add_dropout(0.2)
-    //!     .add_output_layer(10, ActivationType::Softmax)
-    //!     .build()?;
-    //!
-    //! model.compile()?;
-    //! let results = model.train(training_data, config).await?;
-    //! # Ok(())
-    //! # }
-    //! ```
+    /// Complete Deep Neural Network API
+    ///
+    /// Provides easy access to all DNN components including models, layers,
+    /// optimizers, loss functions, and training infrastructure.
+    ///
+    /// ## Quick Examples:
+    ///
+    /// ```rust,no_run
+    /// use zen_neural::dnn_api::*;
+    ///
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// // Create and train a model
+    /// let mut model = ZenDNNModel::builder()
+    ///     .input_dim(784)
+    ///     .add_dense_layer(128, ActivationType::ReLU)
+    ///     .add_dropout(0.2)
+    ///     .add_output_layer(10, ActivationType::Softmax)
+    ///     .build()?;
+    ///
+    /// model.compile()?;
+    /// let results = model.train(training_data, config).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
 
     // Core model and configuration
     pub use crate::dnn::{
@@ -234,18 +225,8 @@ pub mod dnn_api {
     #[cfg(feature = "gpu")]
     pub use crate::dnn::gpu::{GPUDNNProcessor, DNNGPUConfig, GPUMatrixOps};
 
-    // Storage integration (if enabled)
-    #[cfg(feature = "zen-storage")]
-    pub use crate::dnn::storage::{
-        DNNStorage, DNNStorageConfig, DNNCheckpoint, DNNTrainingRun,
-        DNNModelMetadata, DNNStorageStatistics
-    };
-
-    // Distributed training (if enabled)
-    #[cfg(feature = "zen-distributed")]
-    pub use crate::dnn::distributed::{
-        DistributedDNNNetwork, DNNDistributionStrategy, DNNNodeConfig
-    };
+    // Storage and distributed training moved to TypeScript orchestration layer
+    // (claude-code-zen provides all coordination, Rust provides pure computation)
 }
 
 // Re-export GNN functionality
@@ -312,46 +293,62 @@ pub mod gnn_api {
     };
 
     // Training infrastructure
-    pub use crate::src::gnn::training::{
+    pub use crate::src::gnn::{
         GNNTrainer, TrainingConfig, TrainingMetrics,
+        DistributedConfig
+    };
+    pub use crate::src::gnn::training::{
         OptimizerType, LRSchedulerType,
         ValidationConfig, EarlyStoppingConfig, CheckpointConfig,
-        DistributedConfig, TrainingState
+        TrainingState
     };
 
     // Message aggregation strategies
+    pub use crate::src::gnn::{
+        AggregationConfig
+    };
     pub use crate::src::gnn::aggregation::{
         AggregationStrategy, 
         MeanAggregation, MaxAggregation, SumAggregation,
-        AttentionAggregation, PoolingAggregation,
-        AggregationConfig
+        AttentionAggregation, PoolingAggregation
     };
 
     // Node update mechanisms
-    pub use crate::src::gnn::updates::{
-        NodeUpdate,
-        GRUNodeUpdate, ResidualNodeUpdate, SimpleNodeUpdate,
-        UpdateConfig, ActivationFunction as GNNActivation
+    pub use crate::src::gnn::{
+        SimpleNodeUpdate, GRUNodeUpdate, ResidualNodeUpdate,
+        UpdateConfig
     };
+    pub use crate::src::gnn::updates::{
+        NodeUpdate
+    };
+    pub use crate::src::gnn::ActivationFunction as GNNActivation;
 
-    // Data loading and processing
-    pub use crate::src::gnn::data::{
+    // Data loading and processing  
+    pub use crate::src::gnn::{
         GraphDataLoader, DataLoaderConfig, BatchConfig,
         GraphDatasetBuilder, GraphTransform
     };
 
     // GPU acceleration
     #[cfg(feature = "gpu")]
-    pub use crate::src::gnn::gpu::{
+    pub use crate::src::gnn::{
         GPUManager, GPUConfig, DeviceType, MemoryInfo,
         gpu_aggregate, gpu_node_update, gpu_forward_pass
     };
 
     // Layer definitions and architecture
     pub use crate::src::gnn::layers::{
-        GCNLayer, GATLayer, SAGELayer, GINLayer,
-        LayerConfig, MessagePassingLayer
+        GraphConvLayer as GCNLayer, 
+        GATLayer, 
+        GraphSAGELayer as SAGELayer,
+        MessagePassingLayer
     };
+    
+    // Layer config (use GNNConfig as LayerConfig)
+    pub use crate::src::gnn::GNNConfig as LayerConfig;
+    
+    // Missing GINLayer - add placeholder
+    pub type GINLayer = crate::src::gnn::layers::GraphConvLayer;
 
     // Test utilities (for integration testing)
     #[cfg(test)]
@@ -424,20 +421,22 @@ pub mod gnn_api {
                 node_labels: None,
                 edge_labels: None,
                 graph_labels: None,
-                metadata: HashMap::from([
-                    ("builder_created".to_string(), json!(true)),
-                    ("num_nodes".to_string(), json!(self.num_nodes)),
-                    ("num_edges".to_string(), json!(self.num_edges)),
-                ]),
+                metadata: crate::src::gnn::data::GraphMetadata {
+                    node_labels: None,
+                    graph_labels: None,
+                    edge_labels: None,
+                    node_weights: None,
+                    edge_weights: None,
+                    properties: HashMap::from([
+                        ("builder_created".to_string(), "true".to_string()),
+                        ("num_nodes".to_string(), self.num_nodes.to_string()),
+                        ("num_edges".to_string(), self.num_edges.to_string()),
+                    ]),
+                },
             })
         }
     }
 }
 
-// Storage integration (if enabled)
-#[cfg(all(feature = "gnn", feature = "zen-storage"))]
-pub use src::storage;
-
-// Distributed functionality (if enabled)
-#[cfg(all(feature = "gnn", feature = "zen-distributed"))]
-pub use src::distributed;
+// Storage and distributed functionality moved to TypeScript orchestration layer
+// (claude-code-zen handles all orchestration, Rust handles pure computation)

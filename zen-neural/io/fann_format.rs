@@ -163,29 +163,29 @@ impl FannWriter {
         writeln!(writer, "num_layers={}", network.num_layers())?;
         writeln!(writer, "connection_rate={:.6}", network.connection_rate)?;
         writeln!(writer, "network_type=0")?;
-        writeln!(writer, "learning_momentum=0.000000")?;
+        writeln!(writer, "learning_momentum=0.0")?;
         writeln!(writer, "training_algorithm=2")?;
         writeln!(writer, "train_error_function=1")?;
         writeln!(writer, "train_stop_function=0")?;
-        writeln!(writer, "cascade_output_change_fraction=0.010000")?;
-        writeln!(writer, "quickprop_decay=-0.000100")?;
-        writeln!(writer, "quickprop_mu=1.750000")?;
-        writeln!(writer, "rprop_increase_factor=1.200000")?;
-        writeln!(writer, "rprop_decrease_factor=0.500000")?;
-        writeln!(writer, "rprop_delta_min=0.000000")?;
-        writeln!(writer, "rprop_delta_max=50.000000")?;
-        writeln!(writer, "rprop_delta_zero=0.100000")?;
+        writeln!(writer, "cascade_output_change_fraction=0.01")?;
+        writeln!(writer, "quickprop_decay=-0.0001")?;
+        writeln!(writer, "quickprop_mu=1.75")?;
+        writeln!(writer, "rprop_increase_factor=1.2")?;
+        writeln!(writer, "rprop_decrease_factor=0.5")?;
+        writeln!(writer, "rprop_delta_min=0.0")?;
+        writeln!(writer, "rprop_delta_max=50.0")?;
+        writeln!(writer, "rprop_delta_zero=0.1")?;
         writeln!(writer, "cascade_output_stagnation_epochs=12")?;
-        writeln!(writer, "cascade_candidate_change_fraction=0.010000")?;
+        writeln!(writer, "cascade_candidate_change_fraction=0.01")?;
         writeln!(writer, "cascade_candidate_stagnation_epochs=12")?;
         writeln!(writer, "cascade_max_out_epochs=150")?;
         writeln!(writer, "cascade_min_out_epochs=50")?;
         writeln!(writer, "cascade_max_cand_epochs=150")?;
         writeln!(writer, "cascade_min_cand_epochs=50")?;
         writeln!(writer, "cascade_num_candidate_groups=2")?;
-        writeln!(writer, "bit_fail_limit=0.350000")?;
-        writeln!(writer, "cascade_candidate_limit=1000.000000")?;
-        writeln!(writer, "cascade_weight_multiplier=0.400000")?;
+        writeln!(writer, "bit_fail_limit=0.35")?;
+        writeln!(writer, "cascade_candidate_limit=1000.0")?;
+        writeln!(writer, "cascade_weight_multiplier=0.4")?;
         writeln!(writer, "cascade_activation_functions_count=10")?;
         writeln!(
             writer,
@@ -194,7 +194,7 @@ impl FannWriter {
         writeln!(writer, "cascade_activation_steepnesses_count=4")?;
         writeln!(
             writer,
-            "cascade_activation_steepnesses=0.250000 0.500000 0.750000 1.000000 "
+            "cascade_activation_steepnesses=0.25 0.5 0.75 1.0 "
         )?;
 
         // Write layer sizes

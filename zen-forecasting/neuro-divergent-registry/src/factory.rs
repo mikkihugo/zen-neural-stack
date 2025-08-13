@@ -218,7 +218,7 @@ impl ModelFactory {
       let cache_key = format!("{}_{}", name, std::any::type_name::<T>());
       if let Some(cached) = self.get_from_cache::<T>(&cache_key) {
         self.stats.write().cache_hits += 1;
-        log::debug!("Cache hit for model '{}'", name);
+        log::debug!("Cache hit for model '{name}'");
         return Ok(cached);
       }
       self.stats.write().cache_misses += 1;
@@ -252,7 +252,7 @@ impl ModelFactory {
 
     if options.benchmark {
       // TODO: Add more detailed benchmarking
-      log::debug!("Model '{}' created in {:.2}ms", name, creation_time);
+      log::debug!("Model '{name}' created in {creation_time:.2}ms");
     }
 
     // Update statistics
@@ -345,7 +345,7 @@ impl ModelFactory {
     for name in names {
       match self.create_with_options::<T>(name, options.clone()) {
         Ok(model) => results.push(model),
-        Err(e) => errors.push(format!("{}: {}", name, e)),
+        Err(e) => errors.push(format!("{name}: {e}")),
       }
     }
 
@@ -376,7 +376,7 @@ impl ModelFactory {
   ) -> RegistryResult<()> {
     let name = template.name.clone();
     self.templates.write().insert(name.clone(), template);
-    log::debug!("Registered model template '{}'", name);
+    log::debug!("Registered model template '{name}'");
     Ok(())
   }
 
@@ -436,8 +436,7 @@ impl ModelFactory {
       if let Some(config_input_size) = config.input_size {
         if config_input_size != input_size {
           return Err(RegistryError::InvalidConfiguration(format!(
-            "Input size mismatch: expected {}, got {}",
-            input_size, config_input_size
+            "Input size mismatch: expected {input_size}, got {config_input_size}"
           )));
         }
       }
@@ -447,8 +446,7 @@ impl ModelFactory {
       if let Some(config_output_size) = config.output_size {
         if config_output_size != output_size {
           return Err(RegistryError::InvalidConfiguration(format!(
-            "Output size mismatch: expected {}, got {}",
-            output_size, config_output_size
+            "Output size mismatch: expected {output_size}, got {config_output_size}"
           )));
         }
       }
@@ -508,7 +506,7 @@ impl Clone for CreationStats {
 
 /// Global model factory instance
 static GLOBAL_FACTORY: once_cell::sync::Lazy<ModelFactory> =
-  once_cell::sync::Lazy::new(|| ModelFactory::new());
+  once_cell::sync::Lazy::new(ModelFactory::new);
 
 /// Get the global model factory
 pub fn global_factory() -> &'static ModelFactory {

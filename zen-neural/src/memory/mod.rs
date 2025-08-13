@@ -52,7 +52,6 @@
  * @see ../training/mod.rs Training infrastructure
  * @see ../gpu/mod.rs GPU acceleration backend
  */
-
 use std::sync::{Arc, RwLock, Mutex};
 use std::collections::HashMap;
 // Removed unused imports: GlobalAlloc, Layout, NonNull, PhantomData
@@ -431,7 +430,7 @@ impl TensorType {
     pub fn can_cast_to(&self, target: TensorType) -> bool {
         match (self, target) {
             // Same type is always safe
-            (a, b) if a == b => true,
+            (a, b) if *a == b => true,
             
             // Widening conversions are generally safe
             (TensorType::UInt8, _) => true, // uint8 can cast to anything
@@ -767,11 +766,18 @@ impl ZenMemorySystem {
         let activation_pool_size = (config.total_pool_size as f32 * config.activation_pool_ratio) as usize;
         
         // Initialize memory pools  
+        // Create both typed pools and a raw byte pool for BufferManager
         let tensor_pool = Arc::new(ThreadSafePool::<f32>::new(
             tensor_pool_size,
             config.max_size_classes,
             config.cache_line_size,
-        )?); // Explicitly specify f32 type
+        )?); // Typed pool for f32 tensors
+        
+        let raw_pool = Arc::new(ThreadSafePool::<u8>::new(
+            tensor_pool_size / 2, // Share the allocation between typed and raw pools
+            config.max_size_classes,
+            config.cache_line_size,
+        )?); // Raw byte pool for BufferManager
         
         let gradient_pool = Arc::new(ThreadSafePool::<f32>::new(
             gradient_pool_size,
@@ -796,7 +802,7 @@ impl ZenMemorySystem {
             let manager = Arc::new(BufferManager::new(
                 tensor_type,
                 config.simd_alignment,
-                tensor_pool.clone(),
+                raw_pool.clone(),
             )?);
             buffer_managers.insert(tensor_type, manager);
         }
@@ -921,7 +927,9 @@ impl ZenMemorySystem {
             allocation_count: profiler_stats.allocation_count,
             deallocation_count: profiler_stats.deallocation_count,
             fragmentation_ratio: Self::calculate_fragmentation_ratio(&tensor_stats, &gradient_stats, &activation_stats),
-            pool_efficiency: Self::calculate_pool_efficiency(&tensor_stats, &gradient_stats, &activation_stats),
+            average_allocation_size: profiler_stats.average_allocation_size,
+            utilization_efficiency: Self::calculate_pool_efficiency(&tensor_stats, &gradient_stats, &activation_stats),
+            total_time_us: profiler_stats.total_time_us,
             cache_hit_rate: profiler_stats.cache_hit_rate,
         })
     }
@@ -967,11 +975,13 @@ impl ZenMemorySystem {
         Ok(ProfileReport {
             memory_stats: stats,
             config: self.config.clone(),
-            pool_reports: vec![
-                self.tensor_pool.get_detailed_stats(),
-                self.gradient_pool.get_detailed_stats(),
-                self.activation_pool.get_detailed_stats(),
-            ],
+            pool_reports: {
+                let mut reports = Vec::new();
+                reports.extend(self.tensor_pool.get_detailed_stats());
+                reports.extend(self.gradient_pool.get_detailed_stats());
+                reports.extend(self.activation_pool.get_detailed_stats());
+                reports
+            },
             layout_analysis: self.layout_optimizer.read()
                 .map_err(|_| MemoryError::ThreadSafetyError {
                     message: "Failed to lock layout optimizer".to_string()

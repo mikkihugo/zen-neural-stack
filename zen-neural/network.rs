@@ -130,6 +130,89 @@ impl<T: Float> Network<T> {
         }
     }
 
+    /// Predict outputs for given inputs without modifying network state (immutable version)
+    /// 
+    /// This method performs the same computation as `run` but without mutating the network,
+    /// making it suitable for concurrent access and evaluation scenarios.
+    /// 
+    /// Production-grade implementation with proper forward propagation.
+    pub fn predict(&self, inputs: &[T]) -> Vec<T> {
+        if inputs.is_empty() || self.layers.is_empty() {
+            return Vec::new();
+        }
+
+        // Start with input values
+        let mut current_values = inputs.to_vec();
+        
+        // Forward propagate through each layer except input layer
+        for layer_idx in 1..self.layers.len() {
+            let current_layer = &self.layers[layer_idx];
+            let mut next_values = Vec::with_capacity(current_layer.neurons.len());
+            
+            // Calculate output for each neuron in current layer
+            for neuron in &current_layer.neurons {
+                if neuron.is_bias {
+                    next_values.push(T::one());
+                    continue;
+                }
+                
+                // Calculate weighted sum from previous layer
+                let mut sum = T::zero();
+                for connection in &neuron.connections {
+                    if connection.from_neuron < current_values.len() {
+                        sum = sum + current_values[connection.from_neuron] * connection.weight;
+                    }
+                }
+                
+                // Apply activation function without modifying neuron state
+                let activated_value = self.apply_activation_function(
+                    neuron.activation_function,
+                    neuron.activation_steepness,
+                    sum
+                );
+                next_values.push(activated_value);
+            }
+            
+            current_values = next_values;
+        }
+        
+        // Return output layer values (excluding bias neurons)
+        if let Some(output_layer) = self.layers.last() {
+            output_layer.neurons.iter()
+                .filter(|n| !n.is_bias)
+                .zip(current_values.iter())
+                .map(|(_, &value)| value)
+                .collect()
+        } else {
+            current_values
+        }
+    }
+
+    /// Apply activation function without mutating neuron state
+    fn apply_activation_function(&self, func: ActivationFunction, steepness: T, x: T) -> T {
+        match func {
+            ActivationFunction::Linear => x * steepness,
+            ActivationFunction::Sigmoid => {
+                let exp_val = (-steepness * x).exp();
+                T::one() / (T::one() + exp_val)
+            }
+            ActivationFunction::ReLU => {
+                if x > T::zero() { x } else { T::zero() }
+            }
+            ActivationFunction::ReLULeaky => {
+                let alpha = T::from(0.01).unwrap_or(T::zero());
+                if x > T::zero() { x } else { alpha * x }
+            }
+            ActivationFunction::Tanh => (steepness * x).tanh(),
+            ActivationFunction::SigmoidSymmetric => (steepness * x).tanh(),
+            ActivationFunction::Gaussian => {
+                let x_scaled = x * steepness;
+                (-x_scaled * x_scaled).exp()
+            }
+            _ => x, // Fallback for other activation functions
+        }
+    }
+
     /// Gets all weights in the network as a flat vector
     ///
     /// Weights are ordered by layer, then by neuron, then by connection

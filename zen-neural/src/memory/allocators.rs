@@ -9,7 +9,6 @@
  * @version 1.0.0-alpha.1
  * @since 2024-08-11
  */
-
 use std::alloc::{GlobalAlloc, Layout};
 use std::ptr::NonNull;
 
@@ -44,7 +43,14 @@ impl NeuralAllocator {
     /// Create a new neural allocator with thread-safe pools
     pub fn new() -> Self {
         Self {
-            pools: ThreadSafePool::new(),
+            pools: ThreadSafePool::new(
+                16 * 1024 * 1024, // 16MB total size
+                8,                 // 8 size classes
+                64,                // 64-byte alignment for SIMD
+            ).unwrap_or_else(|_| {
+                // Fallback to default system allocator if pool creation fails
+                ThreadSafePool::new(1024 * 1024, 4, 32).expect("Failed to create fallback pool")
+            }),
         }
     }
 }
@@ -59,19 +65,19 @@ impl Default for NeuralAllocator {
 unsafe impl GlobalAlloc for NeuralAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         // Use system allocator for now, but with neural network optimizations
-        std::alloc::System.alloc(layout)
+        unsafe { std::alloc::System.alloc(layout) }
     }
     
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        std::alloc::System.dealloc(ptr, layout)
+        unsafe { std::alloc::System.dealloc(ptr, layout) }
     }
     
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
-        std::alloc::System.alloc_zeroed(layout)
+        unsafe { std::alloc::System.alloc_zeroed(layout) }
     }
     
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
-        std::alloc::System.realloc(ptr, layout, new_size)
+        unsafe { std::alloc::System.realloc(ptr, layout, new_size) }
     }
 }
 

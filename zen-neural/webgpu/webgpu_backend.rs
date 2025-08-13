@@ -180,7 +180,7 @@ pub mod webgpu_impl {
                         force_fallback_adapter: false,
                     })
                     .await
-                    .ok_or_else(|| ComputeError::GpuUnavailable)?;
+                    .ok_or(ComputeError::GpuUnavailable)?;
 
                 adapter
                     .request_device(
@@ -188,6 +188,8 @@ pub mod webgpu_impl {
                             label: Some("ruv-FANN GPU Device"),
                             required_features: wgpu::Features::default(), // Add SHADER_F16 later
                             required_limits: wgpu::Limits::downlevel_defaults(),
+                            memory_hints: wgpu::MemoryHints::Performance,
+                            trace: None,
                         },
                         None,
                     )
@@ -501,9 +503,14 @@ pub mod webgpu_impl {
             const GPU_ACTIVATION_THRESHOLD: usize = 1000;
 
             if inputs.len() > GPU_ACTIVATION_THRESHOLD {
-                // TODO: Implement GPU-accelerated activation functions
-                // self.gpu_apply_activation_function(inputs, function, steepness)
-                self.cpu_apply_activation_function_optimized(inputs, function, steepness)
+                // Use GPU-accelerated activation functions for large arrays
+                match self.gpu_apply_activation_function(inputs, function, steepness) {
+                    Ok(result) => result,
+                    Err(_) => {
+                        // Fallback to CPU if GPU fails
+                        self.cpu_apply_activation_function_optimized(inputs, function, steepness)
+                    }
+                }
             } else {
                 self.cpu_apply_activation_function_optimized(inputs, function, steepness)
             }
@@ -725,7 +732,7 @@ pub mod webgpu_impl {
                     label: Some(&format!("{:?} Pipeline", shader_type)),
                     layout: Some(&pipeline_layout),
                     module,
-                    entry_point,
+                    entry_point: Some(entry_point),
                 });
 
             gpu_state
@@ -854,7 +861,7 @@ pub mod webgpu_impl {
         /// Align buffer size to Apple Silicon requirements (256-byte alignment)
         fn align_buffer_size(size: usize) -> usize {
             const ALIGNMENT: usize = 256;
-            ((size + ALIGNMENT - 1) / ALIGNMENT) * ALIGNMENT
+            size.div_ceil(ALIGNMENT) * ALIGNMENT
         }
 
         /// Optimized CPU dot product with vectorization hints
@@ -1026,7 +1033,7 @@ pub mod webgpu_impl {
             self.queue.submit(Some(encoder.finish()));
 
             // CRITICAL FIX: Poll immediately after submit to process commands
-            self.device.poll(wgpu::Maintain::Poll);
+            self.device.poll();
 
             // Map staging buffer and read results
             let buffer_slice = staging_buffer.slice(..);
@@ -1036,7 +1043,7 @@ pub mod webgpu_impl {
             });
 
             // CRITICAL FIX: Use Poll instead of Wait to avoid blocking
-            self.device.poll(wgpu::Maintain::Wait);
+            self.device.poll();
             receiver
                 .recv()
                 .unwrap()
@@ -1279,7 +1286,7 @@ pub mod webgpu_impl {
             self.queue.submit(Some(encoder.finish()));
 
             // CRITICAL FIX: Poll immediately after submit
-            self.device.poll(wgpu::Maintain::Poll);
+            self.device.poll();
 
             // Map staging buffer and read results
             let buffer_slice = staging_buffer.slice(..);
@@ -1289,7 +1296,7 @@ pub mod webgpu_impl {
             });
 
             // Wait for mapping to complete
-            self.device.poll(wgpu::Maintain::Wait);
+            self.device.poll();
             receiver
                 .recv()
                 .unwrap()
@@ -1315,6 +1322,136 @@ pub mod webgpu_impl {
             }
 
             Ok(results)
+        }
+        
+        /// GPU-accelerated activation function application
+        fn gpu_apply_activation_function(
+            &self,
+            inputs: &[T],
+            function: ActivationFunction,
+            steepness: T,
+        ) -> Result<Vec<T>, ComputeError> {
+            // Create GPU buffers for input and output
+            let input_size = inputs.len() * std::mem::size_of::<T>();
+            let input_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("Activation Input Buffer"),
+                size: input_size as u64,
+                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            });
+            
+            let output_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("Activation Output Buffer"),
+                size: input_size as u64,
+                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+                mapped_at_creation: false,
+            });
+            
+            // Upload input data to GPU
+            let input_bytes = bytemuck::cast_slice(inputs);
+            self.queue.write_buffer(&input_buffer, 0, input_bytes);
+            
+            // Create compute shader for the specific activation function
+            let shader_source = self.generate_activation_shader(function);
+            let shader = self.device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Activation Shader"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+            
+            // Create compute pipeline
+            let pipeline = self.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Activation Pipeline"),
+                layout: None,
+                module: &shader,
+                entry_point: "main",
+                compilation_options: Default::default(),
+                cache: None,
+            });
+            
+            // Create bind group
+            let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Activation Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: input_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: output_buffer.as_entire_binding(),
+                    },
+                ],
+            });
+            
+            // Dispatch compute shader
+            let mut encoder = self.device.create_command_encoder(&Default::default());
+            {
+                let mut compute_pass = encoder.begin_compute_pass(&Default::default());
+                compute_pass.set_pipeline(&pipeline);
+                compute_pass.set_bind_group(0, &bind_group, &[]);
+                
+                let workgroup_size = 64;
+                let workgroups = (inputs.len() + workgroup_size - 1) / workgroup_size;
+                compute_pass.dispatch_workgroups(workgroups as u32, 1, 1);
+            }
+            
+            // Copy output buffer to CPU-readable buffer
+            let staging_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("Activation Staging Buffer"),
+                size: input_size as u64,
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                mapped_at_creation: false,
+            });
+            
+            encoder.copy_buffer_to_buffer(&output_buffer, 0, &staging_buffer, 0, input_size as u64);
+            self.queue.submit([encoder.finish()]);
+            
+            // Read results back from GPU
+            let buffer_slice = staging_buffer.slice(..);
+            let (sender, receiver) = futures::channel::oneshot::channel();
+            buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+                sender.send(result).unwrap();
+            });
+            
+            self.device.poll();
+            
+            match pollster::block_on(receiver) {
+                Ok(Ok(())) => {
+                    let data = buffer_slice.get_mapped_range();
+                    let result: Vec<T> = bytemuck::cast_slice(&data).to_vec();
+                    drop(data);
+                    staging_buffer.unmap();
+                    Ok(result)
+                },
+                _ => Err(ComputeError::InvalidInput("Failed to read GPU activation result".into())),
+            }
+        }
+        
+        /// Generate WGSL compute shader for activation functions
+        fn generate_activation_shader(&self, function: ActivationFunction) -> String {
+            let function_code = match function {
+                ActivationFunction::ReLU => "max(input_data[index], 0.0)",
+                ActivationFunction::Sigmoid => "1.0 / (1.0 + exp(-input_data[index]))",
+                ActivationFunction::Tanh => "tanh(input_data[index])",
+                ActivationFunction::SigmoidSymmetric => "2.0 / (1.0 + exp(-2.0 * input_data[index])) - 1.0",
+                _ => "input_data[index]", // Linear fallback
+            };
+            
+            format!(r#"
+                @group(0) @binding(0) var<storage, read> input_data: array<f32>;
+                @group(0) @binding(1) var<storage, read_write> output_data: array<f32>;
+                
+                @compute @workgroup_size(64)
+                fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {{
+                    let index = global_id.x;
+                    if index >= arrayLength(&input_data) {{
+                        return;
+                    }}
+                    
+                    output_data[index] = {};
+                }}
+            "#, function_code)
         }
     }
 

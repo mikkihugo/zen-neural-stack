@@ -541,7 +541,7 @@ pub fn initialize_registry_with_config(
             }
           }
           Err(e) => {
-            log::warn!("Failed to load plugins from {:?}: {}", plugin_dir, e);
+            log::warn!("Failed to load plugins from {plugin_dir:?}: {e}");
           }
         }
       }

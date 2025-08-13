@@ -79,6 +79,12 @@ pub struct BenchmarkRunner {
     javascript_baselines: HashMap<String, JavaScriptBaseline>,
 }
 
+impl Default for BenchmarkRunner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BenchmarkRunner {
     pub fn new() -> Self {
         Self {

@@ -20,26 +20,41 @@ impl<T: Float + Send + Sync + Default + std::fmt::Debug + 'static> GpuGradientCo
     
     /// Create a new GPU gradient computer with automatic backend selection
     pub fn with_auto_backend() -> Result<Self, ComputeError> {
-        let mut backend_selector = BackendSelector::new()?;
+        let backend_selector = BackendSelector::new()?;
         let profile = crate::webgpu::backend::ComputeProfile {
             matrix_size: crate::webgpu::backend::MatrixSize::Medium,
             batch_size: 32,
             operation_type: crate::webgpu::backend::OperationType::Training,
         };
         
-        // Select optimal backend for gradient computation
-        if let Some(backend) = backend_selector.select_backend(&profile) {
-            Ok(Self {
-                backend: Arc::new(backend),
-                _phantom: std::marker::PhantomData,
-            })
+        // Get the backend type and create our own instance
+        let backend_type = if let Some(backend_ref) = backend_selector.select_backend(&profile) {
+            backend_ref.backend_type()
         } else {
-            Err(ComputeError::BackendError("No suitable backend found for gradient computation".to_string()))
-        }
+            return Err(ComputeError::BackendError("No suitable backend found for gradient computation".to_string()));
+        };
+        
+        // Create our own backend instance based on the selected type
+        let backend: Arc<dyn ComputeBackend<T>> = match backend_type {
+            crate::webgpu::backend::BackendType::WebGPU => {
+                Arc::new(crate::webgpu::webgpu_backend::WebGPUBackend::initialize()?)
+            },
+            crate::webgpu::backend::BackendType::Simd => {
+                Arc::new(crate::webgpu::backend::SimdBackend::initialize()?)
+            },
+            crate::webgpu::backend::BackendType::Cpu => {
+                Arc::new(crate::webgpu::backend::CpuBackend::initialize()?)
+            },
+        };
+        
+        Ok(Self {
+            backend,
+            _phantom: std::marker::PhantomData,
+        })
     }
     
     /// Create gradient computer with specific backend selector configuration
-    pub fn with_backend_selector(mut selector: BackendSelector<T>) -> Result<Self, ComputeError> {
+    pub fn with_backend_selector(selector: BackendSelector<T>) -> Result<Self, ComputeError> {
         // Configure selector for training workloads
         let profile = crate::webgpu::backend::ComputeProfile {
             matrix_size: crate::webgpu::backend::MatrixSize::Large,
@@ -47,14 +62,30 @@ impl<T: Float + Send + Sync + Default + std::fmt::Debug + 'static> GpuGradientCo
             operation_type: crate::webgpu::backend::OperationType::Training,
         };
         
-        if let Some(backend) = selector.select_backend(&profile) {
-            Ok(Self {
-                backend: Arc::new(backend),
-                _phantom: std::marker::PhantomData,
-            })
+        // Get the backend type and create our own instance
+        let backend_type = if let Some(backend_ref) = selector.select_backend(&profile) {
+            backend_ref.backend_type()
         } else {
-            Err(ComputeError::BackendError("Backend selector failed to find suitable backend".to_string()))
-        }
+            return Err(ComputeError::BackendError("Backend selector failed to find suitable backend".to_string()));
+        };
+        
+        // Create our own backend instance based on the selected type
+        let backend: Arc<dyn ComputeBackend<T>> = match backend_type {
+            crate::webgpu::backend::BackendType::WebGPU => {
+                Arc::new(crate::webgpu::webgpu_backend::WebGPUBackend::initialize()?)
+            },
+            crate::webgpu::backend::BackendType::Simd => {
+                Arc::new(crate::webgpu::backend::SimdBackend::initialize()?)
+            },
+            crate::webgpu::backend::BackendType::Cpu => {
+                Arc::new(crate::webgpu::backend::CpuBackend::initialize()?)
+            },
+        };
+        
+        Ok(Self {
+            backend,
+            _phantom: std::marker::PhantomData,
+        })
     }
     
     /// Configure GPU shaders for gradient computation

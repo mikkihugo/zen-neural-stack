@@ -18,7 +18,6 @@
  * @version 1.0.0-alpha.1
  * @since 2025-01-14
  */
-
 use std::collections::HashMap;
 use ndarray::{Array2, Axis, s};
 
@@ -43,7 +42,7 @@ impl TensorUtils {
             ));
         }
         
-        if dims.iter().any(|&d| d == 0) {
+        if dims.contains(&0) {
             return Err(DNNError::InvalidInput(
                 "All dimensions must be greater than zero".to_string()
             ));
@@ -84,7 +83,7 @@ impl TensorUtils {
             }
             _ => {
                 return Err(DNNError::InvalidConfiguration(
-                    format!("Unknown layer type: {}", layer_type)
+                    format!("Unknown layer type: {layer_type}")
                 ));
             }
         }
@@ -108,7 +107,7 @@ impl TensorUtils {
         
         if k != k2 {
             return Err(DNNError::DimensionMismatch(
-                format!("Inner dimensions must match: {} vs {}", k, k2)
+                format!("Inner dimensions must match: {k} vs {k2}")
             ));
         }
         
@@ -145,7 +144,7 @@ impl TensorUtils {
                 Ok(input_shape.to_vec())
             },
             _ => Err(DNNError::InvalidConfiguration(
-                format!("Unknown layer type: {}", layer_type)
+                format!("Unknown layer type: {layer_type}")
             ))
         }
     }
@@ -189,7 +188,7 @@ impl TensorUtils {
         for (i, tensor) in tensors.iter().enumerate() {
             if tensor.data.shape().len() != 2 {
                 return Err(DNNError::InvalidInput(
-                    format!("Tensor {} is not 2D", i)
+                    format!("Tensor {i} is not 2D")
                 ));
             }
             if tensor.data.shape()[1] != feature_dim {
@@ -360,7 +359,7 @@ impl DebugUtils {
     /// Print tensor summary for debugging
     pub fn print_tensor_summary(tensor: &DNNTensor, name: &str) {
         let stats = Self::compute_tensor_stats(tensor);
-        println!("=== Tensor Summary: {} ===", name);
+        println!("=== Tensor Summary: {name} ===");
         println!("Shape: {:?}", stats.shape);
         println!("Mean: {:.6}, Std: {:.6}", stats.mean, stats.std);
         println!("Min: {:.6}, Max: {:.6}", stats.min, stats.max);

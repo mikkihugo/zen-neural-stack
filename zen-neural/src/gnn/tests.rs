@@ -448,9 +448,9 @@ mod core_tests {
         let validation_error = GNNError::ValidationError("Test validation error".to_string());
 
         // Test error display
-        assert!(format!("{}", storage_error).contains("storage"));
-        assert!(format!("{}", computation_error).contains("computation"));
-        assert!(format!("{}", validation_error).contains("validation"));
+        assert!(format!("{storage_error}").contains("storage"));
+        assert!(format!("{computation_error}").contains("computation"));
+        assert!(format!("{validation_error}").contains("validation"));
 
         // Test error debug
         assert!(format!("{:?}", storage_error).contains("StorageError"));

@@ -6,15 +6,32 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct BufferHandle(u64);
+pub struct BufferHandle {
+    id: u64,
+    size: u64,
+}
 
 impl BufferHandle {
-    pub fn new(id: u64) -> Self {
-        Self(id)
+    pub fn new(size: u64) -> Self {
+        // Generate a unique ID based on the size and current time
+        let id = size + (std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos() % 1_000_000) as u64;
+        
+        Self { id, size }
+    }
+
+    pub fn with_id(id: u64, size: u64) -> Self {
+        Self { id, size }
     }
 
     pub fn id(&self) -> u64 {
-        self.0
+        self.id
+    }
+
+    pub fn size(&self) -> u64 {
+        self.size
     }
 }
 
@@ -101,7 +118,7 @@ impl CpuMemoryManager {
 
         let id = *next_id;
         *next_id += 1;
-        let handle = BufferHandle(id);
+        let handle = BufferHandle::with_id(id, size as u64);
 
         // Create CPU buffer
         let buffer = vec![0u8; size];
@@ -253,7 +270,7 @@ pub mod webgpu_memory {
             stats.total_allocated += size;
             stats.buffer_count += 1;
 
-            Ok(super::BufferHandle::new(id))
+            Ok(super::BufferHandle::with_id(id, size as u64))
         }
 
         pub fn deallocate_buffer(&self, handle: super::BufferHandle) -> Result<(), ComputeError> {

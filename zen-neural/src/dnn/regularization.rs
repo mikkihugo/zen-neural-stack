@@ -43,7 +43,6 @@
  * @version 1.0.0-alpha.1
  * @since 2025-01-14
  */
-
 use ndarray::{Array1, Array2, Axis};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -310,6 +309,8 @@ pub struct BatchNormLayer {
     gamma_grad: Option<Array1<f32>>,
     beta_grad: Option<Array1<f32>>,
     
+    // Note: RNG is created locally when needed for thread safety
+    
     /// Input dimension (set during compilation)
     input_dim: Option<usize>,
     
@@ -364,18 +365,19 @@ impl BatchNormLayer {
     fn initialize_parameters_with_normal(&mut self, dimension: usize) -> Result<(), DNNError> {
         // Initialize gamma (scale) with normal distribution around 1.0
         let gamma_dist = Normal::new(1.0, 0.1)
-            .map_err(|e| DNNError::InvalidConfiguration(format!("Failed to create gamma distribution: {}", e)))?;
+            .map_err(|e| DNNError::InvalidConfiguration(format!("Failed to create gamma distribution: {e}")))?;
         
+        let mut rng = rand::thread_rng(); // Create local RNG for thread safety
         let gamma = Array1::from_shape_fn(dimension, |_| {
-            gamma_dist.sample(&mut self.rng) as f32
+            gamma_dist.sample(&mut rng) as f32
         });
         
         // Initialize beta (shift) with normal distribution around 0.0
         let beta_dist = Normal::new(0.0, 0.1)
-            .map_err(|e| DNNError::InvalidConfiguration(format!("Failed to create beta distribution: {}", e)))?;
+            .map_err(|e| DNNError::InvalidConfiguration(format!("Failed to create beta distribution: {e}")))?;
         
         let beta = Array1::from_shape_fn(dimension, |_| {
-            beta_dist.sample(&mut self.rng) as f32
+            beta_dist.sample(&mut rng) as f32
         });
         
         self.gamma = Some(gamma);
@@ -447,7 +449,7 @@ impl BatchNormLayer {
         
         // Validate minimum batch size for stable statistics
         if training && batch_size < 2 {
-            log::warn!("Batch size {} too small for stable batch normalization", batch_size);
+            log::warn!("Batch size {batch_size} too small for stable batch normalization");
         }
         
         let (mean, var) = if training {
@@ -560,12 +562,12 @@ impl DNNLayer for BatchNormLayer {
         
         // Use input statistics to compute proper gradients
         let input_mean = TensorOps::mean_axis(input, 0)?;
-        let input_centered = TensorOps::subtract_broadcast(input, &input_mean)?;
+        let _input_centered = TensorOps::subtract_broadcast(input, &input_mean)?; // Reserved for variance calculation
         
         // For batch normalization, gradients depend on input statistics
         // This simplified version scales gradients based on input variance
         let input_var = self.compute_batch_variance(input, &input_mean)?;
-        let inv_std = TensorOps::apply_elementwise(&input_var, |x| 1.0 / (x + self.config.epsilon).sqrt())?;
+        let inv_std = input_var.mapv(|x| 1.0 / (x + self.config.epsilon).sqrt());
         
         // Scale gradients by inverse standard deviation
         let scaled_gradients = TensorOps::multiply_broadcast(grad_output, &inv_std)?;
@@ -821,7 +823,7 @@ impl DNNLayer for LayerNormLayer {
             let sample_var = TensorOps::compute_sample_variance(&input_sample, sample_mean)?;
             
             // Scale gradients by layer statistics
-            let grad_sample = TensorOps::get_batch_sample(&mut processed_gradients, batch_idx)?;
+            let _grad_sample = TensorOps::get_batch_sample(&processed_gradients, batch_idx)?; // Reserved for gradient analysis
             let inv_std = 1.0 / (sample_var + self.config.epsilon).sqrt();
             TensorOps::scale_sample_inplace(&mut processed_gradients, batch_idx, inv_std)?;
         }

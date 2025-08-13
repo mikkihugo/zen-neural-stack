@@ -70,7 +70,7 @@ zen-compute = { path = "../zen-compute" }
 zen-swarm-vector = { path = "crates/zen-swarm-vector" }
 
 # MCP dependencies
-axum = "0.7.9"
+axum = "0.8.4"
 tower = "0.4.13"
 tokio-tungstenite = "0.27.0"
 schemars = "0.8.21"

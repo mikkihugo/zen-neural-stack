@@ -33,7 +33,7 @@ futures = { workspace = true }
 rmcp = { version = "0.2.1", features = ["server", "transport-io"] }
 
 # MCP specific dependencies (WebSocket)
-axum = { version = "0.7", features = ["ws", "json"] }
+axum = { version = "0.8", features = ["ws", "json"] }
 axum-extra = { version = "0.9", features = ["typed-header"] }
 tower = { version = "0.5", features = ["full"] }
 tower-http = { version = "0.6", features = ["cors", "trace"] }

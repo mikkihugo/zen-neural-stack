@@ -73,7 +73,7 @@ zen-swarm-vector = { path = "crates/zen-swarm-vector" }
 axum = "0.7.9"
 tower = "0.4.13"
 tokio-tungstenite = "0.27.0"
-schemars = "0.8.21"
+schemars = "1.0.4"
 uuid = { version = "1.11.0", features = ["v4", "serde"] }
 
 # Transport dependencies

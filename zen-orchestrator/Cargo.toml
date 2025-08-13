@@ -31,7 +31,7 @@ serde = { version = "1.0.219", features = ["derive"], default-features = false }
 serde_json = { version = "1.0.142", default-features = false, features = ["alloc"] }
 
 # Random number generation  
-getrandom = { version = "0.2.15", default-features = false }
+getrandom = { version = "0.3.3", default-features = false }
 rand = { workspace = true, features = ["small_rng"] }
 
 # Logging

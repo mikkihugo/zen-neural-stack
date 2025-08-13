@@ -56,7 +56,7 @@ ndarray = "0.16.1"
 # Neural network specific
 nalgebra = "0.34.0"
 rand = { version = "0.8.5", features = ["small_rng"] }
-rand_distr = "0.4.3"
+rand_distr = "0.5.1"
 rand_chacha = "0.3.1"
 
 # GPU acceleration 

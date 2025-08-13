@@ -36,7 +36,7 @@ rayon = "1.10.0"
 
 # Random number generation
 rand = "0.8.5"
-rand_distr = "0.4.3"
+rand_distr = "0.5.1"
 
 # Mathematical operations
 nalgebra = "0.34.0"

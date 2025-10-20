@@ -35,4 +35,4 @@ crate-type = ["cdylib", "rlib"]
 
 # Target-specific dependencies for WASM
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-getrandom = { version = "0.2", features = ["js"] }
+getrandom = { version = "0.3", features = ["js"] }
